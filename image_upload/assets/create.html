@@ -1,0 +1,28 @@
+{% extends "admin/challenges/create.html" %}
+
+{% block type %}
+	<input type="hidden" value="image_upload" name="type" id="chaltype">
+{% endblock %}
+
+{% block value %}
+	<div class="form-group">
+		<label for="value">Points<br>
+			<small class="form-text text-muted">Points awarded upon approval</small>
+		</label>
+		<input type="number" class="form-control" name="value" placeholder="Enter value" required>
+	</div>
+
+	<div class="form-group">
+		<label for="max_file_size_mb">Max File Size (MB)<br>
+			<small class="form-text text-muted">Maximum allowed file size in megabytes</small>
+		</label>
+		<input type="number" class="form-control" name="max_file_size_mb" value="10" min="1" max="100">
+	</div>
+
+	<div class="form-group">
+		<label for="allowed_extensions">Allowed Extensions<br>
+			<small class="form-text text-muted">Comma-separated allowed file extensions</small>
+		</label>
+		<input type="text" class="form-control" name="allowed_extensions" value="png,jpg,jpeg,webp,gif">
+	</div>
+{% endblock %}

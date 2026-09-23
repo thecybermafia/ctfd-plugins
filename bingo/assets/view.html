@@ -1,0 +1,117 @@
+{% extends "challenge.html" %}
+
+{% block input %}
+<input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+<input id="bingo-size" type="hidden" value="{{ challenge.grid_size or 5 }}">
+<textarea id="bingo-cells-data" style="display: none;">{{ (challenge.cells_data or []) | tojson }}</textarea>
+
+<div class="bingo-wrapper my-3">
+  
+  <!-- Score and Pattern Header Stats -->
+  <div class="bingo-hud-stats d-flex justify-content-between align-items-center p-2 mb-3 rounded" style="background: rgba(8, 12, 18, 0.95); border: 1px solid var(--cyber-border-bright);">
+    <div>
+      <span class="text-muted small text-uppercase font-monospace">Tiles Solved:</span>
+      <strong id="bingo-tiles-ratio" class="text-cyan ms-1 font-monospace">0 / 25</strong>
+    </div>
+    <div>
+      <span class="text-muted small text-uppercase font-monospace">Lines Completed:</span>
+      <strong id="bingo-lines-count" class="text-success ms-1 font-monospace">0</strong>
+    </div>
+    <div>
+      <span class="text-muted small text-uppercase font-monospace">Line Bonus:</span>
+      <strong class="text-success ms-1 font-monospace">+{{ challenge.line_bonus or 50 }} PTS</strong>
+    </div>
+  </div>
+
+  <!-- Interactive Bingo 5x5 Card -->
+  <div class="bingo-grid-container p-3 rounded" style="background: rgba(6, 10, 15, 0.98); border: 1px solid var(--cyber-border); overflow-x: auto;">
+    <div id="bingo-board-grid" class="bingo-board-grid" style="display: grid; gap: 8px; margin: 0 auto;">
+      <!-- Tiles populated by view.js -->
+    </div>
+  </div>
+
+  <!-- Active Tile Prompt & Submission Box -->
+  <div id="bingo-tile-prompt-box" class="card mt-3 d-none" style="border: 1px solid var(--cyber-cyan) !important;">
+    <div class="card-header d-flex justify-content-between align-items-center py-2">
+      <h6 id="bingo-prompt-title" class="mb-0 text-cyan">Tile Title</h6>
+      <span id="bingo-prompt-pts" class="badge bg-success text-dark">15 PTS</span>
+    </div>
+    <div class="card-body py-2">
+      <p id="bingo-prompt-desc" class="mb-2 small text-light"></p>
+      <div id="bingo-prompt-form">
+        <div class="input-group">
+          <input type="text" id="bingo-prompt-flag-input" class="form-control font-monospace" placeholder="Enter tile flag...">
+          <button class="btn btn-primary" id="bingo-prompt-submit-btn" type="button">
+            <i class="fas fa-check"></i> Submit Tile
+          </button>
+        </div>
+      </div>
+      <div id="bingo-prompt-solved-msg" class="text-success fw-bold d-none py-1 font-monospace">
+        <i class="fas fa-check-circle"></i> Tile already solved!
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block submit %}
+<!-- Handled inside input block -->
+{% endblock %}
+
+<style>
+.bingo-tile {
+  background: var(--cyber-bg-surface);
+  border: 1px solid var(--cyber-border);
+  border-radius: 4px;
+  height: 85px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.bingo-tile:hover {
+  border-color: var(--cyber-cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px var(--cyber-cyan-glow);
+}
+
+.bingo-tile.selected {
+  border-color: var(--cyber-cyan) !important;
+  box-shadow: 0 0 15px var(--cyber-cyan-glow) !important;
+}
+
+.bingo-tile.solved {
+  background: linear-gradient(135deg, rgba(0, 255, 102, 0.12) 0%, rgba(0, 255, 102, 0.22) 100%) !important;
+  border-color: var(--cyber-green) !important;
+}
+
+.bingo-tile.solved .tile-title {
+  color: var(--cyber-green) !important;
+}
+
+.bingo-tile .tile-title {
+  font-family: var(--cyber-font-display);
+  font-size: 0.72rem;
+  line-height: 1.15;
+  color: var(--cyber-text-main);
+  word-break: break-word;
+}
+
+.bingo-tile .tile-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.68rem;
+  font-family: var(--cyber-font-mono);
+  color: var(--cyber-text-muted);
+}
+
+.bingo-tile.solved .tile-footer {
+  color: var(--cyber-green);
+}
+</style>

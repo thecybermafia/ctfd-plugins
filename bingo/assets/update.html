@@ -1,0 +1,41 @@
+{% extends "admin/challenges/update.html" %}
+
+{% block value %}
+	<div class="form-group mb-3">
+		<label for="value"><b>Full Card Points</b><br>
+			<small class="form-text text-muted">Base points awarded for solving the full Bingo card</small>
+		</label>
+		<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
+	</div>
+
+	<div class="form-row row mb-3">
+		<div class="form-group col-md-4">
+			<label for="grid_size"><b>Grid Size</b></label>
+			<select class="form-control custom-select" name="grid_size">
+				<option value="3" {% if challenge.grid_size == 3 %}selected{% endif %}>3 x 3 (9 Squares - Fast & Fun)</option>
+				<option value="4" {% if challenge.grid_size == 4 %}selected{% endif %}>4 x 4 (16 Squares)</option>
+				<option value="5" {% if challenge.grid_size == 5 %}selected{% endif %}>5 x 5 (25 Squares - Classic)</option>
+			</select>
+		</div>
+		<div class="form-group col-md-4">
+			<label for="line_bonus"><b>Line Bonus (Points)</b></label>
+			<input type="number" class="form-control" name="line_bonus" value="{{ challenge.line_bonus }}" min="0">
+			<small class="form-text text-muted">Per row, column, or diagonal</small>
+		</div>
+		<div class="form-group col-md-4">
+			<label for="blackout_bonus"><b>Blackout Bonus</b></label>
+			<input type="number" class="form-control" name="blackout_bonus" value="{{ challenge.blackout_bonus }}" min="0">
+			<small class="form-text text-muted">Extra bonus for full card</small>
+		</div>
+	</div>
+
+	<div class="form-group mb-3">
+		<label for="squares_text">
+			<b>Bingo Squares (One per line: <code>Square Title | Flag</code>)</b><br>
+			<small class="form-text text-muted">
+				Simply list each square name and its required flag separated by <code>|</code>. No JSON required!
+			</small>
+		</label>
+		<textarea class="form-control font-monospace" name="squares_text" rows="10">{{ challenge.squares_text }}</textarea>
+	</div>
+{% endblock %}

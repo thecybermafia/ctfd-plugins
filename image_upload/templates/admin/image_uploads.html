@@ -1,0 +1,174 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>Image Upload Challenge Reviews</h1>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Status Filters -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <ul class="nav nav-pills">
+        <li class="nav-item">
+          <a class="nav-link {% if current_status == 'pending' %}active{% endif %}" href="{{ url_for('image_upload.admin_image_uploads', status='pending') }}">
+            <i class="fas fa-clock"></i> Pending Reviews
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if current_status == 'approved' %}active{% endif %}" href="{{ url_for('image_upload.admin_image_uploads', status='approved') }}">
+            <i class="fas fa-check-circle"></i> Approved
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if current_status == 'rejected' %}active{% endif %}" href="{{ url_for('image_upload.admin_image_uploads', status='rejected') }}">
+            <i class="fas fa-times-circle"></i> Rejected
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if current_status == 'all' %}active{% endif %}" href="{{ url_for('image_upload.admin_image_uploads', status='all') }}">
+            All Submissions
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Submissions Table -->
+  <div class="row">
+    <div class="col-md-12">
+      {% if not submissions %}
+        <div class="alert alert-secondary text-center py-5">
+          <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
+          <h4>No submissions found for status: <strong>{{ current_status }}</strong></h4>
+        </div>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead class="thead-dark">
+              <tr>
+                <th style="width: 100px;">Proof</th>
+                <th>Challenge</th>
+                <th>Participant</th>
+                <th>Submitted Notes</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th style="width: 280px;">Review Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sub in submissions %}
+              <tr id="sub-row-{{ sub.id }}">
+                <td>
+                  {% if sub.file_url %}
+                    <a href="{{ sub.file_url }}" target="_blank" rel="noopener noreferrer">
+                      <img src="{{ sub.file_url }}" alt="Proof thumbnail" class="img-thumbnail" style="max-height: 75px; max-width: 90px;">
+                    </a>
+                  {% else %}
+                    <span class="badge badge-secondary">No file</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <strong>{{ sub.challenge_name }}</strong><br>
+                  <small class="text-muted">{{ sub.challenge_value }} points</small>
+                </td>
+                <td>
+                  <strong>{{ sub.team_name or sub.user_name }}</strong><br>
+                  {% if sub.team_name %}
+                    <small class="text-muted">User: {{ sub.user_name }}</small>
+                  {% endif %}
+                </td>
+                <td>
+                  <small class="text-light">{{ sub.notes or 'No notes provided' }}</small>
+                  {% if sub.feedback %}
+                    <div class="mt-1 text-info small"><strong>Feedback:</strong> {{ sub.feedback }}</div>
+                  {% endif %}
+                </td>
+                <td><small class="text-muted">{{ sub.created_at }}</small></td>
+                <td>
+                  {% if sub.status == 'pending' %}
+                    <span class="badge badge-warning text-dark">Pending</span>
+                  {% elif sub.status == 'approved' %}
+                    <span class="badge badge-success">Approved (+{{ sub.points_awarded }})</span>
+                  {% elif sub.status == 'rejected' %}
+                    <span class="badge badge-danger">Rejected</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="input-group input-group-sm mb-2">
+                    <span class="input-group-text">Points</span>
+                    <input type="number" class="form-control" id="pts-{{ sub.id }}" value="{{ sub.points_awarded or sub.challenge_value }}">
+                  </div>
+                  <input type="text" class="form-control form-control-sm mb-2" id="fb-{{ sub.id }}" placeholder="Feedback notes..." value="{{ sub.feedback }}">
+                  <div class="btn-group btn-group-sm w-100">
+                    <button class="btn btn-success approve-btn" data-sub-id="{{ sub.id }}">
+                      <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button class="btn btn-danger reject-btn" data-sub-id="{{ sub.id }}">
+                      <i class="fas fa-times"></i> Reject
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function submitReview(subId, status) {
+    var pts = document.getElementById("pts-" + subId).value;
+    var fb = document.getElementById("fb-" + subId).value;
+
+    fetch("/api/v1/admin/image_uploads/" + subId + "/review", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": init.csrfNonce
+      },
+      body: JSON.stringify({
+        status: status,
+        points: parseInt(pts),
+        feedback: fb
+      })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success) {
+          window.location.reload();
+        } else {
+          alert(res.message || "Review action failed");
+        }
+      })
+      .catch(function(err) {
+        alert("Error submitting review: " + err);
+      });
+  }
+
+  document.querySelectorAll(".approve-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var id = this.getAttribute("data-sub-id");
+      submitReview(id, "approved");
+    });
+  });
+
+  document.querySelectorAll(".reject-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var id = this.getAttribute("data-sub-id");
+      if (confirm("Are you sure you want to reject this submission?")) {
+        submitReview(id, "rejected");
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

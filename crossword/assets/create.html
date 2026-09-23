@@ -1,0 +1,37 @@
+{% extends "admin/challenges/create.html" %}
+
+{% block type %}
+	<input type="hidden" value="crossword" name="type" id="chaltype">
+{% endblock %}
+
+{% block value %}
+	<div class="form-group mb-3">
+		<label for="value"><b>Points</b><br>
+			<small class="form-text text-muted">Points awarded upon solving</small>
+		</label>
+		<input type="number" class="form-control" name="value" placeholder="e.g. 250" value="250" required>
+	</div>
+
+	<div class="form-group mb-3">
+		<label for="solution_word"><b>Solution Word or Flag</b><br>
+			<small class="form-text text-muted">The secret keyword or flag the player submits (e.g. <code>CYBERDEFENSE</code> or <code>flag{crossword_win}</code>)</small>
+		</label>
+		<input type="text" class="form-control" name="solution_word" placeholder="e.g. CYBERSECURITY" required>
+	</div>
+
+	<div class="form-group mb-3">
+		<label for="clues_text">
+			<b>Clues &amp; Answers (One per line: <code>Question / Clue | Answer</code>)</b><br>
+			<small class="form-text text-muted">
+				Simply enter each question followed by <code>|</code> and its answer. No JSON or coordinates required!
+			</small>
+		</label>
+		<textarea class="form-control font-monospace" name="clues_text" rows="8" placeholder="Protocol for secure web browsing | HTTPS&#10;Malicious self-replicating program | WORM&#10;Unique numerical network identifier | IP&#10;SQL database injection attack | SQLI">Protocol for secure web browsing | HTTPS
+Malicious self-replicating program | WORM
+Unique numerical network identifier | IP
+Database query injection attack | SQLI
+Linux superuser privilege command | SUDO
+Asymmetric cryptography algorithm | RSA
+Encoded binary to ASCII format | BASE64</textarea>
+	</div>
+{% endblock %}

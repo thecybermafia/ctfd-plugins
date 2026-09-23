@@ -1,0 +1,29 @@
+CTFd Advanced Plugins Suite
+Copyright 2026 CyberMafia (https://github.com/thecybermafia)
+
+This product includes software developed by CyberMafia.
+
+===============================================================================
+MANDATORY ATTRIBUTION REQUIREMENT (Apache License 2.0, Section 4d)
+===============================================================================
+
+Under the terms of the Apache License Version 2.0, any individual, organization,
+or entity that uses, deploys, modifies, distributes, forks, or embeds this
+software (or any derivative work based upon it) MUST retain and display the
+following attribution notice prominently:
+
+1. SOURCE CODE & REPOSITORIES:
+   Retain this NOTICE file in its entirety in all copies, forks, and distributions.
+   Any modified file must carry a prominent header stating that it has been
+   modified, including the date of modification and reference to the original author.
+
+2. RUNTIME & PUBLIC COMPETITION DEPLOYMENTS:
+   If this plugin suite (or any part thereof) is deployed in a publicly or privately
+   accessible CTF competition, tournament, or educational portal, visible attribution
+   must be preserved in the user interface, documentation, or competition footer:
+
+   "Powered by CTFd Plugins Suite by CyberMafia (https://github.com/thecybermafia/ctfd-plugins)"
+
+3. MODIFICATIONS:
+   All modifications must be clearly marked as derivative works and may not remove
+   or obscure the original CyberMafia authorship and copyright notices.

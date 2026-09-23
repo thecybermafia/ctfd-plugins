@@ -1,0 +1,52 @@
+{% extends "challenge.html" %}
+
+{% block input %}
+<input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+<textarea id="cw-clues-data" style="display: none;">{{ (challenge.clues_data or []) | tojson }}</textarea>
+
+<div class="crossword-wrapper my-3">
+  
+  <div class="alert alert-dark p-2 mb-3" style="background: rgba(8, 12, 18, 0.95); border: 1px solid var(--cyber-border-bright);">
+    <small style="color: var(--cyber-cyan);" class="font-monospace">
+      <i class="fas fa-terminal me-1"></i>
+      Solve each cyber clue below to deduce the master decryption flag / keyword.
+    </small>
+  </div>
+
+  <!-- Clues List Table -->
+  <div class="card mb-3" style="background: rgba(8, 12, 18, 0.95); border: 1px solid var(--cyber-border);">
+    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+      <span class="text-cyan fw-bold text-uppercase small font-monospace"><i class="fas fa-list-ol me-1"></i> Crossword Questions</span>
+      <span id="cw-progress-badge" class="badge bg-secondary font-monospace">0 / 0 Solved</span>
+    </div>
+    <div class="card-body p-2" id="cw-clues-container" style="max-height: 340px; overflow-y: auto;">
+      <!-- Populated by view.js -->
+    </div>
+  </div>
+
+  <!-- Solution Submission Form -->
+  <div class="pt-2 border-top" style="border-color: var(--cyber-border) !important;">
+    <label for="challenge-input" class="form-label fw-bold font-monospace" style="color: var(--cyber-green);">
+      <i class="fas fa-key me-1"></i> Solved Master Flag or Keyword:
+    </label>
+    <div class="input-group">
+      <input 
+        id="challenge-input" 
+        class="challenge-input form-control form-control-lg font-monospace" 
+        type="text" 
+        name="submission" 
+        placeholder="Enter master keyword / flag..." 
+        autocomplete="off"
+      >
+      <button id="challenge-submit" class="challenge-submit btn btn-primary px-4" type="button">
+        <i class="fas fa-check me-1"></i> Submit
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block submit %}
+<!-- Handled inside input block -->
+{% endblock %}
