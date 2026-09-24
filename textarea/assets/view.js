@@ -1,17 +1,30 @@
-CTFd.plugin.run((_CTFd) => {
+CTFd._internal.challenge.data = undefined;
+CTFd._internal.challenge.renderer = null;
+CTFd._internal.challenge.preRender = function() {};
+CTFd._internal.challenge.render = null;
+CTFd._internal.challenge.postRender = function() {
+  setTimeout(initTextareaChallenge, 50);
+};
+CTFd._internal.challenge.submit = function() {
+  return Promise.resolve();
+};
+
+function initTextareaChallenge() {
   const chalIdEl = document.getElementById("challenge-id");
   if (!chalIdEl) return;
   const challengeId = chalIdEl.value;
 
+  const contentInput = document.getElementById("ta-content-input");
+  const charCounter = document.getElementById("ta-char-counter");
+  const submitBtn = document.getElementById("ta-submit-btn");
   const statusAlert = document.getElementById("ta-status-alert");
   const statusIcon = document.getElementById("ta-status-icon");
   const statusTitle = document.getElementById("ta-status-title");
   const statusDesc = document.getElementById("ta-status-desc");
   const statusFeedback = document.getElementById("ta-status-feedback");
-  const contentInput = document.getElementById("ta-content-input");
-  const charCounter = document.getElementById("ta-char-counter");
-  const submitBtn = document.getElementById("ta-submit-btn");
-  const formBox = document.getElementById("ta-form-box");
+
+  if (!submitBtn || submitBtn.dataset.bound === "true") return;
+  submitBtn.dataset.bound = "true";
 
   function updateCharCount() {
     if (!contentInput || !charCounter) return;
@@ -59,53 +72,59 @@ CTFd.plugin.run((_CTFd) => {
           statusFeedback.textContent = sub.feedback ? `Judge Feedback: ${sub.feedback}` : "";
         }
       })
-      .catch(err => {
-        console.error("Failed to load textarea submission status:", err);
-      });
+      .catch(err => console.error("Failed to load textarea submission status:", err));
   }
 
   loadStatus();
 
-  if (submitBtn) {
-    submitBtn.addEventListener("click", () => {
-      const text = contentInput ? contentInput.value.trim() : "";
-      if (!text) {
-        alert("Please enter your writeup or solution text before submitting.");
-        return;
-      }
+  submitBtn.addEventListener("click", () => {
+    const text = contentInput ? contentInput.value.trim() : "";
+    if (!text) {
+      alert("Please enter your writeup or solution text before submitting.");
+      return;
+    }
 
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Submitting...';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Submitting...';
 
-      fetch(`/api/v1/challenges/${challengeId}/textarea/submit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "CSRF-Token": init.csrfNonce
-        },
-        body: JSON.stringify({
-          content: text,
-          nonce: init.csrfNonce
-        })
+    const csrfToken = (window.init && window.init.csrfNonce) || (window.CTFd && window.CTFd.config && window.CTFd.config.csrfNonce) || "";
+
+    fetch(`/api/v1/challenges/${challengeId}/textarea/submit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": csrfToken
+      },
+      body: JSON.stringify({
+        content: text,
+        nonce: csrfToken
       })
-        .then(r => r.json())
-        .then(res => {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
+    })
+      .then(r => r.json())
+      .then(res => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
 
-          if (res.success) {
-            alert(res.message);
-            loadStatus();
-          } else {
-            alert(res.message || "Submission failed");
-          }
-        })
-        .catch(err => {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
-          alert("Network communication error. Please try again.");
-          console.error("Submission error:", err);
-        });
-    });
-  }
+        if (res.success) {
+          alert(res.message);
+          loadStatus();
+        } else {
+          alert(res.message || "Submission failed");
+        }
+      })
+      .catch(err => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
+        alert("Network communication error. Please try again.");
+        console.error("Submission error:", err);
+      });
+  });
+}
+
+document.addEventListener("shown.bs.modal", () => {
+  setTimeout(initTextareaChallenge, 50);
+});
+
+CTFd.plugin.run(() => {
+  setTimeout(initTextareaChallenge, 100);
 });

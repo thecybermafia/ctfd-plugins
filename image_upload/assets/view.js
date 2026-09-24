@@ -1,4 +1,15 @@
-CTFd.plugin.run((_CTFd) => {
+CTFd._internal.challenge.data = undefined;
+CTFd._internal.challenge.renderer = null;
+CTFd._internal.challenge.preRender = function() {};
+CTFd._internal.challenge.render = null;
+CTFd._internal.challenge.postRender = function() {
+  setTimeout(initImageUploadChallenge, 50);
+};
+CTFd._internal.challenge.submit = function() {
+  return Promise.resolve();
+};
+
+function initImageUploadChallenge() {
   const chalIdEl = document.getElementById("challenge-id");
   if (!chalIdEl) return;
   const challengeId = chalIdEl.value;
@@ -13,6 +24,9 @@ CTFd.plugin.run((_CTFd) => {
   const previewLink = document.getElementById("iu-preview-link");
   const uploadFormBox = document.getElementById("iu-upload-form-box");
   const submitBtn = document.getElementById("iu-submit-btn");
+
+  if (!submitBtn || submitBtn.dataset.bound === "true") return;
+  submitBtn.dataset.bound = "true";
 
   function loadStatus() {
     fetch(`/api/v1/challenges/${challengeId}/image_upload/my_status`)
@@ -55,49 +69,56 @@ CTFd.plugin.run((_CTFd) => {
 
   loadStatus();
 
-  if (submitBtn) {
-    submitBtn.addEventListener("click", () => {
-      const fileInput = document.getElementById("iu-file-input");
-      const notesInput = document.getElementById("iu-notes");
+  submitBtn.addEventListener("click", () => {
+    const fileInput = document.getElementById("iu-file-input");
+    const notesInput = document.getElementById("iu-notes");
 
-      if (!fileInput.files || fileInput.files.length === 0) {
-        alert("Please select an image or file to upload.");
-        return;
-      }
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert("Please select an image or file to upload.");
+      return;
+    }
 
-      const formData = new FormData();
-      formData.append("file", fileInput.files[0]);
-      formData.append("notes", notesInput ? notesInput.value : "");
-      formData.append("nonce", init.csrfNonce);
+    const csrfToken = (window.init && window.init.csrfNonce) || (window.CTFd && window.CTFd.config && window.CTFd.config.csrfNonce) || "";
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    formData.append("notes", notesInput ? notesInput.value : "");
+    formData.append("nonce", csrfToken);
 
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
 
-      fetch(`/api/v1/challenges/${challengeId}/image_upload/submit`, {
-        method: "POST",
-        headers: {
-          "CSRF-Token": init.csrfNonce
-        },
-        body: formData
+    fetch(`/api/v1/challenges/${challengeId}/image_upload/submit`, {
+      method: "POST",
+      headers: {
+        "CSRF-Token": csrfToken
+      },
+      body: formData
+    })
+      .then(r => r.json())
+      .then(res => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Mission Review';
+
+        if (res.success) {
+          alert(res.message);
+          fileInput.value = "";
+          loadStatus();
+        } else {
+          alert(res.message || "Upload failed");
+        }
       })
-        .then(r => r.json())
-        .then(res => {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
+      .catch(err => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Mission Review';
+        alert("Error submitting: " + err);
+      });
+  });
+}
 
-          if (res.success) {
-            alert(res.message);
-            fileInput.value = "";
-            loadStatus();
-          } else {
-            alert(res.message || "Upload failed");
-          }
-        })
-        .catch(err => {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
-          alert("Error submitting: " + err);
-        });
-    });
-  }
+document.addEventListener("shown.bs.modal", () => {
+  setTimeout(initImageUploadChallenge, 50);
+});
+
+CTFd.plugin.run(() => {
+  setTimeout(initImageUploadChallenge, 100);
 });

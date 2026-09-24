@@ -1,3 +1,12 @@
+CTFd._internal.challenge.data = undefined;
+CTFd._internal.challenge.renderer = null;
+CTFd._internal.challenge.preRender = function() {};
+CTFd._internal.challenge.render = null;
+CTFd._internal.challenge.postRender = function() {};
+CTFd._internal.challenge.submit = function() {
+  return Promise.resolve();
+};
+
 CTFd.plugin.run((_CTFd) => {
   const chalIdEl = document.getElementById("challenge-id");
   if (!chalIdEl) return;
@@ -144,11 +153,13 @@ CTFd.plugin.run((_CTFd) => {
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
 
+      const csrfToken = (window.init && window.init.csrfNonce) || (window.CTFd && window.CTFd.config && window.CTFd.config.csrfNonce) || "";
+
       fetch(`/api/v1/challenges/${challengeId}/bingo/attempt_cell`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "CSRF-Token": init.csrfNonce
+          "CSRF-Token": csrfToken
         },
         body: JSON.stringify({
           cell_index: selectedCellIndex,
