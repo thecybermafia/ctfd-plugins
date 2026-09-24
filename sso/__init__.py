@@ -1,8 +1,8 @@
 from flask import flash, redirect, request, url_for
-from CTFd.models import Users
 from CTFd.plugins import register_admin_plugin_menu_bar
 from CTFd.plugins.sso.routes import PROVIDER_NAMES, sso_bp
 from CTFd.utils import get_config
+from CTFd.utils.user import authed, is_admin
 
 def load(app):
     app.register_blueprint(sso_bp)
@@ -10,33 +10,43 @@ def load(app):
 
     @app.before_request
     def enforce_sso_policy():
-        # Intercept standard username/password login when SSO is mandatory
-        if request.path == "/login" and request.method == "POST":
-            # Allow emergency admin bypass with specific query param if needed
-            if request.args.get("emergency_auth") == "true":
+        provider = get_config("sso_provider", "disabled")
+        if not provider or provider == "disabled":
+            return
+
+        # 1. When browsing directly to /admin, unauthenticated users can still log in with local accounts
+        if request.path in ("/admin", "/admin/"):
+            if not is_admin():
+                return redirect(url_for("auth.login", fallback=1, next="/admin"))
+
+        # 2. When browsing or submitting to /login
+        if request.path == "/login":
+            # If already authenticated, let standard CTFd handle redirect
+            if authed():
                 return
 
-            provider = get_config("sso_provider", "disabled")
-            if provider and provider != "disabled":
-                user_settings = get_config("sso_user_settings", "all_users")
+            is_fallback = (
+                request.args.get("fallback") == "1"
+                or request.form.get("fallback") == "1"
+                or request.args.get("emergency_auth") == "true"
+                or request.args.get("next", "").startswith("/admin")
+            )
+
+            # GET requests: browsing directly to /login without fallback=1 redirects to SSO provider
+            if request.method == "GET":
+                if is_fallback:
+                    return  # Render local login form
+                return redirect(url_for("sso.sso_login"))
+
+            # POST requests: local credential login is allowed via fallback mode
+            if request.method == "POST":
+                if is_fallback:
+                    return  # Allow CTFd auth.login to verify username & password
+                
+                # Direct POST to /login without fallback while SSO is enabled
                 prov_name = PROVIDER_NAMES.get(provider, provider.upper())
-
-                if user_settings == "all_users":
-                    flash(
-                        f"Single Sign-On is required for all users. Please authenticate using {prov_name}.",
-                        "danger",
-                    )
-                    return redirect(url_for("auth.login"))
-
-                elif user_settings == "admins_only":
-                    name = request.form.get("name")
-                    if name:
-                        user = Users.query.filter(
-                            (Users.name == name) | (Users.email == name)
-                        ).first()
-                        if user and user.type == "admin":
-                            flash(
-                                f"Single Sign-On is required for Administrator accounts. Please authenticate using {prov_name}.",
-                                "danger",
-                            )
-                            return redirect(url_for("auth.login"))
+                flash(
+                    f"Single Sign-On is enabled ({prov_name}). Users with local CTFd accounts may still log in using the fallback URL (/login?fallback=1).",
+                    "warning",
+                )
+                return redirect(url_for("auth.login", fallback=1))

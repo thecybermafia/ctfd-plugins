@@ -22,10 +22,23 @@ A robust, enterprise-grade Single Sign-On (SSO) and identity federation plugin f
   - Interactive warning banner in the Admin Console alerting administrators if registration is public when SSO is required.
 - **Fail-Safe Disaster Recovery**:
   - Built-in emergency administrative bypass query (`/login?emergency_auth=true`) allowing authorized administrators with root database/console access to log in with emergency local credentials in case of third-party IdP outages.
+- **Official CTFd Fallback URL & Admin Bypass Support**:
+  - Compliant with [CTFd Official SSO Documentation](https://docs.ctfd.io/docs/settings/single-sign-on/#fallback-url).
+  - When any Single Sign On configuration is enabled, users with local CTFd accounts may still login by browsing directly to `https://[ctfd]/admin` or `https://[ctfd]/login?fallback=1`.
 - **Automated User Provisioning**:
   - Automatically provisions verified CTFd user profiles upon successful identity assertion, extracting name, email, and authentication tokens.
 
 ---
+
+## 🔗 Fallback URL & Local Accounts
+
+When any Single Sign-On configuration is enabled:
+- **Direct Login Redirection**: Visiting `https://[ctfd]/login` directly redirects the user immediately to the configured SSO provider.
+- **Local Account Fallback**: Users with local CTFd accounts (or administrators during IdP network disruptions) can log in by visiting:
+  ```text
+  https://[ctfd]/login?fallback=1
+  ```
+- **Admin Panel Access**: Unauthenticated users navigating directly to `https://[ctfd]/admin` are automatically routed to the local fallback login prompt (`/login?fallback=1&next=/admin`), ensuring emergency administrator access is never severed.
 
 ## 🛠️ Configuration & Usage
 
