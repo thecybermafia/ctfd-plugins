@@ -42,25 +42,33 @@ When any Single Sign-On configuration is enabled:
 
 ## 🛠️ Configuration & Usage
 
-### 1. Admin Console Setup
+### 1. Modern Admin Console Setup (`/admin/sso`)
 1. Log into your CTFd instance as an administrator.
-2. In the Admin Panel navbar, click **Plugins > SSO Settings** (`/admin/sso`).
-3. Select your desired **Single Sign-On Provider**:
-   - `Disable SSO`
-   - `SAML`
-   - `Discord`
-   - `GitHub`
-   - `Google`
-   - `Azure`
-   - `Okta`
-4. Expand the credentials panel and enter the required Client ID, Client Secret, endpoints, or IdP Metadata XML.
-5. Select your **User Settings** policy:
-   - **All Users** *(auto-sets Registration Visibility to Private)*
-   - **Admins Only**
-6. Select your **Registration Visibility**:
-   - **Public**
-   - **Private**
-7. Click **Save SSO Configuration**.
+2. In the Admin Panel navbar, click **Single Sign-On** (`/admin/sso`).
+3. The newly redesigned, intuitive tabbed console provides dedicated configuration panes for:
+   - **General Settings**: Choose the active SSO provider, User Settings enforcement policy (`All Users` vs `Admins Only`), and Registration Visibility (`Public` vs `Private`).
+   - **SAML**:
+     - *Identity Provider (IdP)*: SAML IdP Metadata URL or SAML IdP Metadata XML.
+     - *Service Provider (SP)*: SAML SP URL, SAML Login URL, and SAML SP Metadata XML.
+   - **Discord**:
+     - Pre-configured Callback URL (`/oauth/discord/authorized`) with one-click copy.
+     - Client ID, Client Secret, and configurable Scopes (`identify email`).
+   - **GitHub & GitHub Enterprise**:
+     - Pre-configured Callback URL (`/oauth/github/authorized`) with one-click copy.
+     - Client ID, Client Secret, and Scopes (`user:email`).
+     - GitHub Enterprise Server overrides: Base API URL, Custom Authorization URL, Custom Token URL.
+   - **Google Workspace**:
+     - Pre-configured Callback URL (`/oauth/google/authorized`) with one-click copy.
+     - Client ID, Client Secret, and Scopes (`openid email profile`).
+     - Hosted Domain restriction (`hd` parameter, e.g. `example.com` or `university.edu`).
+   - **Microsoft Azure / Entra ID**:
+     - Pre-configured Callback URL (`/oauth/azure/authorized`) with one-click copy.
+     - Application (Client) ID, Client Secret, Directory (Tenant) ID (`common`, `organizations`, or UUID), and Scopes.
+   - **Okta**:
+     - Pre-configured Callback URL (`/oauth/okta/authorized`) with one-click copy.
+     - Client ID, Client Secret, and Okta Organization Base URL (`https://example.okta.com`).
+     - Scopes and Advanced Authorization / Token endpoint overrides.
+4. Click **Save SSO Configuration** on the bottom sticky action bar.
 
 ---
 

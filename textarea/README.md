@@ -15,11 +15,13 @@ A secure, enterprise-grade long-form text submission and manual review challenge
 - **Dedicated Admin Review Console**:
   - Accessible directly from the CTFd admin navbar at `/admin/textarea_submissions`.
   - Filter submissions by challenge or review status (`Pending`, `Approved`, `Rejected`).
-  - Formatted writeup preview with quick one-click "Copy Writeup" button.
-  - Granular scoring input with range slider to award full, partial, or bonus points (clamped between 0 and max challenge value).
+  - **Full Writeup Inspector Modal**: High-definition, untruncated viewing modal for writeups of any length, featuring live word count, character count, line count metrics, and one-click clipboard copying.
+  - **Dynamic Re-grading Lifecycle**: Seamlessly re-evaluate and re-grade already approved or rejected submissions. Automatically synchronizes `Solves` and `Awards`, accurately recalculating scoreboard rankings and points in real-time.
+  - Granular scoring input with quick presets (100%, 75%, 50%, 0 PTS) to award full, partial, or bonus points.
   - Admin feedback textarea to leave detailed reviewer notes for the competitor.
 - **Defensive Hardening & Anti-Abuse**:
-  - Maximum character ceiling enforcement (up to 100,000 characters) to prevent Denial of Service (DoS) and database bloat.
+  - Maximum character ceiling enforcement to prevent Denial of Service (DoS) and database bloat.
+  - Safe `<script type="application/json">` data payload avoiding HTML attribute quote escaping issues.
   - Strict HTML escaping to eliminate Stored Cross-Site Scripting (XSS).
   - Competition lifecycle enforcement (submissions blocked when CTF is frozen, paused, or not yet started).
 

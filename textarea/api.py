@@ -177,8 +177,30 @@ def review_submission(submission_id):
     sub.feedback = feedback
     sub.reviewer_id = admin_user.id
 
+    default_points = sub.challenge.value if sub.challenge else 0
+
+    solve_filter = {"challenge_id": sub.challenge_id}
+    if sub.team_id:
+        solve_filter["team_id"] = sub.team_id
+    else:
+        solve_filter["user_id"] = sub.user_id
+
+    existing_solve = Solves.query.filter_by(**solve_filter).first()
+
+    # Find any existing manual review adjustment award
+    award_filter = {
+        "user_id": sub.user_id,
+        "team_id": sub.team_id,
+        "category": "Manual Review",
+    }
+    existing_awards = Awards.query.filter_by(**award_filter).all()
+    target_award = None
+    for a in existing_awards:
+        if f"Challenge #{sub.challenge_id}" in (a.name or "") or (sub.challenge and sub.challenge.name in (a.name or "")):
+            target_award = a
+            break
+
     if new_status == "approved":
-        default_points = sub.challenge.value if sub.challenge else 0
         raw_points = data.get("points")
         if raw_points is None or raw_points == "":
             points = default_points
@@ -188,18 +210,10 @@ def review_submission(submission_id):
             except (TypeError, ValueError):
                 return jsonify({"success": False, "message": "Points must be an integer"}), 400
 
-        # Never award negative points or excessive overflow
         points = max(0, min(100000, points))
         sub.points_awarded = points
 
-        # Insert solve if not already present
-        solve_filter = {"challenge_id": sub.challenge_id}
-        if sub.team_id:
-            solve_filter["team_id"] = sub.team_id
-        else:
-            solve_filter["user_id"] = sub.user_id
-
-        existing_solve = Solves.query.filter_by(**solve_filter).first()
+        # Ensure Solve record exists
         if not existing_solve:
             solve = Solves(
                 user_id=sub.user_id,
@@ -210,29 +224,50 @@ def review_submission(submission_id):
             )
             db.session.add(solve)
 
-            # If custom points awarded differs from default challenge value, add differential award
-            if points != default_points:
-                diff = points - default_points
-                award = Awards(
+        # Handle score differential via Award
+        diff = points - default_points
+        if diff == 0:
+            if target_award:
+                db.session.delete(target_award)
+        else:
+            if target_award:
+                target_award.value = diff
+                target_award.description = feedback or "Manual review score adjustment"
+            else:
+                new_award = Awards(
                     user_id=sub.user_id,
                     team_id=sub.team_id,
                     type="standard",
-                    name=f"Manual Grading Adjustment: {sub.challenge.name if sub.challenge else 'Challenge'}",
+                    name=f"Manual Grading Adjustment: Challenge #{sub.challenge_id}",
                     description=feedback or "Manual review score adjustment",
                     value=diff,
                     category="Manual Review",
                     date=datetime.utcnow()
                 )
-                db.session.add(award)
+                db.session.add(new_award)
+
     elif new_status == "rejected":
         sub.points_awarded = 0
-        # If there was a previous solve from this challenge, do not delete unless desired
-        # but mark submission rejected so user can resubmit
+        if existing_solve:
+            db.session.delete(existing_solve)
+        if target_award:
+            db.session.delete(target_award)
 
     db.session.commit()
+
+    try:
+        from CTFd.cache import clear_standings, clear_team_session, clear_user_session
+        clear_standings()
+        if sub.user_id:
+            clear_user_session(sub.user_id)
+        if sub.team_id:
+            clear_team_session(sub.team_id)
+    except Exception as e:
+        pass
+
     return jsonify({
         "success": True,
-        "message": f"Submission {new_status} successfully!",
+        "message": f"Submission successfully recorded as {new_status}!",
         "status": new_status,
         "points_awarded": sub.points_awarded
     })

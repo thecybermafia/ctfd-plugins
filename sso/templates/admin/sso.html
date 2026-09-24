@@ -2,8 +2,22 @@
 
 {% block content %}
 <div class="jumbotron">
-  <div class="container">
-    <h1><i class="fas fa-fingerprint me-2 text-primary"></i>Single Sign-On Configuration</h1>
+  <div class="container d-flex justify-content-between align-items-center">
+    <div>
+      <h1><i class="fas fa-id-badge text-primary me-2"></i>Single Sign-On (SSO)</h1>
+      <p class="text-muted mb-0">Configure enterprise identity providers, user enforcement policies, and OAuth / SAML credentials.</p>
+    </div>
+    <div>
+      {% if sso_provider and sso_provider != 'disabled' %}
+        <span class="badge bg-success py-2 px-3 fs-6">
+          <i class="fas fa-check-circle me-1"></i> Active: {{ sso_provider | upper }}
+        </span>
+      {% else %}
+        <span class="badge bg-secondary py-2 px-3 fs-6">
+          <i class="fas fa-ban me-1"></i> SSO Disabled
+        </span>
+      {% endif %}
+    </div>
   </div>
 </div>
 
@@ -13,329 +27,586 @@
   <form method="POST" id="sso-settings-form">
     <input type="hidden" name="nonce" value="{{ Session.nonce }}">
 
-    <!-- Card 1: Single Sign-On Provider -->
-    <div class="card mb-4 shadow-sm">
-      <div class="card-header bg-dark text-light">
-        <h4 class="mb-0">Single Sign-On Provider</h4>
-        <small class="text-muted">Which SSO provider is enabled</small>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-12 mb-3">
-            <div class="btn-group-vertical w-100" role="group" aria-label="SSO Providers">
-              {% set providers = [
-                ('disabled', 'Disable SSO', 'fas fa-ban', 'No external identity provider integration active'),
-                ('saml', 'SAML', 'fas fa-key', 'Enterprise SAML 2.0 Identity Provider (IdP) integration'),
-                ('discord', 'Discord', 'fab fa-discord', 'Discord OAuth2 login for community servers and squads'),
-                ('github', 'GitHub', 'fab fa-github', 'GitHub OAuth2 authentication for developers and security teams'),
-                ('google', 'Google', 'fab fa-google', 'Google Workspace and OpenID Connect (OIDC) authentication'),
-                ('azure', 'Azure', 'fab fa-microsoft', 'Microsoft Entra ID / Azure Active Directory OAuth2'),
-                ('okta', 'Okta', 'fas fa-shield-alt', 'Okta Workforce and Customer Identity Cloud OIDC')
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs nav-fill mb-4" id="ssoTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold" id="general-tab-btn" data-toggle="tab" data-target="#general-tab" data-bs-toggle="tab" data-bs-target="#general-tab" type="button" role="tab">
+          <i class="fas fa-sliders-h me-1 text-primary"></i> General Settings
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="saml-tab-btn" data-toggle="tab" data-target="#saml-tab" data-bs-toggle="tab" data-bs-target="#saml-tab" type="button" role="tab">
+          <i class="fas fa-key me-1 text-primary"></i> SAML
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="discord-tab-btn" data-toggle="tab" data-target="#discord-tab" data-bs-toggle="tab" data-bs-target="#discord-tab" type="button" role="tab">
+          <i class="fab fa-discord me-1 text-primary"></i> Discord
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="github-tab-btn" data-toggle="tab" data-target="#github-tab" data-bs-toggle="tab" data-bs-target="#github-tab" type="button" role="tab">
+          <i class="fab fa-github me-1 text-primary"></i> GitHub
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="google-tab-btn" data-toggle="tab" data-target="#google-tab" data-bs-toggle="tab" data-bs-target="#google-tab" type="button" role="tab">
+          <i class="fab fa-google me-1 text-primary"></i> Google
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="azure-tab-btn" data-toggle="tab" data-target="#azure-tab" data-bs-toggle="tab" data-bs-target="#azure-tab" type="button" role="tab">
+          <i class="fab fa-microsoft me-1 text-primary"></i> Azure
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="okta-tab-btn" data-toggle="tab" data-target="#okta-tab" data-bs-toggle="tab" data-bs-target="#okta-tab" type="button" role="tab">
+          <i class="fas fa-shield-alt me-1 text-primary"></i> Okta
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="ssoTabContent">
+      <!-- ===================================================================
+           TAB 1: GENERAL SETTINGS
+           =================================================================== -->
+      <div class="tab-pane fade show active" id="general-tab" role="tabpanel">
+        <!-- Single Sign-On Provider Selection -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold">Single Sign-On Provider</h5>
+            <small class="text-muted">Which SSO provider is enabled</small>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              {% set prov_options = [
+                ('disabled', 'Disable SSO', 'fas fa-ban', 'text-secondary', 'Local username and password authentication only.'),
+                ('saml', 'SAML', 'fas fa-key', 'text-warning', 'Enterprise SAML 2.0 Identity Provider (IdP) integration.'),
+                ('discord', 'Discord', 'fab fa-discord', 'text-indigo', 'Discord OAuth2 authentication for community squads.'),
+                ('github', 'GitHub', 'fab fa-github', 'text-dark', 'GitHub and GitHub Enterprise OAuth authentication.'),
+                ('google', 'Google', 'fab fa-google', 'text-danger', 'Google Workspace and OpenID Connect (OIDC) login.'),
+                ('azure', 'Azure', 'fab fa-microsoft', 'text-primary', 'Microsoft Azure Active Directory / Entra ID OAuth.'),
+                ('okta', 'Okta', 'fas fa-shield-alt', 'text-info', 'Okta Workforce and Customer Identity Cloud OIDC.')
               ] %}
 
-              {% for p_val, p_title, p_icon, p_desc in providers %}
-                <div class="form-check p-3 border rounded mb-2 {% if sso_provider == p_val %}border-primary bg-light{% endif %}" style="cursor: pointer;">
-                  <input 
-                    class="form-check-input sso-provider-radio" 
-                    type="radio" 
-                    name="sso_provider" 
-                    id="provider_{{ p_val }}" 
-                    value="{{ p_val }}"
-                    {% if sso_provider == p_val %}checked{% endif %}
-                    onchange="toggleProviderSettings('{{ p_val }}')"
-                  >
-                  <label class="form-check-label ms-2 w-100" for="provider_{{ p_val }}" style="cursor: pointer;">
-                    <strong><i class="{{ p_icon }} me-1 text-primary"></i> {{ p_title }}</strong>
-                    <div class="text-muted small">{{ p_desc }}</div>
-                  </label>
+              {% for p_val, p_name, p_icon, p_color, p_desc in prov_options %}
+                <div class="col-md-6 col-lg-4">
+                  <div class="card h-100 border p-3 sso-provider-card {% if sso_provider == p_val %}border-primary bg-light shadow-sm{% endif %}" style="cursor: pointer;" onclick="selectProvider('{{ p_val }}')">
+                    <div class="d-flex align-items-center">
+                      <input 
+                        class="form-check-input me-3 sso-provider-radio" 
+                        type="radio" 
+                        name="sso_provider" 
+                        id="provider_{{ p_val }}" 
+                        value="{{ p_val }}"
+                        {% if sso_provider == p_val %}checked{% endif %}
+                      >
+                      <div>
+                        <h6 class="mb-1 fw-bold"><i class="{{ p_icon }} {{ p_color }} me-1"></i> {{ p_name }}</h6>
+                        <small class="text-muted d-block" style="font-size: 0.8rem;">{{ p_desc }}</small>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               {% endfor %}
             </div>
           </div>
         </div>
 
-        <!-- Global Callback URI Box -->
-        <div class="alert alert-info py-2 px-3 mt-2 d-flex justify-content-between align-items-center">
-          <div>
-            <i class="fas fa-link me-1"></i>
-            <strong>Callback / Redirect URI:</strong>
-            <code class="ms-2 user-select-all" id="callback-uri-text">{{ callback_url }}</code>
+        <!-- User Settings -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold">User Settings</h5>
+            <small class="text-muted">Which users are required to use SSO.</small>
           </div>
-          <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyCallbackUri()">
-            <i class="fas fa-copy"></i> Copy
-          </button>
-        </div>
+          <div class="card-body">
+            <div class="alert alert-info py-2 px-3 small mb-3">
+              <i class="fas fa-info-circle me-1"></i>
+              Note that setting this to <strong>"All Users"</strong> will also set the registration visibility below to <strong>"Private"</strong>.
+            </div>
 
-        <!-- Provider Specific Credential Panels -->
-        <!-- GitHub -->
-        <div id="panel_github" class="provider-config-panel border p-3 rounded mt-3 bg-light" style="display: none;">
-          <h5 class="text-primary"><i class="fab fa-github me-1"></i> GitHub OAuth Application Settings</h5>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-bold">Client ID</label>
-              <input type="text" class="form-control font-monospace" name="sso_github_client_id" value="{{ github_client_id }}" placeholder="e.g. Ov23li...">
+            <div class="form-check mb-2">
+              <input 
+                class="form-check-input" 
+                type="radio" 
+                name="sso_user_settings" 
+                id="user_settings_all" 
+                value="all_users"
+                {% if sso_user_settings == 'all_users' %}checked{% endif %}
+                onchange="handleUserSettingsChange('all_users')"
+              >
+              <label class="form-check-label fw-bold" for="user_settings_all">
+                All Users
+              </label>
+              <div class="text-muted small">SSO is mandatory for all competitors and administrators. Public registration is locked to Private.</div>
             </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-bold">Client Secret</label>
-              <input type="password" class="form-control font-monospace" name="sso_github_client_secret" value="{{ github_client_secret }}" placeholder="e.g. 7a8b9c...">
-            </div>
-          </div>
-        </div>
 
-        <!-- Google -->
-        <div id="panel_google" class="provider-config-panel border p-3 rounded mt-3 bg-light" style="display: none;">
-          <h5 class="text-primary"><i class="fab fa-google me-1"></i> Google Cloud OAuth 2.0 Credentials</h5>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-bold">Client ID</label>
-              <input type="text" class="form-control font-monospace" name="sso_google_client_id" value="{{ google_client_id }}" placeholder="e.g. 123456789-abc.apps.googleusercontent.com">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-bold">Client Secret</label>
-              <input type="password" class="form-control font-monospace" name="sso_google_client_secret" value="{{ google_client_secret }}" placeholder="e.g. GOCSPX-...">
-            </div>
-          </div>
-        </div>
-
-        <!-- Discord -->
-        <div id="panel_discord" class="provider-config-panel border p-3 rounded mt-3 bg-light" style="display: none;">
-          <h5 class="text-primary"><i class="fab fa-discord me-1"></i> Discord Developer Application</h5>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-bold">Client ID (Application ID)</label>
-              <input type="text" class="form-control font-monospace" name="sso_discord_client_id" value="{{ discord_client_id }}" placeholder="e.g. 112233445566778899">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-bold">Client Secret</label>
-              <input type="password" class="form-control font-monospace" name="sso_discord_client_secret" value="{{ discord_client_secret }}" placeholder="e.g. abcdef1234567890">
+            <div class="form-check">
+              <input 
+                class="form-check-input" 
+                type="radio" 
+                name="sso_user_settings" 
+                id="user_settings_admins" 
+                value="admins_only"
+                {% if sso_user_settings == 'admins_only' %}checked{% endif %}
+                onchange="handleUserSettingsChange('admins_only')"
+              >
+              <label class="form-check-label fw-bold" for="user_settings_admins">
+                Admins Only
+              </label>
+              <div class="text-muted small">SSO is only required for privileged administrative users. Standard participants may register and log in locally.</div>
             </div>
           </div>
         </div>
 
-        <!-- Azure -->
-        <div id="panel_azure" class="provider-config-panel border p-3 rounded mt-3 bg-light" style="display: none;">
-          <h5 class="text-primary"><i class="fab fa-microsoft me-1"></i> Microsoft Entra ID (Azure AD)</h5>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label fw-bold">Directory (Tenant) ID</label>
-              <input type="text" class="form-control font-monospace" name="sso_azure_tenant_id" value="{{ azure_tenant_id }}" placeholder="common or 8a1b2c3d-...">
+        <!-- Registration Visibility -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold">Registration Visibility</h5>
+            <small class="text-muted">Control whether registration is enabled for everyone or disabled. Note that this setting should be configured with respect to the above User Settings.</small>
+          </div>
+          <div class="card-body">
+            <div id="reg-warning-alert" class="alert alert-warning py-2 px-3 small mb-3" style="display: none;">
+              <i class="fas fa-exclamation-triangle me-1"></i>
+              <strong>Security Warning</strong>: If registration is allowed while "User Settings" is set to "All Users", a public account could be registered.
             </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label fw-bold">Application (Client) ID</label>
-              <input type="text" class="form-control font-monospace" name="sso_azure_client_id" value="{{ azure_client_id }}" placeholder="e.g. 9e8d7c6b-...">
+
+            <div class="form-check mb-2">
+              <input 
+                class="form-check-input" 
+                type="radio" 
+                name="registration_visibility" 
+                id="reg_visibility_public" 
+                value="public"
+                {% if registration_visibility == 'public' %}checked{% endif %}
+                onchange="checkRegistrationConflict()"
+              >
+              <label class="form-check-label fw-bold" for="reg_visibility_public">
+                Public
+              </label>
+              <div class="text-muted small">Anyone can access /register and create an account.</div>
             </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label fw-bold">Client Secret Value</label>
-              <input type="password" class="form-control font-monospace" name="sso_azure_client_secret" value="{{ azure_client_secret }}" placeholder="e.g. secret~value">
+
+            <div class="form-check">
+              <input 
+                class="form-check-input" 
+                type="radio" 
+                name="registration_visibility" 
+                id="reg_visibility_private" 
+                value="private"
+                {% if registration_visibility == 'private' %}checked{% endif %}
+                onchange="checkRegistrationConflict()"
+              >
+              <label class="form-check-label fw-bold" for="reg_visibility_private">
+                Private
+              </label>
+              <div class="text-muted small">Registration endpoint is disabled (/register returns 404). Only existing accounts and SSO auto-provisioned operators can log in.</div>
             </div>
           </div>
         </div>
 
-        <!-- Okta -->
-        <div id="panel_okta" class="provider-config-panel border p-3 rounded mt-3 bg-light" style="display: none;">
-          <h5 class="text-primary"><i class="fas fa-shield-alt me-1"></i> Okta Identity Cloud Configuration</h5>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label fw-bold">Okta Domain / Org URL</label>
-              <input type="text" class="form-control font-monospace" name="sso_okta_domain" value="{{ okta_domain }}" placeholder="e.g. dev-123456.okta.com">
+        <!-- Fallback URL Callout Card -->
+        <div class="card mb-4 shadow-sm border-info bg-light">
+          <div class="card-body">
+            <h6 class="fw-bold text-primary mb-1"><i class="fas fa-life-ring me-1"></i> CTFd Fallback URL &amp; Local Account Access</h6>
+            <p class="small text-muted mb-2">
+              When any Single Sign On configuration is enabled, users with local CTFd accounts may still login by browsing directly to 
+              <code class="user-select-all fw-bold text-dark">{{ request.url_root.rstrip('/') }}/admin</code> or 
+              <code class="user-select-all fw-bold text-dark">{{ request.url_root.rstrip('/') }}/login?fallback=1</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+           TAB 2: SAML CONFIGURATION
+           =================================================================== -->
+      <div class="tab-pane fade" id="saml-tab" role="tabpanel">
+        <!-- SAML Identity Provider Configuration -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-server text-primary me-2"></i>SAML Identity Provider Configuration</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">SAML IdP Metadata URL</label>
+              <input type="url" class="form-control font-monospace" name="sso_saml_idp_metadata_url" value="{{ saml_idp_metadata_url }}" placeholder="https://idp.example.com/metadata.xml">
+              <div class="form-text text-muted">Provide a URL to the metadata for your SAML configuration</div>
             </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label fw-bold">Client ID</label>
-              <input type="text" class="form-control font-monospace" name="sso_okta_client_id" value="{{ okta_client_id }}" placeholder="e.g. 0oa1b2c3d4...">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label fw-bold">Client Secret</label>
-              <input type="password" class="form-control font-monospace" name="sso_okta_client_secret" value="{{ okta_client_secret }}" placeholder="e.g. secret_key">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">SAML IdP Metadata XML</label>
+              <textarea class="form-control font-monospace" name="sso_saml_idp_metadata_xml" rows="5" placeholder="<md:EntityDescriptor ...>...</md:EntityDescriptor>">{{ saml_idp_metadata_xml }}</textarea>
+              <div class="form-text text-muted">Alternatively provide SAML configuration XML Metadata instead of the URL</div>
             </div>
           </div>
         </div>
 
-        <!-- SAML -->
-        <div id="panel_saml" class="provider-config-panel border p-3 rounded mt-3 bg-light" style="display: none;">
-          <h5 class="text-primary"><i class="fas fa-key me-1"></i> SAML 2.0 IdP Parameters</h5>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-bold">Entity ID / Issuer</label>
-              <input type="text" class="form-control font-monospace" name="sso_saml_entity_id" value="{{ saml_entity_id }}" placeholder="e.g. https://idp.example.com/entity">
+        <!-- SAML Service Provider Configuration -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-satellite text-primary me-2"></i>SAML Service Provider Configuration</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">SAML SP URL</label>
+              <div class="input-group">
+                <input type="text" class="form-control font-monospace" id="sp-url-input" name="sso_saml_sp_url" value="{{ saml_sp_url }}" readonly>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('sp-url-input')"><i class="fas fa-copy"></i> Copy</button>
+              </div>
+              <div class="form-text text-muted">SAML Service Provider URL</div>
             </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-bold">Single Sign-On Service URL</label>
-              <input type="text" class="form-control font-monospace" name="sso_saml_sso_url" value="{{ saml_sso_url }}" placeholder="e.g. https://idp.example.com/sso">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">SAML Login URL</label>
+              <div class="input-group">
+                <input type="text" class="form-control font-monospace" id="sp-login-input" name="sso_saml_sp_login_url" value="{{ saml_sp_login_url }}" readonly>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('sp-login-input')"><i class="fas fa-copy"></i> Copy</button>
+              </div>
+              <div class="form-text text-muted">SAML Service Provider Login URL</div>
             </div>
-            <div class="col-md-12 mb-3">
-              <label class="form-label fw-bold">X.509 Certificate (PEM Format)</label>
-              <textarea class="form-control font-monospace" name="sso_saml_x509_cert" rows="3" placeholder="-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----">{{ saml_x509_cert }}</textarea>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">SAML SP Metadata XML</label>
+              <textarea class="form-control font-monospace" name="sso_saml_sp_metadata_xml" rows="5">{{ saml_sp_metadata_xml }}</textarea>
+              <div class="form-text text-muted">SAML Service Provider Metadata XML</div>
             </div>
           </div>
         </div>
+      </div>
 
+      <!-- ===================================================================
+           TAB 3: DISCORD OAUTH CONFIGURATION
+           =================================================================== -->
+      <div class="tab-pane fade" id="discord-tab" role="tabpanel">
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold"><i class="fab fa-discord text-primary me-2"></i>Discord OAuth Configuration</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Callback URL</label>
+              <div class="input-group">
+                <input type="text" class="form-control font-monospace" id="discord-callback-url" value="{{ callbacks.discord }}" readonly>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('discord-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+              </div>
+              <div class="form-text text-muted">Add this URL as a redirect URI in your Discord application</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client ID</label>
+                <input type="text" class="form-control font-monospace" name="sso_discord_client_id" value="{{ discord_client_id }}" placeholder="e.g. 1029384756...">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client Secret</label>
+                <input type="password" class="form-control font-monospace" name="sso_discord_client_secret" value="{{ discord_client_secret }}" placeholder="e.g. a1b2c3d4e5...">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Scope</label>
+              <input type="text" class="form-control font-monospace" name="sso_discord_scope" value="{{ discord_scope }}" placeholder="identify email">
+              <div class="form-text text-muted">Space-separated OAuth scopes.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+           TAB 4: GITHUB OAUTH CONFIGURATION
+           =================================================================== -->
+      <div class="tab-pane fade" id="github-tab" role="tabpanel">
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold"><i class="fab fa-github text-primary me-2"></i>GitHub OAuth Configuration</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Callback URL</label>
+              <div class="input-group">
+                <input type="text" class="form-control font-monospace" id="github-callback-url" value="{{ callbacks.github }}" readonly>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('github-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+              </div>
+              <div class="form-text text-muted">Add this URL as a redirect URI in your GitHub OAuth application</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client ID</label>
+                <input type="text" class="form-control font-monospace" name="sso_github_client_id" value="{{ github_client_id }}" placeholder="e.g. Iv1.7a8b9c...">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client Secret</label>
+                <input type="password" class="form-control font-monospace" name="sso_github_client_secret" value="{{ github_client_secret }}" placeholder="e.g. 7f8e9d...">
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold">Scope</label>
+              <input type="text" class="form-control font-monospace" name="sso_github_scope" value="{{ github_scope }}" placeholder="user:email">
+              <div class="form-text text-muted">Space-separated OAuth scopes.</div>
+            </div>
+
+            <!-- GitHub Enterprise Sub-Card -->
+            <div class="card border bg-light">
+              <div class="card-header py-2">
+                <strong class="text-uppercase small"><i class="fas fa-building me-1"></i> GitHub Enterprise</strong>
+              </div>
+              <div class="card-body">
+                <p class="small text-muted mb-3">Leave these blank to use the public GitHub endpoints.</p>
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Base URL</label>
+                  <input type="url" class="form-control font-monospace" name="sso_github_base_url" value="{{ github_base_url }}" placeholder="https://github.example.com/">
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Authorization URL</label>
+                    <input type="url" class="form-control font-monospace" name="sso_github_auth_url" value="{{ github_auth_url }}" placeholder="https://github.example.com/login/oauth/authorize">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Token URL</label>
+                    <input type="url" class="form-control font-monospace" name="sso_github_token_url" value="{{ github_token_url }}" placeholder="https://github.example.com/login/oauth/access_token">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+           TAB 5: GOOGLE OAUTH CONFIGURATION
+           =================================================================== -->
+      <div class="tab-pane fade" id="google-tab" role="tabpanel">
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold"><i class="fab fa-google text-primary me-2"></i>Google OAuth Configuration</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Callback URL</label>
+              <div class="input-group">
+                <input type="text" class="form-control font-monospace" id="google-callback-url" value="{{ callbacks.google }}" readonly>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('google-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+              </div>
+              <div class="form-text text-muted">Add this URL as an authorized redirect URI in your Google Cloud Console</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client ID</label>
+                <input type="text" class="form-control font-monospace" name="sso_google_client_id" value="{{ google_client_id }}" placeholder="e.g. 123456789-xyz.apps.googleusercontent.com">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client Secret</label>
+                <input type="password" class="form-control font-monospace" name="sso_google_client_secret" value="{{ google_client_secret }}" placeholder="e.g. GOCSPX-...">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Scope</label>
+              <input type="text" class="form-control font-monospace" name="sso_google_scope" value="{{ google_scope }}" placeholder="openid email profile">
+              <div class="form-text text-muted">Space-separated OAuth scopes.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Hosted Domain (optional)</label>
+              <input type="text" class="form-control font-monospace" name="sso_google_hosted_domain" value="{{ google_hosted_domain }}" placeholder="example.com">
+              <div class="form-text text-muted">Restrict sign-in to accounts belonging to this G Suite domain.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+           TAB 6: AZURE OAUTH CONFIGURATION
+           =================================================================== -->
+      <div class="tab-pane fade" id="azure-tab" role="tabpanel">
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold"><i class="fab fa-microsoft text-primary me-2"></i>Azure OAuth Configuration</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Callback URL</label>
+              <div class="input-group">
+                <input type="text" class="form-control font-monospace" id="azure-callback-url" value="{{ callbacks.azure }}" readonly>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('azure-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+              </div>
+              <div class="form-text text-muted">Add this URL as a redirect URI in your Azure app registration</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client ID</label>
+                <input type="text" class="form-control font-monospace" name="sso_azure_client_id" value="{{ azure_client_id }}" placeholder="e.g. 00000000-0000-0000-0000-000000000000">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client Secret</label>
+                <input type="password" class="form-control font-monospace" name="sso_azure_client_secret" value="{{ azure_client_secret }}" placeholder="e.g. secret_value_here">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Tenant</label>
+              <input type="text" class="form-control font-monospace" name="sso_azure_tenant" value="{{ azure_tenant }}" placeholder="common">
+              <div class="form-text text-muted">Azure AD tenant ID, domain name, or common to allow any tenant.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Scope</label>
+              <input type="text" class="form-control font-monospace" name="sso_azure_scope" value="{{ azure_scope }}" placeholder="openid email profile">
+              <div class="form-text text-muted">Space-separated OAuth scopes.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+           TAB 7: OKTA OAUTH CONFIGURATION
+           =================================================================== -->
+      <div class="tab-pane fade" id="okta-tab" role="tabpanel">
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-shield-alt text-primary me-2"></i>Okta OAuth Configuration</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Callback URL</label>
+              <div class="input-group">
+                <input type="text" class="form-control font-monospace" id="okta-callback-url" value="{{ callbacks.okta }}" readonly>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('okta-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+              </div>
+              <div class="form-text text-muted">Add this URL as a sign-in redirect URI in your Okta application</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client ID</label>
+                <input type="text" class="form-control font-monospace" name="sso_okta_client_id" value="{{ okta_client_id }}" placeholder="e.g. 0oab1c2d3e...">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Client Secret</label>
+                <input type="password" class="form-control font-monospace" name="sso_okta_client_secret" value="{{ okta_client_secret }}" placeholder="e.g. okta_secret...">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Base URL</label>
+              <input type="url" class="form-control font-monospace" name="sso_okta_base_url" value="{{ okta_base_url }}" placeholder="https://your-org.okta.com">
+              <div class="form-text text-muted">Your Okta organization URL.</div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold">Scope</label>
+              <input type="text" class="form-control font-monospace" name="sso_okta_scope" value="{{ okta_scope }}" placeholder="openid email profile">
+              <div class="form-text text-muted">Space-separated OAuth scopes.</div>
+            </div>
+
+            <!-- Okta Advanced Endpoints Sub-Card -->
+            <div class="card border bg-light">
+              <div class="card-header py-2">
+                <strong class="text-uppercase small"><i class="fas fa-cogs me-1"></i> Advanced</strong>
+              </div>
+              <div class="card-body">
+                <p class="small text-muted mb-3">Override the default Okta authorization and token endpoints.</p>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Authorization URL</label>
+                    <input type="url" class="form-control font-monospace" name="sso_okta_auth_url" value="{{ okta_auth_url }}" placeholder="https://your-org.okta.com/oauth2/default/v1/authorize">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Token URL</label>
+                    <input type="url" class="form-control font-monospace" name="sso_okta_token_url" value="{{ okta_token_url }}" placeholder="https://your-org.okta.com/oauth2/default/v1/token">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Card 2: User Settings -->
-    <div class="card mb-4 shadow-sm">
-      <div class="card-header bg-dark text-light">
-        <h4 class="mb-0">User Settings</h4>
-        <small class="text-muted">Which users are required to use SSO.</small>
+    <!-- Sticky / Bottom Action Bar -->
+    <div class="card shadow-sm sticky-bottom mb-5 border-top border-2 border-primary">
+      <div class="card-body py-3 d-flex justify-content-between align-items-center bg-white">
+        <span class="text-muted small">
+          <i class="fas fa-info-circle me-1"></i> Changes apply immediately to new authentication requests.
+        </span>
+        <button type="submit" class="btn btn-success btn-lg px-4 shadow-sm fw-bold">
+          <i class="fas fa-save me-2"></i> Save SSO Configuration
+        </button>
       </div>
-      <div class="card-body">
-        <div class="alert alert-secondary py-2">
-          <small class="text-muted">
-            <i class="fas fa-info-circle me-1"></i>
-            Note that setting this to "All Users" will also set the registration visibility below to "Private"
-          </small>
-        </div>
-
-        <div class="form-check mb-3">
-          <input 
-            class="form-check-input" 
-            type="radio" 
-            name="sso_user_settings" 
-            id="sso_users_all" 
-            value="all_users"
-            {% if sso_user_settings == 'all_users' %}checked{% endif %}
-            onchange="handleUserSettingsChange('all_users')"
-          >
-          <label class="form-check-label fw-bold" for="sso_users_all">
-            All Users
-          </label>
-          <div class="text-muted small">Every participant and operator must authenticate via the configured Single Sign-On provider. Standard username/password login is restricted.</div>
-        </div>
-
-        <div class="form-check mb-2">
-          <input 
-            class="form-check-input" 
-            type="radio" 
-            name="sso_user_settings" 
-            id="sso_users_admins" 
-            value="admins_only"
-            {% if sso_user_settings == 'admins_only' %}checked{% endif %}
-            onchange="handleUserSettingsChange('admins_only')"
-          >
-          <label class="form-check-label fw-bold" for="sso_users_admins">
-            Admins Only
-          </label>
-          <div class="text-muted small">Only administrator accounts are required to use SSO. Standard participants may register or authenticate with username and password.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card 3: Registration Visibility -->
-    <div class="card mb-4 shadow-sm">
-      <div class="card-header bg-dark text-light">
-        <h4 class="mb-0">Registration Visibility</h4>
-        <small class="text-muted">Control whether registration is enabled for everyone or disabled.</small>
-      </div>
-      <div class="card-body">
-        <div class="alert alert-secondary py-2 mb-3">
-          <small class="text-muted">
-            <i class="fas fa-sliders-h me-1"></i>
-            Note that this setting should be configured with respect to the above User Settings.
-          </small>
-        </div>
-
-        <div class="alert alert-warning mb-3" id="registration-warning" style="display: none;">
-          <i class="fas fa-exclamation-triangle me-1"></i>
-          <strong>Security Warning:</strong> If registration is allowed while "User Settings" is set to "All Users", a public account could be registered.
-        </div>
-
-        <div class="form-check mb-3">
-          <input 
-            class="form-check-input" 
-            type="radio" 
-            name="registration_visibility" 
-            id="reg_vis_public" 
-            value="public"
-            {% if registration_visibility == 'public' %}checked{% endif %}
-            onchange="handleRegistrationVisibilityChange('public')"
-          >
-          <label class="form-check-label fw-bold" for="reg_vis_public">
-            Public
-          </label>
-          <div class="text-muted small">Anyone can register a local CTFd account directly via the /register portal.</div>
-        </div>
-
-        <div class="form-check mb-2">
-          <input 
-            class="form-check-input" 
-            type="radio" 
-            name="registration_visibility" 
-            id="reg_vis_private" 
-            value="private"
-            {% if registration_visibility == 'private' %}checked{% endif %}
-            onchange="handleRegistrationVisibilityChange('private')"
-          >
-          <label class="form-check-label fw-bold" for="reg_vis_private">
-            Private
-          </label>
-          <div class="text-muted small">Public self-registration is closed. Accounts are provisioned exclusively through Single Sign-On or created by Administrators.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Submit Toolbar -->
-    <div class="d-flex justify-content-end mb-5">
-      <button type="submit" class="btn btn-primary btn-lg px-4">
-        <i class="fas fa-save me-1"></i> Save SSO Settings
-      </button>
     </div>
   </form>
 </div>
 
 <script>
-function toggleProviderSettings(provider) {
-  document.querySelectorAll(".provider-config-panel").forEach(p => p.style.display = "none");
-  const panel = document.getElementById("panel_" + provider);
-  if (panel) {
-    panel.style.display = "block";
+function selectProvider(val) {
+  const radio = document.getElementById("provider_" + val);
+  if (radio) {
+    radio.checked = true;
+  }
+  document.querySelectorAll(".sso-provider-card").forEach(el => {
+    el.classList.remove("border-primary", "bg-light", "shadow-sm");
+  });
+  if (radio && radio.closest(".sso-provider-card")) {
+    radio.closest(".sso-provider-card").classList.add("border-primary", "bg-light", "shadow-sm");
   }
 }
 
-function handleUserSettingsChange(setting) {
-  const regPrivate = document.getElementById("reg_vis_private");
-  const regPublic = document.getElementById("reg_vis_public");
-  const warning = document.getElementById("registration-warning");
+function handleUserSettingsChange(val) {
+  if (val === "all_users") {
+    const privRadio = document.getElementById("reg_visibility_private");
+    if (privRadio) privRadio.checked = true;
+  }
+  checkRegistrationConflict();
+}
 
-  if (setting === "all_users") {
-    // Automatically set registration visibility to private
-    if (regPrivate) regPrivate.checked = true;
-    if (warning) warning.style.display = "none";
+function checkRegistrationConflict() {
+  const isAllUsers = document.getElementById("user_settings_all").checked;
+  const isPublicReg = document.getElementById("reg_visibility_public").checked;
+  const warningEl = document.getElementById("reg-warning-alert");
+
+  if (isAllUsers && isPublicReg) {
+    warningEl.style.display = "block";
   } else {
-    if (warning) warning.style.display = "none";
+    warningEl.style.display = "none";
   }
 }
 
-function handleRegistrationVisibilityChange(visibility) {
-  const userSettingAll = document.getElementById("sso_users_all");
-  const warning = document.getElementById("registration-warning");
-
-  if (visibility === "public" && userSettingAll && userSettingAll.checked) {
-    if (warning) warning.style.display = "block";
-  } else {
-    if (warning) warning.style.display = "none";
-  }
-}
-
-function copyCallbackUri() {
-  const text = document.getElementById("callback-uri-text").textContent.trim();
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Callback URI copied to clipboard: " + text);
+function copyInputText(elemId) {
+  const input = document.getElementById(elemId);
+  if (!input) return;
+  navigator.clipboard.writeText(input.value).then(() => {
+    alert("Copied to clipboard: " + input.value);
   });
 }
 
+// Initial conflict check and tab handling on load
 document.addEventListener("DOMContentLoaded", () => {
-  const activeRadio = document.querySelector(".sso-provider-radio:checked");
-  if (activeRadio) {
-    toggleProviderSettings(activeRadio.value);
-  }
+  checkRegistrationConflict();
 
-  // Initial warning check
-  const userSettingAll = document.getElementById("sso_users_all");
-  const regPublic = document.getElementById("reg_vis_public");
-  const warning = document.getElementById("registration-warning");
-  if (userSettingAll && userSettingAll.checked && regPublic && regPublic.checked) {
-    if (warning) warning.style.display = "block";
-  }
+  // Cross-Bootstrap Tab switcher
+  document.querySelectorAll("#ssoTab .nav-link").forEach(btn => {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      const targetId = (this.getAttribute("data-bs-target") || this.getAttribute("data-target") || "").replace("#", "");
+      if (!targetId) return;
+
+      document.querySelectorAll("#ssoTab .nav-link").forEach(b => b.classList.remove("active"));
+      this.classList.add("active");
+
+      document.querySelectorAll("#ssoTabContent .tab-pane").forEach(pane => {
+        pane.classList.remove("show", "active");
+      });
+      const targetPane = document.getElementById(targetId);
+      if (targetPane) {
+        targetPane.classList.add("show", "active");
+      }
+    });
+  });
 });
 </script>
 {% endblock %}

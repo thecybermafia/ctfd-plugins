@@ -41,5 +41,17 @@ class TextareaChallengeType(BaseChallenge):
         return super().update(challenge, request)
 
     @classmethod
+    def delete(cls, challenge):
+        from CTFd.models import Awards
+        from CTFd.plugins.textarea.models import TextareaSubmission
+        TextareaSubmission.query.filter_by(challenge_id=challenge.id).delete()
+        # Clean up any manual review adjustment awards for this challenge
+        awards = Awards.query.filter_by(category="Manual Review").all()
+        for a in awards:
+            if f"Challenge #{challenge.id}" in (a.name or "") or (challenge.name and challenge.name in (a.name or "")):
+                db.session.delete(a)
+        super().delete(challenge)
+
+    @classmethod
     def attempt(cls, challenge, request):
         return False, "This mission requires manual evaluation by Mission Control. Please submit your text writeup."
