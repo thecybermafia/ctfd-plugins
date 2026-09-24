@@ -1,0 +1,33 @@
+{% extends "admin/challenges/create.html" %}
+
+{% block type %}
+	<input type="hidden" value="textarea" name="type" id="chaltype">
+{% endblock %}
+
+{% block value %}
+	<div class="form-group mb-3">
+		<label for="value"><b>Points</b><br>
+			<small class="form-text text-muted">Standard points awarded for approved writeup</small>
+		</label>
+		<input type="number" class="form-control" name="value" placeholder="e.g. 100" value="100" required>
+	</div>
+
+	<div class="form-row row mb-3">
+		<div class="form-group col-md-6">
+			<label for="min_chars"><b>Minimum Characters</b></label>
+			<input type="number" class="form-control" name="min_chars" value="0" min="0">
+			<small class="form-text text-muted">Minimum character requirement (0 for no limit)</small>
+		</div>
+		<div class="form-group col-md-6">
+			<label for="max_chars"><b>Maximum Characters</b></label>
+			<input type="number" class="form-control" name="max_chars" value="5000" min="1" max="50000">
+			<small class="form-text text-muted">Maximum character limit (up to 50,000)</small>
+		</div>
+	</div>
+
+	<div class="form-group mb-3">
+		<label for="placeholder"><b>Input Placeholder Prompt</b></label>
+		<input type="text" class="form-control" name="placeholder" placeholder="e.g. Enter your complete exploitation methodology, command history, and flag description...">
+		<small class="form-text text-muted">Help prompt displayed inside the participant's textarea</small>
+	</div>
+{% endblock %}

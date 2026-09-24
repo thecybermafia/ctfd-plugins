@@ -15,6 +15,8 @@ A production-ready collection of game-changing challenge types and operational i
 | [**`bingo`**](./bingo) | Challenge Type | Interactive 3×3, 4×4, or 5×5 Cyber Bingo board with instant tile validation, row/col/diagonal line bonuses, and blackout prizes. |
 | [**`crossword`**](./crossword) | Challenge Type | Cyber Crossword puzzle challenge with simple `Clue \| Answer` setup and master solution keyword verification. |
 | [**`image_upload`**](./image_upload) | Challenge Type | Secure manual review challenge for OSINT, physical hacking, hardware badges, and telemetry proof with admin scoring console. |
+| [**`textarea`**](./textarea) | Challenge Type | Monospace long-form text submission and manual evaluation challenge with character counter, DoS clamping, and admin review console. |
+| [**`sso`**](./sso) | Authentication | Enterprise Single Sign-On supporting SAML 2.0, Discord, GitHub, Google, Azure, and Okta with policy enforcement and private registration sync. |
 | [**`google_chat`**](./google_chat) | Admin Integration | Real-time webhook notifications to Google Chat spaces for First Bloods, challenge solves, and team registrations. |
 
 ---
@@ -33,7 +35,13 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
    - **Dangerous Extension Blacklist**: Blocks executable and scriptable extensions (`svg`, `html`, `php`, `py`, `js`, `exe`, etc.) to eliminate Stored XSS and remote code execution risks.
    - **Magic Bytes Validation**: Verifies the genuine byte signatures of image payloads to stop disguised webshells.
    - **Input Sanitization**: Score inputs and notes are clamped to prevent database injection and DoS.
-4. **CTF Lifecycle Enforcement**:
+4. **Input Boundary Enforcement & XSS Elimination (Textarea)**:
+   - Submissions are clamped to configurable character thresholds and a hard 100,000-character ceiling to prevent DoS.
+   - Writeups are strictly escaped in both the admin scoring console and user modals to prevent Stored XSS.
+5. **SSO Policy Synchronization & Authentication Lockdown (SSO)**:
+   - Synchronizes `registration_visibility = "private"` when SSO is mandatory for all users, closing race conditions where unmanaged accounts could be registered publicly.
+   - Rejects password logins when SSO is required, with an emergency admin recovery bypass (`?emergency_auth=true`) for disaster response.
+6. **CTF Lifecycle Enforcement**:
    - Solves and submissions are blocked if the competition is frozen, paused, or has not started yet (unless submitted by an admin).
    - Hidden challenges cannot be queried or solved by non-admin participants.
 
@@ -46,7 +54,7 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
 1. Copy the desired plugin folder(s) directly into your CTFd `CTFd/plugins/` directory:
    ```bash
    # Copy all plugins
-   cp -r bingo crossword image_upload google_chat /path/to/CTFd/CTFd/plugins/
+   cp -r bingo crossword image_upload textarea sso google_chat /path/to/CTFd/CTFd/plugins/
    ```
 
 2. Restart your CTFd application or container:
@@ -60,6 +68,7 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
    - `bingo`
    - `crossword`
    - `image_upload`
+   - `textarea`
 
 ---
 

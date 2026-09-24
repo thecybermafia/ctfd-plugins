@@ -1,0 +1,57 @@
+{% extends "challenge.html" %}
+
+{% block input %}
+<input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+
+<div class="textarea-wrapper my-3" id="textarea-challenge-container">
+  
+  <!-- Current Review Status Alert -->
+  <div id="ta-status-alert" class="alert alert-secondary d-none" role="alert" style="background: rgba(8, 12, 18, 0.95); border: 1px solid var(--cyber-border-bright);">
+    <div class="d-flex align-items-center">
+      <i id="ta-status-icon" class="fas fa-info-circle fa-2x me-3 text-cyan"></i>
+      <div>
+        <h5 id="ta-status-title" class="alert-heading mb-1 font-monospace">Status</h5>
+        <p id="ta-status-desc" class="mb-0 small"></p>
+        <p id="ta-status-feedback" class="mt-1 mb-0 fw-bold small text-light font-monospace"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Writeup Textarea Form -->
+  <div id="ta-form-box">
+    <div class="mb-2 d-flex justify-content-between align-items-center">
+      <label for="ta-content-input" class="form-label fw-bold font-monospace mb-0" style="color: var(--cyber-cyan);">
+        <i class="fas fa-terminal me-1"></i> Submission Writeup / Text:
+      </label>
+      <span id="ta-char-counter" class="small text-muted font-monospace">0 / {{ challenge.max_chars or 5000 }} chars</span>
+    </div>
+    <textarea 
+      class="form-control font-monospace" 
+      id="ta-content-input" 
+      rows="8" 
+      placeholder="{{ challenge.placeholder or 'Enter your complete methodology, writeup, or solution...' }}"
+      maxlength="{{ challenge.max_chars or 5000 }}"
+      style="background: rgba(10, 15, 20, 0.95); border: 1px solid var(--cyber-border); color: var(--matrix-green-bright); resize: vertical;"
+    ></textarea>
+    <div class="d-flex justify-content-between align-items-center mt-1">
+      <small class="text-muted font-monospace">
+        {% if challenge.min_chars and challenge.min_chars > 0 %}
+          Min required: {{ challenge.min_chars }} chars.
+        {% endif %}
+        Max allowed: {{ challenge.max_chars or 5000 }} chars.
+      </small>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block submit %}
+<div class="row submit-row">
+  <div class="col-12 col-sm-8 mx-auto">
+    <button id="ta-submit-btn" class="btn btn-primary w-100 py-2">
+      <i class="fas fa-paper-plane me-1"></i> Submit for Evaluation
+    </button>
+  </div>
+</div>
+{% endblock %}

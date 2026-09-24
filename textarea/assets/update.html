@@ -1,0 +1,24 @@
+{% extends "admin/challenges/update.html" %}
+
+{% block value %}
+	<div class="form-group mb-3">
+		<label for="value"><b>Points</b></label>
+		<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
+	</div>
+
+	<div class="form-row row mb-3">
+		<div class="form-group col-md-6">
+			<label for="min_chars"><b>Minimum Characters</b></label>
+			<input type="number" class="form-control" name="min_chars" value="{{ challenge.min_chars }}" min="0">
+		</div>
+		<div class="form-group col-md-6">
+			<label for="max_chars"><b>Maximum Characters</b></label>
+			<input type="number" class="form-control" name="max_chars" value="{{ challenge.max_chars }}" min="1" max="50000">
+		</div>
+	</div>
+
+	<div class="form-group mb-3">
+		<label for="placeholder"><b>Input Placeholder Prompt</b></label>
+		<input type="text" class="form-control" name="placeholder" value="{{ challenge.placeholder }}">
+	</div>
+{% endblock %}
