@@ -61,11 +61,26 @@
             <tbody>
               {% for sub in submissions %}
               <tr id="sub-row-{{ sub.id }}">
-                <td>
+                <td class="text-center" style="vertical-align: middle; width: 110px;">
                   {% if sub.file_url %}
-                    <a href="{{ sub.file_url }}" target="_blank" rel="noopener noreferrer">
-                      <img src="{{ sub.file_url }}" alt="Proof thumbnail" class="img-thumbnail" style="max-height: 75px; max-width: 90px;">
-                    </a>
+                    <div class="d-flex flex-column align-items-center">
+                      <img 
+                        src="{{ sub.file_url }}" 
+                        alt="Proof" 
+                        class="img-thumbnail shadow-sm rounded mb-1 proof-img-thumb" 
+                        style="width: 80px; height: 60px; object-fit: cover; cursor: pointer; background: #212529;"
+                        onclick="openProofModal('{{ sub.file_url }}', '{{ sub.challenge_name | escape }}', '{{ (sub.team_name or sub.user_name) | escape }}')"
+                        title="Click to inspect full image proof"
+                      >
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-info py-0 px-2 font-monospace" 
+                        style="font-size: 0.75rem;"
+                        onclick="openProofModal('{{ sub.file_url }}', '{{ sub.challenge_name | escape }}', '{{ (sub.team_name or sub.user_name) | escape }}')"
+                      >
+                        <i class="fas fa-search-plus"></i> View
+                      </button>
+                    </div>
                   {% else %}
                     <span class="badge badge-secondary">No file</span>
                   {% endif %}
@@ -120,10 +135,71 @@
     </div>
   </div>
 </div>
+
+<!-- Proof Image Inspection Modal -->
+<div class="modal fade" id="proofModal" tabindex="-1" role="dialog" aria-labelledby="proofModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="proofModalLabel">Proof Inspection — <span id="proof-modal-chal"></span></h5>
+        <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" onclick="closeProofModal()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center p-3" style="background: #0d1117;">
+        <img id="proof-modal-img" src="" alt="Proof Full Resolution" class="img-fluid rounded" style="max-height: 70vh; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+        <div class="text-muted small mt-2 font-monospace text-light">Submitted by: <strong id="proof-modal-user" class="text-white"></strong></div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <a id="proof-modal-download" href="" target="_blank" download class="btn btn-outline-primary btn-sm">
+          <i class="fas fa-external-link-alt"></i> Open Raw in New Tab
+        </a>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal" data-bs-dismiss="modal" onclick="closeProofModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+function openProofModal(imgUrl, chalName, userName) {
+  document.getElementById("proof-modal-img").src = imgUrl;
+  document.getElementById("proof-modal-download").href = imgUrl;
+  document.getElementById("proof-modal-chal").textContent = chalName;
+  document.getElementById("proof-modal-user").textContent = userName;
+  if (typeof $ !== "undefined" && typeof $.fn.modal !== "undefined") {
+    $("#proofModal").modal("show");
+  } else if (typeof jQuery !== "undefined" && typeof jQuery.fn.modal !== "undefined") {
+    jQuery("#proofModal").modal("show");
+  } else if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+    let m = bootstrap.Modal.getInstance(document.getElementById("proofModal"));
+    if (!m) m = new bootstrap.Modal(document.getElementById("proofModal"));
+    m.show();
+  } else {
+    const el = document.getElementById("proofModal");
+    el.classList.add("show");
+    el.style.display = "block";
+    document.body.classList.add("modal-open");
+  }
+}
+
+function closeProofModal() {
+  if (typeof $ !== "undefined" && typeof $.fn.modal !== "undefined") {
+    $("#proofModal").modal("hide");
+  } else if (typeof jQuery !== "undefined" && typeof jQuery.fn.modal !== "undefined") {
+    jQuery("#proofModal").modal("hide");
+  } else if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+    let m = bootstrap.Modal.getInstance(document.getElementById("proofModal"));
+    if (m) m.hide();
+  } else {
+    const el = document.getElementById("proofModal");
+    el.classList.remove("show");
+    el.style.display = "none";
+    document.body.classList.remove("modal-open");
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   function submitReview(subId, status) {
     var pts = document.getElementById("pts-" + subId).value;

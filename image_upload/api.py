@@ -181,14 +181,8 @@ def admin_image_uploads():
     sub_list = []
     for s in submissions:
         file_url = None
-        try:
-            if s.file and s.file.location:
-                file_url = url_for("views.files", path=s.file.location)
-        except Exception:
-            from CTFd.models import Files
-            f = Files.query.filter_by(id=s.file_id).first() if s.file_id else None
-            if f and f.location:
-                file_url = url_for("views.files", path=f.location)
+        if s.file_id:
+            file_url = url_for("image_upload.admin_image_upload_view", submission_id=s.id)
         sub_list.append({
             "id": s.id,
             "challenge_id": s.challenge_id,
@@ -209,6 +203,34 @@ def admin_image_uploads():
         submissions=sub_list,
         current_status=status_filter
     )
+
+@image_upload_bp.route("/admin/image_uploads/<int:submission_id>/image", methods=["GET"])
+@admins_only
+def admin_image_upload_view(submission_id):
+    from flask import abort, send_file
+    import mimetypes
+    from CTFd.utils.uploads import get_uploader
+    from werkzeug.utils import safe_join
+    from CTFd.models import Files
+
+    sub = ImageUploadSubmission.query.filter_by(id=submission_id).first_or_404()
+    f = None
+    try:
+        f = sub.file
+    except Exception:
+        pass
+    if not f and sub.file_id:
+        f = Files.query.filter_by(id=sub.file_id).first()
+    if not f or not f.location:
+        abort(404)
+
+    uploader = get_uploader()
+    file_path = safe_join(uploader.base_path, f.location)
+    if not os.path.exists(file_path):
+        abort(404)
+
+    mimetype = mimetypes.guess_type(f.location)[0] or "image/png"
+    return send_file(file_path, as_attachment=False, mimetype=mimetype)
 
 @image_upload_bp.route("/api/v1/admin/image_uploads/<int:submission_id>/review", methods=["POST"])
 @admins_only

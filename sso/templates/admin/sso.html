@@ -7,6 +7,37 @@
   </div>
 </div>
 
+<style>
+  #ssoTab {
+    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 1.5rem !important;
+  }
+  #ssoTab .nav-item {
+    margin-bottom: -2px;
+  }
+  #ssoTab .nav-link {
+    color: #495057;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.65rem 1.25rem;
+    border: 2px solid transparent;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+  }
+  #ssoTab .nav-link:hover {
+    color: #007bff;
+    border-color: #e9ecef #e9ecef #dee2e6;
+  }
+  #ssoTab .nav-link.active {
+    color: #007bff !important;
+    font-weight: 600;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff !important;
+  }
+</style>
+
 <div class="container">
   {% include "components/errors.html" %}
 
@@ -14,41 +45,41 @@
     <input type="hidden" name="nonce" value="{{ Session.nonce }}">
 
     <!-- Navigation Tabs -->
-    <ul class="nav nav-pills mb-4" id="ssoTab" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="general-tab-btn" data-toggle="tab" data-target="#general-tab" data-bs-toggle="tab" data-bs-target="#general-tab" type="button" role="tab">
+    <ul class="nav nav-tabs mb-4" id="ssoTab" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="general-tab-btn" href="#general-tab" data-toggle="tab" role="tab">
           General Settings
-        </button>
+        </a>
       </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="saml-tab-btn" data-toggle="tab" data-target="#saml-tab" data-bs-toggle="tab" data-bs-target="#saml-tab" type="button" role="tab">
+      <li class="nav-item">
+        <a class="nav-link" id="saml-tab-btn" href="#saml-tab" data-toggle="tab" role="tab">
           SAML
-        </button>
+        </a>
       </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="discord-tab-btn" data-toggle="tab" data-target="#discord-tab" data-bs-toggle="tab" data-bs-target="#discord-tab" type="button" role="tab">
+      <li class="nav-item">
+        <a class="nav-link" id="discord-tab-btn" href="#discord-tab" data-toggle="tab" role="tab">
           Discord
-        </button>
+        </a>
       </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="github-tab-btn" data-toggle="tab" data-target="#github-tab" data-bs-toggle="tab" data-bs-target="#github-tab" type="button" role="tab">
+      <li class="nav-item">
+        <a class="nav-link" id="github-tab-btn" href="#github-tab" data-toggle="tab" role="tab">
           GitHub
-        </button>
+        </a>
       </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="google-tab-btn" data-toggle="tab" data-target="#google-tab" data-bs-toggle="tab" data-bs-target="#google-tab" type="button" role="tab">
+      <li class="nav-item">
+        <a class="nav-link" id="google-tab-btn" href="#google-tab" data-toggle="tab" role="tab">
           Google
-        </button>
+        </a>
       </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="azure-tab-btn" data-toggle="tab" data-target="#azure-tab" data-bs-toggle="tab" data-bs-target="#azure-tab" type="button" role="tab">
+      <li class="nav-item">
+        <a class="nav-link" id="azure-tab-btn" href="#azure-tab" data-toggle="tab" role="tab">
           Azure
-        </button>
+        </a>
       </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="okta-tab-btn" data-toggle="tab" data-target="#okta-tab" data-bs-toggle="tab" data-bs-target="#okta-tab" type="button" role="tab">
+      <li class="nav-item">
+        <a class="nav-link" id="okta-tab-btn" href="#okta-tab" data-toggle="tab" role="tab">
           Okta
-        </button>
+        </a>
       </li>
     </ul>
 
@@ -177,7 +208,7 @@
         <!-- Fallback URL Callout Card -->
         <div class="card mb-4 shadow-sm border-info bg-light">
           <div class="card-body">
-            <h6 class="fw-bold text-primary mb-1"><i class="fas fa-life-ring me-1"></i> CTFd Fallback URL &amp; Local Account Access</h6>
+            <h6 class="fw-bold text-primary mb-1">CTFd Fallback URL &amp; Local Account Access</h6>
             <p class="small text-muted mb-2">
               When any Single Sign On configuration is enabled, users with local CTFd accounts may still login by browsing directly to 
               <code class="user-select-all fw-bold text-dark">{{ request.url_root.rstrip('/') }}/admin</code> or 
@@ -194,7 +225,7 @@
         <!-- SAML Identity Provider Configuration -->
         <div class="card mb-4 shadow-sm">
           <div class="card-header bg-light">
-            <h5 class="mb-0 fw-bold"><i class="fas fa-server text-primary me-2"></i>SAML Identity Provider Configuration</h5>
+            <h5 class="mb-0 fw-bold">SAML Identity Provider Configuration</h5>
           </div>
           <div class="card-body">
             <div class="mb-3">
@@ -214,7 +245,7 @@
         <!-- SAML Service Provider Configuration -->
         <div class="card mb-4 shadow-sm">
           <div class="card-header bg-light">
-            <h5 class="mb-0 fw-bold"><i class="fas fa-satellite text-primary me-2"></i>SAML Service Provider Configuration</h5>
+            <h5 class="mb-0 fw-bold">SAML Service Provider Configuration</h5>
           </div>
           <div class="card-body">
             <div class="mb-3">
@@ -250,7 +281,7 @@
       <div class="tab-pane fade" id="discord-tab" role="tabpanel">
         <div class="card mb-4 shadow-sm">
           <div class="card-header bg-light">
-            <h5 class="mb-0 fw-bold"><i class="fab fa-discord text-primary me-2"></i>Discord OAuth Configuration</h5>
+            <h5 class="mb-0 fw-bold">Discord OAuth Configuration</h5>
           </div>
           <div class="card-body">
             <div class="mb-3">
@@ -288,7 +319,7 @@
       <div class="tab-pane fade" id="github-tab" role="tabpanel">
         <div class="card mb-4 shadow-sm">
           <div class="card-header bg-light">
-            <h5 class="mb-0 fw-bold"><i class="fab fa-github text-primary me-2"></i>GitHub OAuth Configuration</h5>
+            <h5 class="mb-0 fw-bold">GitHub OAuth Configuration</h5>
           </div>
           <div class="card-body">
             <div class="mb-3">
@@ -320,7 +351,7 @@
             <!-- GitHub Enterprise Sub-Card -->
             <div class="card border bg-light">
               <div class="card-header py-2">
-                <strong class="text-uppercase small"><i class="fas fa-building me-1"></i> GitHub Enterprise</strong>
+                <strong class="text-uppercase small">GitHub Enterprise</strong>
               </div>
               <div class="card-body">
                 <p class="small text-muted mb-3">Leave these blank to use the public GitHub endpoints.</p>
@@ -350,7 +381,7 @@
       <div class="tab-pane fade" id="google-tab" role="tabpanel">
         <div class="card mb-4 shadow-sm">
           <div class="card-header bg-light">
-            <h5 class="mb-0 fw-bold"><i class="fab fa-google text-primary me-2"></i>Google OAuth Configuration</h5>
+            <h5 class="mb-0 fw-bold">Google OAuth Configuration</h5>
           </div>
           <div class="card-body">
             <div class="mb-3">
@@ -394,7 +425,7 @@
       <div class="tab-pane fade" id="azure-tab" role="tabpanel">
         <div class="card mb-4 shadow-sm">
           <div class="card-header bg-light">
-            <h5 class="mb-0 fw-bold"><i class="fab fa-microsoft text-primary me-2"></i>Azure OAuth Configuration</h5>
+            <h5 class="mb-0 fw-bold">Azure OAuth Configuration</h5>
           </div>
           <div class="card-body">
             <div class="mb-3">
@@ -438,7 +469,7 @@
       <div class="tab-pane fade" id="okta-tab" role="tabpanel">
         <div class="card mb-4 shadow-sm">
           <div class="card-header bg-light">
-            <h5 class="mb-0 fw-bold"><i class="fas fa-shield-alt text-primary me-2"></i>Okta OAuth Configuration</h5>
+            <h5 class="mb-0 fw-bold">Okta OAuth Configuration</h5>
           </div>
           <div class="card-body">
             <div class="mb-3">
@@ -476,7 +507,7 @@
             <!-- Okta Advanced Endpoints Sub-Card -->
             <div class="card border bg-light">
               <div class="card-header py-2">
-                <strong class="text-uppercase small"><i class="fas fa-cogs me-1"></i> Advanced</strong>
+                <strong class="text-uppercase small">Advanced</strong>
               </div>
               <div class="card-body">
                 <p class="small text-muted mb-3">Override the default Okta authorization and token endpoints.</p>
@@ -548,7 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("#ssoTab .nav-link").forEach(btn => {
     btn.addEventListener("click", function(e) {
       e.preventDefault();
-      const targetId = (this.getAttribute("data-bs-target") || this.getAttribute("data-target") || "").replace("#", "");
+      const targetId = (this.getAttribute("data-bs-target") || this.getAttribute("data-target") || this.getAttribute("href") || "").replace("#", "");
       if (!targetId) return;
 
       document.querySelectorAll("#ssoTab .nav-link").forEach(b => b.classList.remove("active"));
