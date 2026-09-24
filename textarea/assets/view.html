@@ -3,7 +3,7 @@
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
 
-<div class="textarea-wrapper my-2" id="textarea-challenge-container">
+<div class="textarea-wrapper w-100 my-2" id="textarea-challenge-container">
   
   <!-- Current Review Status Alert -->
   <div id="ta-status-alert" class="alert alert-secondary d-none mb-3" role="alert" style="background: rgba(8, 12, 18, 0.95); border: 1px solid var(--cyber-border-bright);">
@@ -18,29 +18,25 @@
   </div>
 
   <!-- Writeup Textarea Form -->
-  <div id="ta-form-box">
-    <div class="mb-2 d-flex justify-content-between align-items-center">
-      <label for="ta-content-input" class="form-label fw-bold font-monospace mb-0" style="color: var(--cyber-cyan);">
-        <i class="fas fa-terminal me-1"></i> Submission Writeup / Text:
-      </label>
-      <span id="ta-char-counter" class="small text-muted font-monospace">0 / {{ challenge.max_chars or 5000 }} chars</span>
-    </div>
-    <textarea 
-      class="form-control font-monospace mb-2" 
-      id="ta-content-input" 
-      rows="7" 
-      placeholder="{{ challenge.placeholder or 'Enter your complete methodology, writeup, or solution...' }}"
-      maxlength="{{ challenge.max_chars or 5000 }}"
-      style="background: rgba(10, 15, 20, 0.95); border: 1px solid var(--cyber-border); color: var(--matrix-green-bright); resize: vertical;"
-    ></textarea>
-    <div class="d-flex justify-content-between align-items-center mb-3">
+  <div id="ta-form-box" class="w-100">
+    <div class="d-flex justify-content-between align-items-center mb-2">
       <small class="text-muted font-monospace">
         {% if challenge.min_chars and challenge.min_chars > 0 %}
           Min required: {{ challenge.min_chars }} chars.
         {% endif %}
         Max allowed: {{ challenge.max_chars or 5000 }} chars.
       </small>
+      <span id="ta-char-counter" class="small text-muted font-monospace">0 / {{ challenge.max_chars or 5000 }} chars</span>
     </div>
+
+    <textarea 
+      class="form-control font-monospace mb-3 w-100" 
+      id="ta-content-input" 
+      rows="7" 
+      placeholder="{{ challenge.placeholder if challenge.placeholder else 'Enter your complete methodology, writeup, or solution...' }}"
+      maxlength="{{ challenge.max_chars or 5000 }}"
+      style="background: rgba(10, 15, 20, 0.95); border: 1px solid var(--cyber-border); color: var(--matrix-green-bright); resize: vertical; width: 100%;"
+    ></textarea>
 
     <div>
       <button id="ta-submit-btn" class="btn btn-primary w-100 py-2">
@@ -50,6 +46,22 @@
   </div>
 
 </div>
+
+<style>
+  .submit-row:has(#textarea-challenge-container) > div:first-child,
+  .submit-row:has(.textarea-wrapper) > div:first-child {
+    width: 100% !important;
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+  .submit-row:has(#textarea-challenge-container) > .key-submit,
+  .submit-row:has(.textarea-wrapper) > .key-submit {
+    display: none !important;
+  }
+  #textarea-challenge-container {
+    width: 100% !important;
+  }
+</style>
 {% endblock %}
 
 {% block submit %}
