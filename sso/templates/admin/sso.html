@@ -2,22 +2,8 @@
 
 {% block content %}
 <div class="jumbotron">
-  <div class="container d-flex justify-content-between align-items-center">
-    <div>
-      <h1><i class="fas fa-id-badge text-primary me-2"></i>Single Sign-On (SSO)</h1>
-      <p class="text-muted mb-0">Configure enterprise identity providers, user enforcement policies, and OAuth / SAML credentials.</p>
-    </div>
-    <div>
-      {% if sso_provider and sso_provider != 'disabled' %}
-        <span class="badge bg-success py-2 px-3 fs-6">
-          <i class="fas fa-check-circle me-1"></i> Active: {{ sso_provider | upper }}
-        </span>
-      {% else %}
-        <span class="badge bg-secondary py-2 px-3 fs-6">
-          <i class="fas fa-ban me-1"></i> SSO Disabled
-        </span>
-      {% endif %}
-    </div>
+  <div class="container">
+    <h1>Single Sign-On (SSO)</h1>
   </div>
 </div>
 
@@ -28,40 +14,40 @@
     <input type="hidden" name="nonce" value="{{ Session.nonce }}">
 
     <!-- Navigation Tabs -->
-    <ul class="nav nav-tabs nav-fill mb-4" id="ssoTab" role="tablist">
+    <ul class="nav nav-pills mb-4" id="ssoTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active fw-bold" id="general-tab-btn" data-toggle="tab" data-target="#general-tab" data-bs-toggle="tab" data-bs-target="#general-tab" type="button" role="tab">
-          <i class="fas fa-sliders-h me-1 text-primary"></i> General Settings
+        <button class="nav-link active" id="general-tab-btn" data-toggle="tab" data-target="#general-tab" data-bs-toggle="tab" data-bs-target="#general-tab" type="button" role="tab">
+          General Settings
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold" id="saml-tab-btn" data-toggle="tab" data-target="#saml-tab" data-bs-toggle="tab" data-bs-target="#saml-tab" type="button" role="tab">
-          <i class="fas fa-key me-1 text-primary"></i> SAML
+        <button class="nav-link" id="saml-tab-btn" data-toggle="tab" data-target="#saml-tab" data-bs-toggle="tab" data-bs-target="#saml-tab" type="button" role="tab">
+          SAML
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold" id="discord-tab-btn" data-toggle="tab" data-target="#discord-tab" data-bs-toggle="tab" data-bs-target="#discord-tab" type="button" role="tab">
-          <i class="fab fa-discord me-1 text-primary"></i> Discord
+        <button class="nav-link" id="discord-tab-btn" data-toggle="tab" data-target="#discord-tab" data-bs-toggle="tab" data-bs-target="#discord-tab" type="button" role="tab">
+          Discord
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold" id="github-tab-btn" data-toggle="tab" data-target="#github-tab" data-bs-toggle="tab" data-bs-target="#github-tab" type="button" role="tab">
-          <i class="fab fa-github me-1 text-primary"></i> GitHub
+        <button class="nav-link" id="github-tab-btn" data-toggle="tab" data-target="#github-tab" data-bs-toggle="tab" data-bs-target="#github-tab" type="button" role="tab">
+          GitHub
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold" id="google-tab-btn" data-toggle="tab" data-target="#google-tab" data-bs-toggle="tab" data-bs-target="#google-tab" type="button" role="tab">
-          <i class="fab fa-google me-1 text-primary"></i> Google
+        <button class="nav-link" id="google-tab-btn" data-toggle="tab" data-target="#google-tab" data-bs-toggle="tab" data-bs-target="#google-tab" type="button" role="tab">
+          Google
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold" id="azure-tab-btn" data-toggle="tab" data-target="#azure-tab" data-bs-toggle="tab" data-bs-target="#azure-tab" type="button" role="tab">
-          <i class="fab fa-microsoft me-1 text-primary"></i> Azure
+        <button class="nav-link" id="azure-tab-btn" data-toggle="tab" data-target="#azure-tab" data-bs-toggle="tab" data-bs-target="#azure-tab" type="button" role="tab">
+          Azure
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold" id="okta-tab-btn" data-toggle="tab" data-target="#okta-tab" data-bs-toggle="tab" data-bs-target="#okta-tab" type="button" role="tab">
-          <i class="fas fa-shield-alt me-1 text-primary"></i> Okta
+        <button class="nav-link" id="okta-tab-btn" data-toggle="tab" data-target="#okta-tab" data-bs-toggle="tab" data-bs-target="#okta-tab" type="button" role="tab">
+          Okta
         </button>
       </li>
     </ul>
@@ -74,41 +60,24 @@
         <!-- Single Sign-On Provider Selection -->
         <div class="card mb-4 shadow-sm">
           <div class="card-header bg-light">
-            <h5 class="mb-0 fw-bold">Single Sign-On Provider</h5>
+            <h5 class="mb-0 font-weight-bold">Single Sign-On Provider</h5>
             <small class="text-muted">Which SSO provider is enabled</small>
           </div>
           <div class="card-body">
-            <div class="row g-3">
-              {% set prov_options = [
-                ('disabled', 'Disable SSO', 'fas fa-ban', 'text-secondary', 'Local username and password authentication only.'),
-                ('saml', 'SAML', 'fas fa-key', 'text-warning', 'Enterprise SAML 2.0 Identity Provider (IdP) integration.'),
-                ('discord', 'Discord', 'fab fa-discord', 'text-indigo', 'Discord OAuth2 authentication for community squads.'),
-                ('github', 'GitHub', 'fab fa-github', 'text-dark', 'GitHub and GitHub Enterprise OAuth authentication.'),
-                ('google', 'Google', 'fab fa-google', 'text-danger', 'Google Workspace and OpenID Connect (OIDC) login.'),
-                ('azure', 'Azure', 'fab fa-microsoft', 'text-primary', 'Microsoft Azure Active Directory / Entra ID OAuth.'),
-                ('okta', 'Okta', 'fas fa-shield-alt', 'text-info', 'Okta Workforce and Customer Identity Cloud OIDC.')
-              ] %}
-
-              {% for p_val, p_name, p_icon, p_color, p_desc in prov_options %}
-                <div class="col-md-6 col-lg-4">
-                  <div class="card h-100 border p-3 sso-provider-card {% if sso_provider == p_val %}border-primary bg-light shadow-sm{% endif %}" style="cursor: pointer;" onclick="selectProvider('{{ p_val }}')">
-                    <div class="d-flex align-items-center">
-                      <input 
-                        class="form-check-input me-3 sso-provider-radio" 
-                        type="radio" 
-                        name="sso_provider" 
-                        id="provider_{{ p_val }}" 
-                        value="{{ p_val }}"
-                        {% if sso_provider == p_val %}checked{% endif %}
-                      >
-                      <div>
-                        <h6 class="mb-1 fw-bold"><i class="{{ p_icon }} {{ p_color }} me-1"></i> {{ p_name }}</h6>
-                        <small class="text-muted d-block" style="font-size: 0.8rem;">{{ p_desc }}</small>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              {% endfor %}
+            <div class="form-group mb-0">
+              <label for="sso_provider" class="font-weight-bold">Active Provider</label>
+              <select class="form-control custom-select" name="sso_provider" id="sso_provider">
+                <option value="disabled" {% if sso_provider == 'disabled' or not sso_provider %}selected{% endif %}>Disable SSO</option>
+                <option value="saml" {% if sso_provider == 'saml' %}selected{% endif %}>SAML</option>
+                <option value="discord" {% if sso_provider == 'discord' %}selected{% endif %}>Discord</option>
+                <option value="github" {% if sso_provider == 'github' %}selected{% endif %}>GitHub</option>
+                <option value="google" {% if sso_provider == 'google' %}selected{% endif %}>Google</option>
+                <option value="azure" {% if sso_provider == 'azure' %}selected{% endif %}>Azure</option>
+                <option value="okta" {% if sso_provider == 'okta' %}selected{% endif %}>Okta</option>
+              </select>
+              <small class="form-text text-muted mt-2">
+                Selecting a provider enables SSO authentication for users matching the User Settings policy below. Local users may always log in via the fallback URL.
+              </small>
             </div>
           </div>
         </div>
@@ -543,19 +512,6 @@
 </div>
 
 <script>
-function selectProvider(val) {
-  const radio = document.getElementById("provider_" + val);
-  if (radio) {
-    radio.checked = true;
-  }
-  document.querySelectorAll(".sso-provider-card").forEach(el => {
-    el.classList.remove("border-primary", "bg-light", "shadow-sm");
-  });
-  if (radio && radio.closest(".sso-provider-card")) {
-    radio.closest(".sso-provider-card").classList.add("border-primary", "bg-light", "shadow-sm");
-  }
-}
-
 function handleUserSettingsChange(val) {
   if (val === "all_users") {
     const privRadio = document.getElementById("reg_visibility_private");

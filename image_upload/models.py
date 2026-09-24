@@ -1,5 +1,8 @@
 from datetime import datetime
-from CTFd.models import Challenges, db
+from CTFd.models import Challenges, Files, db
+
+class ImageUploadFiles(Files):
+    __mapper_args__ = {"polymorphic_identity": "image_upload"}
 
 class ImageUploadChallenge(Challenges):
     __mapper_args__ = {"polymorphic_identity": "image_upload"}

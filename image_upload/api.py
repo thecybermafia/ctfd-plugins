@@ -94,7 +94,7 @@ def submit_image(challenge_id):
         return jsonify({"success": False, "message": f"File exceeds maximum size of {chal.max_file_size_mb} MB"}), 400
 
     # Save file using CTFd uploader
-    saved_file = upload_file(file=file, type="image_upload")
+    saved_file = upload_file(file=file, type="standard")
     notes = request.form.get("notes", "")[:4000].strip()
 
     # Find existing pending submission or create new
@@ -146,7 +146,16 @@ def get_submission_status(challenge_id):
     if not sub:
         return jsonify({"success": True, "data": None})
 
-    file_url = url_for("views.files", path=sub.file.location) if sub.file else None
+    file_url = None
+    try:
+        if sub.file and sub.file.location:
+            file_url = url_for("views.files", path=sub.file.location)
+    except Exception:
+        from CTFd.models import Files
+        f = Files.query.filter_by(id=sub.file_id).first() if sub.file_id else None
+        if f and f.location:
+            file_url = url_for("views.files", path=f.location)
+
     return jsonify({
         "success": True,
         "data": {
@@ -171,7 +180,15 @@ def admin_image_uploads():
     submissions = query.order_by(ImageUploadSubmission.created_at.desc()).all()
     sub_list = []
     for s in submissions:
-        file_url = url_for("views.files", path=s.file.location) if s.file else None
+        file_url = None
+        try:
+            if s.file and s.file.location:
+                file_url = url_for("views.files", path=s.file.location)
+        except Exception:
+            from CTFd.models import Files
+            f = Files.query.filter_by(id=s.file_id).first() if s.file_id else None
+            if f and f.location:
+                file_url = url_for("views.files", path=f.location)
         sub_list.append({
             "id": s.id,
             "challenge_id": s.challenge_id,

@@ -6,7 +6,11 @@ from CTFd.plugins import (
 from CTFd.plugins.challenges import CHALLENGE_CLASSES
 from CTFd.plugins.image_upload.api import image_upload_bp
 from CTFd.plugins.image_upload.challenge import ImageUploadChallengeType
-from CTFd.plugins.image_upload.models import ImageUploadChallenge, ImageUploadSubmission
+from CTFd.plugins.image_upload.models import (
+    ImageUploadChallenge,
+    ImageUploadFiles,
+    ImageUploadSubmission,
+)
 
 def load(app):
     with app.app_context():
