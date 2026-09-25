@@ -1,6 +1,6 @@
 import datetime
 from flask import request, session
-from CTFd.models import Users, db
+from CTFd.models import Users, Teams, db
 from CTFd.plugins import (
     register_admin_plugin_menu_bar,
     register_plugin_assets_directory,
@@ -13,6 +13,7 @@ from CTFd.plugins.referrals.config import ReferralConfig
 from CTFd.plugins.referrals.listener import register_referral_listeners
 from CTFd.plugins.referrals.models import ReferralCodes, Referrals
 from CTFd.plugins.referrals.routes import referrals_bp
+from CTFd.plugins.referrals.scoring import ReferralScoring
 
 
 def load(app):
@@ -22,6 +23,62 @@ def load(app):
 
     app.register_blueprint(referrals_bp)
     app.register_blueprint(referrals_api)
+
+    def get_user_referral_info(user_id):
+        user = Users.query.filter_by(id=user_id).first()
+        if not user:
+            return None
+        code_obj = ReferralCodes.query.filter_by(user_id=user_id).first()
+        recruits = Referrals.query.filter_by(referrer_id=user_id).order_by(Referrals.created_at.desc()).all()
+        for r in recruits:
+            r.live_score, r.live_solves = ReferralScoring.get_referee_progress(r.referee_id)
+        my_ref = Referrals.query.filter_by(referee_id=user_id).first()
+        is_disabled = ReferralConfig.is_user_disabled(user_id)
+        points_earned = sum(r.award.value for r in recruits if r.award and r.award.value)
+        return {
+            "code": code_obj.code if code_obj else None,
+            "clicks": code_obj.clicks if code_obj else 0,
+            "recruits": recruits,
+            "total_recruits": len(recruits),
+            "qualified_count": sum(1 for r in recruits if r.status == "qualified"),
+            "pending_count": sum(1 for r in recruits if r.status in ("pending", "flagged")),
+            "points_earned": points_earned,
+            "my_referral": my_ref,
+            "is_disabled": is_disabled,
+            "configs": ReferralConfig.get_all(),
+        }
+
+    def get_team_referral_info(team_id):
+        team = Teams.query.filter_by(id=team_id).first()
+        captain_code_obj = None
+        captain_name = None
+        if team and team.captain_id:
+            captain = Users.query.filter_by(id=team.captain_id).first()
+            if captain:
+                captain_name = captain.name
+                captain_code_obj = ReferralCodes.query.filter_by(user_id=captain.id).first()
+
+        recruits = Referrals.query.filter_by(referrer_team_id=team_id).order_by(Referrals.created_at.desc()).all()
+        for r in recruits:
+            r.live_score, r.live_solves = ReferralScoring.get_referee_progress(r.referee_id)
+        is_disabled = ReferralConfig.is_team_disabled(team_id)
+        points_earned = sum(r.award.value for r in recruits if r.award and r.award.value)
+        return {
+            "captain_code": captain_code_obj.code if captain_code_obj else None,
+            "captain_name": captain_name,
+            "captain_id": team.captain_id if team else None,
+            "clicks": captain_code_obj.clicks if captain_code_obj else 0,
+            "recruits": recruits,
+            "total_recruits": len(recruits),
+            "qualified_count": sum(1 for r in recruits if r.status == "qualified"),
+            "pending_count": sum(1 for r in recruits if r.status in ("pending", "flagged")),
+            "points_earned": points_earned,
+            "is_disabled": is_disabled,
+            "configs": ReferralConfig.get_all(),
+        }
+
+    app.jinja_env.globals["get_user_referral_info"] = get_user_referral_info
+    app.jinja_env.globals["get_team_referral_info"] = get_team_referral_info
 
     register_plugin_assets_directory(app, base_path="/plugins/referrals/assets/")
 

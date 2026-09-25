@@ -35,6 +35,9 @@ DEFAULT_CONFIGS = {
 
     # 7. UI & Messaging
     "referral_broadcast_feed": "true",
+    "referral_show_bonus_notice": "true",
+    "referral_bonus_notice_text": "",
+    "referral_show_progress_in_roster": "true",
     "referral_instructions": (
         "Share your unique recruit link with operatives to expand your syndicate. "
         "Bonus points unlock when your recruit proves field capability by reaching the challenge score milestone!"
@@ -65,7 +68,14 @@ class ReferralConfig:
             return int(val)
         except (ValueError, TypeError):
             def_val = DEFAULT_CONFIGS.get(key, 0)
-            return int(def_val)
+    @staticmethod
+    def get_bonus_notice_text():
+        custom = (ReferralConfig.get("referral_bonus_notice_text") or "").strip()
+        if custom:
+            return custom
+        pts = ReferralConfig.get_int("referral_points")
+        req_pts = ReferralConfig.get_int("referral_min_points_to_qualify")
+        return f"Earn +{pts} PTS per recruit who proves capability by scoring ≥ {req_pts} points."
 
     @staticmethod
     def set(key, value):

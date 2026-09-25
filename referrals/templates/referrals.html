@@ -71,10 +71,12 @@ body.theme-dark .referral-stat-box,
             </div>
           </div>
 
+          {% if configs.referral_show_bonus_notice != 'false' %}
           <div class="alert alert-secondary font-monospace small mb-0 p-2">
             <i class="fas fa-shield-alt text-info me-1"></i>
-            Bonus: <strong>+{{ points_per_ref }} PTS</strong> per recruit who proves field readiness by earning <strong>&ge; {{ min_points_to_qualify }} PTS</strong> in challenges.
+            {{ bonus_notice_text }}
           </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -144,7 +146,9 @@ body.theme-dark .referral-stat-box,
               <tr>
                 <th>Operative</th>
                 <th>Joined</th>
-                <th>Milestone Progress</th>
+                {% if configs.referral_show_progress_in_roster != 'false' %}
+                  <th>Milestone Progress</th>
+                {% endif %}
                 <th>Status</th>
                 <th class="text-end">Bonus Awarded</th>
               </tr>
@@ -161,6 +165,7 @@ body.theme-dark .referral-stat-box,
                   <td class="text-muted small">
                     {{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else 'N/A' }}
                   </td>
+                  {% if configs.referral_show_progress_in_roster != 'false' %}
                   <td>
                     <div class="d-flex align-items-center" style="max-width: 200px;">
                       <div class="progress flex-grow-1 me-2" style="height: 8px;">
@@ -170,6 +175,7 @@ body.theme-dark .referral-stat-box,
                       <span class="small text-muted">{{ r.live_score }}/{{ min_points_to_qualify }} PTS</span>
                     </div>
                   </td>
+                  {% endif %}
                   <td>
                     {% if r.status == 'qualified' %}
                       <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2">

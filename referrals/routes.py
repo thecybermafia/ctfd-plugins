@@ -97,6 +97,7 @@ def referrals_dashboard():
         min_solves_to_qualify=min_solves_to_qualify,
         my_referral=my_referral,
         is_disabled=is_disabled,
+        bonus_notice_text=ReferralConfig.get_bonus_notice_text(),
         configs=ReferralConfig.get_all(),
     )
 
@@ -169,6 +170,9 @@ def api_referrals_me():
             "recruits": recruits_data,
             "program_name": ReferralConfig.get("referral_program_name", "Referral & Recruitment Directive"),
             "instructions": ReferralConfig.get("referral_instructions", ""),
+            "show_bonus_notice": ReferralConfig.get_bool("referral_show_bonus_notice"),
+            "bonus_notice_text": ReferralConfig.get_bonus_notice_text(),
+            "show_progress_in_roster": ReferralConfig.get_bool("referral_show_progress_in_roster"),
         }
     })
 
@@ -299,6 +303,41 @@ def admin_referral_actions():
                     flash(f"Added team '{target_team.name}' to referral exclusion list.", "warning")
                 else:
                     flash(f"Team '{identifier}' not found.", "danger")
+
+    elif action == "set_custom_code":
+        target_type = request.form.get("target_type")
+        target_id = request.form.get("target_id")
+        new_code = (request.form.get("code") or "").strip().upper()
+        if new_code:
+            target_user_id = None
+            if target_type == "user":
+                target_user_id = int(target_id)
+            elif target_type == "team":
+                team = Teams.query.filter_by(id=target_id).first()
+                if team and team.captain_id:
+                    target_user_id = team.captain_id
+                else:
+                    flash("Cannot assign code: This team has no designated captain.", "warning")
+
+            if target_user_id:
+                existing = ReferralCodes.query.filter_by(code=new_code).first()
+                if existing and existing.user_id != target_user_id:
+                    flash(f"Referral code '{new_code}' is already assigned to another user.", "danger")
+                else:
+                    code_obj = ReferralCodes.query.filter_by(user_id=target_user_id).first()
+                    if not code_obj:
+                        code_obj = ReferralCodes(user_id=target_user_id, code=new_code)
+                        db.session.add(code_obj)
+                    else:
+                        code_obj.code = new_code
+                    db.session.commit()
+                    flash(f"Custom referral code updated to '{new_code}'.", "success")
+        else:
+            flash("Referral code cannot be blank.", "warning")
+
+    redirect_target = request.form.get("redirect")
+    if redirect_target:
+        return redirect(redirect_target)
 
     tab = request.form.get("tab") or ("exclusions" if "disable" in (action or "") or "enable" in (action or "") or "exclusion" in (action or "") else "audit")
     return redirect(url_for("referrals.admin_referrals", tab=tab))
