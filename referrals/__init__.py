@@ -7,7 +7,7 @@ from CTFd.plugins import (
     register_user_page_menu_bar,
 )
 from CTFd.utils.user import authed, get_current_user, get_ip
-from CTFd.plugins.referrals.anti_cheat import AntiCheatEngine
+from CTFd.plugins.referrals.anti_cheat import AntiCheatEngine, resolve_user_ip
 from CTFd.plugins.referrals.api import referrals_api
 from CTFd.plugins.referrals.config import ReferralConfig
 from CTFd.plugins.referrals.listener import register_referral_listeners
@@ -24,7 +24,11 @@ def load(app):
     app.register_blueprint(referrals_api)
 
     register_plugin_assets_directory(app, base_path="/plugins/referrals/assets/")
-    register_user_page_menu_bar(title="Referrals", route="/referrals")
+
+    # By default, do NOT display in the navbar unless explicitly enabled in admin panel
+    if ReferralConfig.get_bool("referral_show_in_navbar"):
+        register_user_page_menu_bar(title="Referrals", route="/referrals")
+
     register_admin_plugin_menu_bar(title="Referrals", route="/admin/referrals")
 
     register_referral_listeners()
@@ -55,6 +59,7 @@ def load(app):
                                 referrer_user = Users.query.filter_by(id=code_obj.user_id).first()
                                 if referrer_user:
                                     current_ip = get_ip()
+                                    referrer_ip = resolve_user_ip(referrer_user.id)
                                     valid, status, msg, notes = AntiCheatEngine.evaluate_new_referral(
                                         referrer_user=referrer_user,
                                         referee_user=user,
@@ -69,7 +74,7 @@ def load(app):
                                             referee_team_id=user.team_id,
                                             code_used=code_str,
                                             status=status,
-                                            referrer_ip=getattr(referrer_user, "ip", None),
+                                            referrer_ip=referrer_ip,
                                             referee_ip=current_ip,
                                             notes=notes,
                                         )

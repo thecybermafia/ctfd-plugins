@@ -1,8 +1,31 @@
 import ipaddress
-from CTFd.models import Users, Teams
+from CTFd.models import Submissions, Tracking, Users, Teams
 from CTFd.utils import get_config
 from CTFd.plugins.referrals.config import ReferralConfig
 from CTFd.plugins.referrals.models import ReferralCodes, Referrals
+
+
+def resolve_user_ip(user_id):
+    """
+    Accurately resolves a user's most recent IP address from CTFd Tracking or Submissions.
+    """
+    if not user_id:
+        return None
+    try:
+        track = Tracking.query.filter_by(user_id=user_id).order_by(Tracking.id.desc()).first()
+        if track and track.ip and track.ip.strip():
+            return track.ip.strip()
+    except Exception:
+        pass
+
+    try:
+        sub = Submissions.query.filter_by(user_id=user_id).order_by(Submissions.id.desc()).first()
+        if sub and sub.ip and sub.ip.strip():
+            return sub.ip.strip()
+    except Exception:
+        pass
+
+    return None
 
 
 class AntiCheatEngine:
@@ -28,6 +51,19 @@ class AntiCheatEngine:
 
         if not referrer_user or not referee_user:
             return False, "rejected", "Invalid referrer or recruit operative.", ""
+
+        # 0. User & Team Administrative Exclusion Checks
+        if ReferralConfig.is_user_disabled(referrer_user.id):
+            return False, "rejected", "Recruiter referral privileges have been suspended by administrators.", "Recruiter user is administratively disabled."
+
+        if referrer_user.team_id and ReferralConfig.is_team_disabled(referrer_user.team_id):
+            return False, "rejected", "Recruiter team referral privileges have been suspended by administrators.", "Recruiter team is administratively disabled."
+
+        if ReferralConfig.is_user_disabled(referee_user.id):
+            return False, "rejected", "Referral privileges for your account have been suspended.", "Recruit user is administratively disabled."
+
+        if referee_user.team_id and ReferralConfig.is_team_disabled(referee_user.team_id):
+            return False, "rejected", "Referral privileges for your team have been suspended.", "Recruit team is administratively disabled."
 
         # 1. Self-Referral Prevention
         if referrer_user.id == referee_user.id:
@@ -58,13 +94,13 @@ class AntiCheatEngine:
         notes_list = []
         status = "pending"
         ip_policy = ReferralConfig.get("referral_ip_policy", "flag")
-        referrer_ip = getattr(referrer_user, "ip", None) or getattr(code_obj, "ip", None)
+        referrer_ip = resolve_user_ip(referrer_user.id)
 
         is_ip_collision = (
             referrer_ip and referee_ip and referrer_ip.strip() == referee_ip.strip() and referee_ip.strip() != ""
         )
         is_subnet_collision = False
-        if not is_ip_collision and ReferralConfig.get_bool("referral_block_subnets"):
+        if not is_ip_collision and ReferralConfig.get_bool("referral_block_subnets") and referrer_ip:
             is_subnet_collision = AntiCheatEngine.is_same_subnet(referrer_ip, referee_ip)
 
         if is_ip_collision:

@@ -1,8 +1,9 @@
 from CTFd.utils import get_config, set_config
 
 DEFAULT_CONFIGS = {
-    # 1. Master & Branding
+    # 1. Master, Navigation & Branding
     "referral_enabled": "true",
+    "referral_show_in_navbar": "false",  # Default false as requested
     "referral_program_name": "Operative Recruitment Directive",
     "referral_code_prefix": "REF-",
     "referral_cookie_ttl_days": "7",
@@ -28,7 +29,11 @@ DEFAULT_CONFIGS = {
     "referral_block_subnets": "false",
     "referral_auto_revoke_on_ban": "true",
 
-    # 6. UI & Messaging
+    # 6. Exclusions & Suspensions (User and Team IDs)
+    "referral_disabled_user_ids": "",
+    "referral_disabled_team_ids": "",
+
+    # 7. UI & Messaging
     "referral_broadcast_feed": "true",
     "referral_instructions": (
         "Share your unique recruit link with operatives to expand your syndicate. "
@@ -76,8 +81,60 @@ class ReferralConfig:
     @staticmethod
     def update_all(form_data):
         for k in DEFAULT_CONFIGS.keys():
+            if k in ("referral_disabled_user_ids", "referral_disabled_team_ids"):
+                continue  # Handled separately via exclusion controls
             if k in form_data:
                 ReferralConfig.set(k, form_data[k])
-            elif k.endswith("_enabled") or k.startswith("referral_disallow_") or k.startswith("referral_block_") or k.startswith("referral_exclude_") or k.startswith("referral_auto_"):
-                # Checkbox missing in POST form means unchecked / false
+            elif k.endswith("_enabled") or k == "referral_show_in_navbar" or k.startswith("referral_disallow_") or k.startswith("referral_block_") or k.startswith("referral_exclude_") or k.startswith("referral_auto_"):
                 ReferralConfig.set(k, "false")
+
+    # --- Exclusion Management for Users & Teams ---
+    @staticmethod
+    def get_disabled_user_ids():
+        raw = ReferralConfig.get("referral_disabled_user_ids", "")
+        if not raw:
+            return set()
+        return {int(x.strip()) for x in raw.split(",") if x.strip().isdigit()}
+
+    @staticmethod
+    def get_disabled_team_ids():
+        raw = ReferralConfig.get("referral_disabled_team_ids", "")
+        if not raw:
+            return set()
+        return {int(x.strip()) for x in raw.split(",") if x.strip().isdigit()}
+
+    @staticmethod
+    def is_user_disabled(user_id):
+        if not user_id:
+            return False
+        return int(user_id) in ReferralConfig.get_disabled_user_ids()
+
+    @staticmethod
+    def is_team_disabled(team_id):
+        if not team_id:
+            return False
+        return int(team_id) in ReferralConfig.get_disabled_team_ids()
+
+    @staticmethod
+    def add_disabled_user(user_id):
+        s = ReferralConfig.get_disabled_user_ids()
+        s.add(int(user_id))
+        ReferralConfig.set("referral_disabled_user_ids", ",".join(str(x) for x in sorted(s)))
+
+    @staticmethod
+    def remove_disabled_user(user_id):
+        s = ReferralConfig.get_disabled_user_ids()
+        s.discard(int(user_id))
+        ReferralConfig.set("referral_disabled_user_ids", ",".join(str(x) for x in sorted(s)))
+
+    @staticmethod
+    def add_disabled_team(team_id):
+        s = ReferralConfig.get_disabled_team_ids()
+        s.add(int(team_id))
+        ReferralConfig.set("referral_disabled_team_ids", ",".join(str(x) for x in sorted(s)))
+
+    @staticmethod
+    def remove_disabled_team(team_id):
+        s = ReferralConfig.get_disabled_team_ids()
+        s.discard(int(team_id))
+        ReferralConfig.set("referral_disabled_team_ids", ",".join(str(x) for x in sorted(s)))
