@@ -439,34 +439,31 @@
             1. Master &amp; Navigation Configuration
           </div>
           <ul class="list-group list-group-flush font-monospace">
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_enabled">Enable Referral System</label>
-                <small class="text-muted d-block">Master switch. If disabled, new referral links and bonuses are paused.</small>
-              </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_enabled" name="referral_enabled" value="true" {% if configs.referral_enabled == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_enabled"></label>
-              </div>
-            </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_show_in_navbar">Show in Main Navbar</label>
-                <small class="text-muted d-block">When disabled, participants access referrals inside Settings &gt; Referrals.</small>
-              </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_show_in_navbar" name="referral_show_in_navbar" value="true" {% if configs.referral_show_in_navbar == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_show_in_navbar"></label>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_enabled" name="referral_enabled" value="true" {% if configs.referral_enabled|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_enabled">
+                  Enable Referral System
+                </label>
+                <small class="text-muted d-block mt-1">Master switch. If disabled, new referral links and bonuses are paused.</small>
               </div>
             </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_broadcast_feed">Broadcast to Live Feed</label>
-                <small class="text-muted d-block">Announce qualified recruit achievements in the tactical live activity feed.</small>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_show_in_navbar" name="referral_show_in_navbar" value="true" {% if configs.referral_show_in_navbar|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_show_in_navbar">
+                  Show in Main Navbar
+                </label>
+                <small class="text-muted d-block mt-1">When disabled, participants access referrals inside Settings &gt; Referrals.</small>
               </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_broadcast_feed" name="referral_broadcast_feed" value="true" {% if configs.referral_broadcast_feed == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_broadcast_feed"></label>
+            </li>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_broadcast_feed" name="referral_broadcast_feed" value="true" {% if configs.referral_broadcast_feed|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_broadcast_feed">
+                  Broadcast to Live Feed
+                </label>
+                <small class="text-muted d-block mt-1">Announce qualified recruit achievements in the tactical live activity feed.</small>
               </div>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center py-3">
@@ -537,14 +534,13 @@
                 <input type="number" class="form-control font-monospace text-end" id="referral_global_point_cap" name="referral_global_point_cap" value="{{ configs.referral_global_point_cap }}" min="0" required>
               </div>
             </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_referee_bonus_enabled">Recruit Welcome Bonus</label>
-                <small class="text-muted d-block">Award bonus points directly to recruit upon proving capability.</small>
-              </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_referee_bonus_enabled" name="referral_referee_bonus_enabled" value="true" {% if configs.referral_referee_bonus_enabled == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_referee_bonus_enabled"></label>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_referee_bonus_enabled" name="referral_referee_bonus_enabled" value="true" {% if configs.referral_referee_bonus_enabled|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_referee_bonus_enabled">
+                  Recruit Welcome Bonus
+                </label>
+                <small class="text-muted d-block mt-1">Award bonus points directly to recruit upon proving capability.</small>
               </div>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center py-3">
@@ -592,34 +588,31 @@
                 <input type="number" class="form-control font-monospace text-end" id="referral_min_solves_to_qualify" name="referral_min_solves_to_qualify" value="{{ configs.referral_min_solves_to_qualify }}" min="1" required>
               </div>
             </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_exclude_zero_point_chals">Exclude 0-Point Challenges</label>
-                <small class="text-muted d-block">Ignore 0-point informational challenges from milestone calculations.</small>
-              </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_exclude_zero_point_chals" name="referral_exclude_zero_point_chals" value="true" {% if configs.referral_exclude_zero_point_chals == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_exclude_zero_point_chals"></label>
-              </div>
-            </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_show_progress_in_roster">Show Progress in Recruited Operatives Roster</label>
-                <small class="text-muted d-block">When disabled, progress like "0/12 PTS" and progress bars are hidden from participants.</small>
-              </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_show_progress_in_roster" name="referral_show_progress_in_roster" value="true" {% if configs.referral_show_progress_in_roster == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_show_progress_in_roster"></label>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_exclude_zero_point_chals" name="referral_exclude_zero_point_chals" value="true" {% if configs.referral_exclude_zero_point_chals|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_exclude_zero_point_chals">
+                  Exclude 0-Point Challenges
+                </label>
+                <small class="text-muted d-block mt-1">Ignore 0-point informational challenges from milestone calculations.</small>
               </div>
             </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_show_bonus_notice">Show Bonus Requirement Notice</label>
-                <small class="text-muted d-block">Displays requirement alert to end users on /settings and /referrals.</small>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_show_progress_in_roster" name="referral_show_progress_in_roster" value="true" {% if configs.referral_show_progress_in_roster|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_show_progress_in_roster">
+                  Show Progress in Recruited Operatives Roster
+                </label>
+                <small class="text-muted d-block mt-1">When disabled, progress like "0/12 PTS" and progress bars are hidden from participants.</small>
               </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_show_bonus_notice" name="referral_show_bonus_notice" value="true" {% if configs.referral_show_bonus_notice == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_show_bonus_notice"></label>
+            </li>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_show_bonus_notice" name="referral_show_bonus_notice" value="true" {% if configs.referral_show_bonus_notice|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_show_bonus_notice">
+                  Show Bonus Requirement Notice
+                </label>
+                <small class="text-muted d-block mt-1">Displays requirement alert to end users on /settings and /referrals.</small>
               </div>
             </li>
             <li class="list-group-item py-3">
@@ -649,34 +642,31 @@
                 </select>
               </div>
             </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_block_subnets">Subnet Collision Screening</label>
-                <small class="text-muted d-block">Flag accounts sharing the same local subnet class (/24 CIDR).</small>
-              </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_block_subnets" name="referral_block_subnets" value="true" {% if configs.referral_block_subnets == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_block_subnets"></label>
-              </div>
-            </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_disallow_teammates">Teammate Exploitation Shield</label>
-                <small class="text-muted d-block">Prevent players from referring members of their own syndicate team to farm points.</small>
-              </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_disallow_teammates" name="referral_disallow_teammates" value="true" {% if configs.referral_disallow_teammates == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_disallow_teammates"></label>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_block_subnets" name="referral_block_subnets" value="true" {% if configs.referral_block_subnets|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_block_subnets">
+                  Subnet Collision Screening
+                </label>
+                <small class="text-muted d-block mt-1">Flag accounts sharing the same local subnet class (/24 CIDR).</small>
               </div>
             </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <div class="mr-4">
-                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_auto_revoke_on_ban">Sanction Synchronization</label>
-                <small class="text-muted d-block">Automatically strip awarded referral points if the recruited operative is banned or hidden.</small>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_disallow_teammates" name="referral_disallow_teammates" value="true" {% if configs.referral_disallow_teammates|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_disallow_teammates">
+                  Teammate Exploitation Shield
+                </label>
+                <small class="text-muted d-block mt-1">Prevent players from referring members of their own syndicate team to farm points.</small>
               </div>
-              <div class="custom-control custom-switch ml-4 flex-shrink-0">
-                <input type="checkbox" class="custom-control-input" id="referral_auto_revoke_on_ban" name="referral_auto_revoke_on_ban" value="true" {% if configs.referral_auto_revoke_on_ban == 'true' %}checked{% endif %}>
-                <label class="custom-control-label" for="referral_auto_revoke_on_ban"></label>
+            </li>
+            <li class="list-group-item py-3">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="referral_auto_revoke_on_ban" name="referral_auto_revoke_on_ban" value="true" {% if configs.referral_auto_revoke_on_ban|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold text-dark d-block" for="referral_auto_revoke_on_ban">
+                  Sanction Synchronization
+                </label>
+                <small class="text-muted d-block mt-1">Automatically strip awarded referral points if the recruited operative is banned or hidden.</small>
               </div>
             </li>
           </ul>

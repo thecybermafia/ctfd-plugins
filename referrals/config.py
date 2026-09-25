@@ -95,7 +95,18 @@ class ReferralConfig:
                 continue  # Handled separately via exclusion controls
             if k in form_data:
                 ReferralConfig.set(k, form_data[k])
-            elif k.endswith("_enabled") or k == "referral_show_in_navbar" or k.startswith("referral_disallow_") or k.startswith("referral_block_") or k.startswith("referral_exclude_") or k.startswith("referral_auto_"):
+            elif k in (
+                "referral_enabled",
+                "referral_show_in_navbar",
+                "referral_broadcast_feed",
+                "referral_referee_bonus_enabled",
+                "referral_exclude_zero_point_chals",
+                "referral_show_progress_in_roster",
+                "referral_show_bonus_notice",
+                "referral_block_subnets",
+                "referral_disallow_teammates",
+                "referral_auto_revoke_on_ban",
+            ):
                 ReferralConfig.set(k, "false")
 
     # --- Exclusion Management for Users & Teams ---
