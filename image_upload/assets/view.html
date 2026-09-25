@@ -3,16 +3,16 @@
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
 
-<div class="image-upload-wrapper my-2" id="image-upload-container">
+<div class="image-upload-wrapper w-100 my-2" id="image-upload-container">
   
-  <!-- Current Review Status Alert -->
-  <div id="iu-status-alert" class="alert alert-secondary d-none mb-3" role="alert" style="background: rgba(8, 12, 18, 0.95); border: 1px solid var(--cyber-border-bright);">
+  <!-- Current Review Status Alert (Dynamically styles for Light & Dark mode) -->
+  <div id="iu-status-alert" class="alert d-none mb-3" role="alert">
     <div class="d-flex align-items-center">
-      <i id="iu-status-icon" class="fas fa-info-circle fa-2x me-3 text-cyan"></i>
+      <i id="iu-status-icon" class="fas fa-info-circle fa-2x me-3"></i>
       <div>
-        <h5 id="iu-status-title" class="alert-heading mb-1 font-monospace">Status</h5>
-        <p id="iu-status-desc" class="mb-0 small text-light"></p>
-        <p id="iu-status-feedback" class="mt-1 mb-0 fw-bold small text-light font-monospace"></p>
+        <h5 id="iu-status-title" class="alert-heading mb-1 font-monospace fw-bold">Status</h5>
+        <p id="iu-status-desc" class="mb-0 small"></p>
+        <p id="iu-status-feedback" class="mt-1 mb-0 fw-bold small font-monospace"></p>
       </div>
     </div>
   </div>
@@ -21,14 +21,14 @@
   <div id="iu-current-preview" class="text-center mb-3 d-none">
     <label class="form-label text-muted small d-block font-monospace">Submitted Telemetry Proof:</label>
     <a id="iu-preview-link" href="#" target="_blank">
-      <img id="iu-preview-img" src="" alt="Submitted proof" class="img-thumbnail" style="max-height: 200px; border: 1px solid var(--cyber-cyan); background: var(--cyber-bg-surface);">
+      <img id="iu-preview-img" src="" alt="Submitted proof" class="img-thumbnail" style="max-height: 200px;">
     </a>
   </div>
 
   <!-- Upload Form -->
-  <div id="iu-upload-form-box">
+  <div id="iu-upload-form-box" class="w-100">
     <div class="mb-3">
-      <label for="iu-file-input" class="form-label fw-bold font-monospace" style="color: var(--cyber-cyan);">
+      <label for="iu-file-input" class="form-label fw-bold font-monospace">
         <i class="fas fa-upload me-1"></i> Upload Evidence / Screenshot
       </label>
       <input class="form-control" type="file" id="iu-file-input" accept="image/*,.pdf,.zip">
@@ -38,7 +38,7 @@
     </div>
 
     <div class="mb-3">
-      <label for="iu-notes" class="form-label fw-bold font-monospace" style="color: var(--cyber-cyan);">Execution Notes / Methodology (Optional)</label>
+      <label for="iu-notes" class="form-label fw-bold font-monospace">Execution Notes / Methodology (Optional)</label>
       <textarea class="form-control font-monospace" id="iu-notes" rows="2" placeholder="Document attack vector, methodology, or reproduction steps..."></textarea>
     </div>
 
@@ -50,6 +50,142 @@
   </div>
 
 </div>
+
+<style>
+  .submit-row:has(#image-upload-container) > div:first-child,
+  .submit-row:has(.image-upload-wrapper) > div:first-child {
+    width: 100% !important;
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+  .submit-row:has(#image-upload-container) > .key-submit,
+  .submit-row:has(.image-upload-wrapper) > .key-submit {
+    display: none !important;
+  }
+  #image-upload-container {
+    width: 100% !important;
+  }
+
+  /* Status Alert Theme-Adaptive Styles */
+  #iu-status-alert {
+    border-radius: 8px;
+    border-width: 1px;
+    border-style: solid;
+    padding: 1rem 1.25rem;
+    transition: all 0.2s ease;
+  }
+
+  #iu-status-alert .alert-heading {
+    color: inherit !important;
+    text-shadow: none !important;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+  }
+
+  #iu-status-alert p {
+    color: inherit !important;
+    opacity: 0.95;
+  }
+
+  /* Light Theme Alert Styling */
+  [data-bs-theme="light"] #iu-status-alert.alert-warning {
+    background-color: #fffbeb !important;
+    border-color: #fde68a !important;
+    color: #92400e !important;
+  }
+  [data-bs-theme="light"] #iu-status-alert.alert-warning #iu-status-icon {
+    color: #d97706 !important;
+  }
+
+  [data-bs-theme="light"] #iu-status-alert.alert-success {
+    background-color: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+    color: #166534 !important;
+  }
+  [data-bs-theme="light"] #iu-status-alert.alert-success #iu-status-icon {
+    color: #16a34a !important;
+  }
+
+  [data-bs-theme="light"] #iu-status-alert.alert-danger {
+    background-color: #fff1f2 !important;
+    border-color: #fecdd3 !important;
+    color: #9f1239 !important;
+  }
+  [data-bs-theme="light"] #iu-status-alert.alert-danger #iu-status-icon {
+    color: #e11d48 !important;
+  }
+
+  [data-bs-theme="light"] #iu-status-alert.alert-secondary,
+  [data-bs-theme="light"] #iu-status-alert.alert-info {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #334155 !important;
+  }
+  [data-bs-theme="light"] #iu-status-alert.alert-secondary #iu-status-icon,
+  [data-bs-theme="light"] #iu-status-alert.alert-info #iu-status-icon {
+    color: #0284c7 !important;
+  }
+
+  /* Dark Theme Alert Styling */
+  [data-bs-theme="dark"] #iu-status-alert.alert-warning {
+    background-color: rgba(255, 170, 0, 0.12) !important;
+    border-color: rgba(255, 170, 0, 0.45) !important;
+    color: #ffd580 !important;
+  }
+  [data-bs-theme="dark"] #iu-status-alert.alert-warning #iu-status-icon {
+    color: #ffaa00 !important;
+  }
+
+  [data-bs-theme="dark"] #iu-status-alert.alert-success {
+    background-color: rgba(0, 230, 118, 0.12) !important;
+    border-color: rgba(0, 230, 118, 0.45) !important;
+    color: #d4eedb !important;
+  }
+  [data-bs-theme="dark"] #iu-status-alert.alert-success #iu-status-icon {
+    color: #00e676 !important;
+  }
+
+  [data-bs-theme="dark"] #iu-status-alert.alert-danger {
+    background-color: rgba(255, 45, 85, 0.12) !important;
+    border-color: rgba(255, 45, 85, 0.45) !important;
+    color: #ffd1dc !important;
+  }
+  [data-bs-theme="dark"] #iu-status-alert.alert-danger #iu-status-icon {
+    color: #ff2d55 !important;
+  }
+
+  [data-bs-theme="dark"] #iu-status-alert.alert-secondary,
+  [data-bs-theme="dark"] #iu-status-alert.alert-info {
+    background-color: rgba(8, 12, 18, 0.95) !important;
+    border-color: var(--cyber-border-bright) !important;
+    color: #e2e8f0 !important;
+  }
+  [data-bs-theme="dark"] #iu-status-alert.alert-secondary #iu-status-icon,
+  [data-bs-theme="dark"] #iu-status-alert.alert-info #iu-status-icon {
+    color: var(--cyber-cyan) !important;
+  }
+
+  /* Form Control Theme-Adaptive Styles */
+  [data-bs-theme="light"] #iu-upload-form-box .form-control {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+  [data-bs-theme="light"] #iu-upload-form-box .form-control:focus {
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.18) !important;
+  }
+
+  [data-bs-theme="dark"] #iu-upload-form-box .form-control {
+    background-color: rgba(10, 15, 20, 0.95) !important;
+    border: 1px solid var(--matrix-border) !important;
+    color: var(--matrix-green-bright) !important;
+  }
+  [data-bs-theme="dark"] #iu-upload-form-box .form-control:focus {
+    border-color: var(--matrix-green-bright) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 230, 118, 0.25) !important;
+  }
+</style>
 {% endblock %}
 
 {% block submit %}
