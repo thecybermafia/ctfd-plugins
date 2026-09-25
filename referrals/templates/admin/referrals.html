@@ -42,8 +42,22 @@
 .referral-action-form:last-child {
   margin-right: 0;
 }
-#referralTabContent .row > [class*="col-"] {
-  margin-bottom: 1.25rem;
+.badge-secondary, .badge-dark {
+  color: #ffffff !important;
+  background-color: #6c757d !important;
+}
+.badge-danger {
+  color: #ffffff !important;
+  background-color: #dc3545 !important;
+}
+.badge-success {
+  color: #ffffff !important;
+  background-color: #28a745 !important;
+}
+.badge-warning {
+  color: #212529 !important;
+  background-color: #ffc107 !important;
+  font-weight: 700 !important;
 }
 </style>
 
@@ -102,7 +116,7 @@
       <a class="nav-link {% if active_tab == 'audit' %}active{% endif %}" id="audit-tab" data-toggle="tab" href="#audit" role="tab">
         Live Audit Log
         {% if total_flagged > 0 %}
-          <span class="badge badge-danger ml-1">{{ total_flagged }}</span>
+          <span class="badge badge-danger text-white ml-1">{{ total_flagged }}</span>
         {% endif %}
       </a>
     </li>
@@ -126,8 +140,8 @@
     <div class="tab-pane fade {% if active_tab == 'audit' %}show active{% endif %}" id="audit" role="tabpanel">
       <div class="card shadow-sm border-1">
         <div class="card-header bg-transparent border-bottom font-monospace fw-bold d-flex justify-content-between align-items-center">
-          <span>Recruitment Telemetry & Audit Roster</span>
-          <span class="badge bg-secondary">{{ referrals|length }} Entries</span>
+          <span>Recruitment Telemetry &amp; Audit Roster</span>
+          <span class="badge badge-secondary text-white">{{ referrals|length }} Entries</span>
         </div>
         <div class="card-body p-0">
           {% if referrals %}
@@ -186,7 +200,7 @@
                         <div><small class="text-muted">Recruiter:</small> <code>{{ r.referrer_ip or 'Unknown' }}</code></div>
                         <div><small class="text-muted">Recruit:</small> <code>{{ r.referee_ip or 'Unknown' }}</code></div>
                         {% if r.is_same_ip %}
-                          <span class="badge bg-danger mt-1">
+                          <span class="badge badge-danger text-white mt-1">
                             IDENTICAL IP
                           </span>
                         {% endif %}
@@ -197,21 +211,21 @@
                       </td>
                       <td>
                         {% if r.status == 'qualified' %}
-                          <span class="badge bg-success">QUALIFIED</span>
+                          <span class="badge badge-success text-white">QUALIFIED</span>
                           {% if r.award %}
                             <div class="small text-success mt-1">+{{ r.award.value }} PTS</div>
                           {% endif %}
                         {% elif r.status == 'flagged' %}
-                          <span class="badge bg-danger">FLAGGED</span>
+                          <span class="badge badge-danger text-white">FLAGGED</span>
                           {% if r.notes %}
                             <div class="small text-danger mt-1">{{ r.notes }}</div>
                           {% endif %}
                         {% elif r.status == 'cap_reached' %}
-                          <span class="badge bg-secondary">CAP REACHED</span>
+                          <span class="badge badge-secondary text-white">CAP REACHED</span>
                         {% elif r.status == 'revoked' %}
-                          <span class="badge bg-secondary">REVOKED</span>
+                          <span class="badge badge-secondary text-white">REVOKED</span>
                         {% else %}
-                          <span class="badge bg-warning text-dark">PENDING</span>
+                          <span class="badge badge-warning text-dark font-weight-bold">PENDING</span>
                         {% endif %}
                       </td>
                       <td class="text-end">
@@ -311,7 +325,7 @@
       <div class="card shadow-sm border-1 mb-4">
         <div class="card-header bg-transparent border-bottom font-monospace fw-bold d-flex justify-content-between align-items-center">
           <span>Suspended Users</span>
-          <span class="badge bg-secondary">{{ disabled_users|length }} Users</span>
+          <span class="badge badge-secondary text-white">{{ disabled_users|length }} Users</span>
         </div>
         <div class="card-body p-0">
           {% if disabled_users %}
@@ -336,7 +350,7 @@
                         </a>
                       </td>
                       <td class="text-muted">{{ u.email }}</td>
-                      <td><span class="badge bg-danger">Suspended</span></td>
+                      <td><span class="badge badge-danger text-white">Suspended</span></td>
                       <td class="text-end">
                         <form method="POST" action="{{ url_for('referrals.admin_referral_actions') }}" class="d-inline">
                           <input type="hidden" name="nonce" value="{{ Session.nonce }}">
@@ -365,7 +379,7 @@
       <div class="card shadow-sm border-1 mb-4">
         <div class="card-header bg-transparent border-bottom font-monospace fw-bold d-flex justify-content-between align-items-center">
           <span>Suspended Teams</span>
-          <span class="badge bg-secondary">{{ disabled_teams|length }} Teams</span>
+          <span class="badge badge-secondary text-white">{{ disabled_teams|length }} Teams</span>
         </div>
         <div class="card-body p-0">
           {% if disabled_teams %}
@@ -388,7 +402,7 @@
                           {{ t.name }}
                         </a>
                       </td>
-                      <td><span class="badge bg-danger">Suspended</span></td>
+                      <td><span class="badge badge-danger text-white">Suspended</span></td>
                       <td class="text-end">
                         <form method="POST" action="{{ url_for('referrals.admin_referral_actions') }}" class="d-inline">
                           <input type="hidden" name="nonce" value="{{ Session.nonce }}">
@@ -421,227 +435,254 @@
 
         <!-- 1. Master & Navigation Configuration -->
         <div class="card shadow-sm border-1 mb-4">
-          <div class="card-header bg-transparent border-bottom font-monospace fw-bold">
-            1. Master & Navigation Configuration
+          <div class="card-header bg-light border-bottom font-monospace fw-bold text-dark py-3">
+            1. Master &amp; Navigation Configuration
           </div>
-          <div class="card-body p-4">
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_enabled" name="referral_enabled" value="true" {% if configs.referral_enabled == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_enabled">Enable Referral System</label>
-                  </div>
-                  <small class="text-muted d-block font-monospace">Master switch. If disabled, new referral links and bonuses are paused.</small>
-                </div>
+          <ul class="list-group list-group-flush font-monospace">
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_enabled">Enable Referral System</label>
+                <small class="text-muted d-block">Master switch. If disabled, new referral links and bonuses are paused.</small>
               </div>
-              <div class="col-md-4 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_show_in_navbar" name="referral_show_in_navbar" value="true" {% if configs.referral_show_in_navbar == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_show_in_navbar">Show in Main Navbar</label>
-                  </div>
-                  <small class="text-muted d-block font-monospace">When disabled, participants access referrals inside Settings &gt; Referrals.</small>
-                </div>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_enabled" name="referral_enabled" value="true" {% if configs.referral_enabled == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_enabled"></label>
               </div>
-              <div class="col-md-4 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_broadcast_feed" name="referral_broadcast_feed" value="true" {% if configs.referral_broadcast_feed == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_broadcast_feed">Broadcast to Live Feed</label>
-                  </div>
-                  <small class="text-muted d-block font-monospace">Announce qualified recruit achievements in the tactical live activity feed.</small>
-                </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_show_in_navbar">Show in Main Navbar</label>
+                <small class="text-muted d-block">When disabled, participants access referrals inside Settings &gt; Referrals.</small>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <label class="form-label font-monospace fw-bold">Program Display Name:</label>
-                <input type="text" class="form-control font-monospace" name="referral_program_name" value="{{ configs.referral_program_name }}" required>
-                <small class="text-muted">Title shown on participant dashboard and settings panel.</small>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_show_in_navbar" name="referral_show_in_navbar" value="true" {% if configs.referral_show_in_navbar == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_show_in_navbar"></label>
               </div>
-              <div class="col-md-3 mb-3">
-                <label class="form-label font-monospace fw-bold">Code Prefix:</label>
-                <input type="text" class="form-control font-monospace" name="referral_code_prefix" value="{{ configs.referral_code_prefix }}" required>
-                <small class="text-muted">e.g. <code>REF-</code> or <code>AGENT-</code></small>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_broadcast_feed">Broadcast to Live Feed</label>
+                <small class="text-muted d-block">Announce qualified recruit achievements in the tactical live activity feed.</small>
               </div>
-              <div class="col-md-3 mb-3">
-                <label class="form-label font-monospace fw-bold">Cookie Validity (Days):</label>
-                <input type="number" class="form-control font-monospace" name="referral_cookie_ttl_days" value="{{ configs.referral_cookie_ttl_days }}" min="1" max="90" required>
-                <small class="text-muted">How long recruit cookie persists.</small>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_broadcast_feed" name="referral_broadcast_feed" value="true" {% if configs.referral_broadcast_feed == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_broadcast_feed"></label>
               </div>
-              <div class="col-12 mb-2">
-                <label class="form-label font-monospace fw-bold">Participant Instructions & Mission Statement:</label>
-                <textarea class="form-control font-monospace" name="referral_instructions" rows="2">{{ configs.referral_instructions }}</textarea>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_program_name">Program Display Name</label>
+                <small class="text-muted d-block">Title shown on participant dashboard and settings panel.</small>
               </div>
-            </div>
-          </div>
+              <div style="min-width: 260px; max-width: 340px;">
+                <input type="text" class="form-control font-monospace" id="referral_program_name" name="referral_program_name" value="{{ configs.referral_program_name }}" required>
+              </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_code_prefix">Code Prefix</label>
+                <small class="text-muted d-block">Prefix for auto-generated invite codes (e.g. <code>REF-</code> or <code>AGENT-</code>).</small>
+              </div>
+              <div style="min-width: 180px; max-width: 220px;">
+                <input type="text" class="form-control font-monospace" id="referral_code_prefix" name="referral_code_prefix" value="{{ configs.referral_code_prefix }}" required>
+              </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_cookie_ttl_days">Cookie Validity (Days)</label>
+                <small class="text-muted d-block">How long recruit tracking cookie persists in days (1 to 90).</small>
+              </div>
+              <div style="min-width: 140px; max-width: 180px;">
+                <input type="number" class="form-control font-monospace text-end" id="referral_cookie_ttl_days" name="referral_cookie_ttl_days" value="{{ configs.referral_cookie_ttl_days }}" min="1" max="90" required>
+              </div>
+            </li>
+            <li class="list-group-item py-3">
+              <label class="fw-bold d-block text-dark mb-1" for="referral_instructions">Participant Instructions &amp; Mission Statement</label>
+              <small class="text-muted d-block mb-2">Detailed onboarding text presented to operatives on their referral terminal.</small>
+              <textarea class="form-control font-monospace" id="referral_instructions" name="referral_instructions" rows="2">{{ configs.referral_instructions }}</textarea>
+            </li>
+          </ul>
         </div>
 
-        <!-- 2. Rewards, Points & Caps -->
+        <!-- 2. Rewards, Points & Inflation Caps -->
         <div class="card shadow-sm border-1 mb-4">
-          <div class="card-header bg-transparent border-bottom font-monospace fw-bold">
-            2. Rewards, Points & Inflation Caps
+          <div class="card-header bg-light border-bottom font-monospace fw-bold text-dark py-3">
+            2. Rewards, Points &amp; Inflation Caps
           </div>
-          <div class="card-body p-4">
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label class="form-label font-monospace fw-bold">Referrer Bonus Points:</label>
-                <input type="number" class="form-control font-monospace" name="referral_points" value="{{ configs.referral_points }}" min="0" required>
-                <small class="text-muted">Points minted to recruiter upon recruit qualification.</small>
+          <ul class="list-group list-group-flush font-monospace">
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_points">Referrer Bonus Points</label>
+                <small class="text-muted d-block">Points minted to recruiter operative upon recruit qualification.</small>
               </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label font-monospace fw-bold">Max Qualified Referrals Per Account / Team:</label>
-                <input type="number" class="form-control font-monospace" name="referral_max_per_account" value="{{ configs.referral_max_per_account }}" min="0" required>
-                <small class="text-muted">Maximum bonuses per user or team (0 = unlimited).</small>
+              <div style="min-width: 140px; max-width: 180px;">
+                <input type="number" class="form-control font-monospace text-end" id="referral_points" name="referral_points" value="{{ configs.referral_points }}" min="0" required>
               </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label font-monospace fw-bold">Global Competition Point Ceiling:</label>
-                <input type="number" class="form-control font-monospace" name="referral_global_point_cap" value="{{ configs.referral_global_point_cap }}" min="0" required>
-                <small class="text-muted">Total referral bonus points allowed across CTF (0 = unlimited).</small>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_max_per_account">Max Qualified Referrals Per Account / Team</label>
+                <small class="text-muted d-block">Maximum rewarded bonuses allowed per account or team (0 = unlimited).</small>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_referee_bonus_enabled" name="referral_referee_bonus_enabled" value="true" {% if configs.referral_referee_bonus_enabled == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_referee_bonus_enabled">Recruit Welcome Bonus</label>
-                  </div>
-                  <small class="text-muted d-block font-monospace">Award bonus points directly to the recruit upon proving capability.</small>
-                </div>
+              <div style="min-width: 140px; max-width: 180px;">
+                <input type="number" class="form-control font-monospace text-end" id="referral_max_per_account" name="referral_max_per_account" value="{{ configs.referral_max_per_account }}" min="0" required>
               </div>
-              <div class="col-md-3 mb-3">
-                <label class="form-label font-monospace fw-bold">Recruit Welcome Points:</label>
-                <input type="number" class="form-control font-monospace" name="referral_referee_bonus_points" value="{{ configs.referral_referee_bonus_points }}" min="0" required>
-                <small class="text-muted">Points awarded to recruit.</small>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_global_point_cap">Global Competition Point Ceiling</label>
+                <small class="text-muted d-block">Total referral bonus points allowed across entire CTF (0 = unlimited).</small>
               </div>
-              <div class="col-md-3 mb-3">
-                <label class="form-label font-monospace fw-bold">Scoreboard Category:</label>
-                <input type="text" class="form-control font-monospace" name="referral_award_category" value="{{ configs.referral_award_category }}" required>
-                <small class="text-muted">Category name under Awards.</small>
+              <div style="min-width: 140px; max-width: 180px;">
+                <input type="number" class="form-control font-monospace text-end" id="referral_global_point_cap" name="referral_global_point_cap" value="{{ configs.referral_global_point_cap }}" min="0" required>
               </div>
-            </div>
-          </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_referee_bonus_enabled">Recruit Welcome Bonus</label>
+                <small class="text-muted d-block">Award bonus points directly to recruit upon proving capability.</small>
+              </div>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_referee_bonus_enabled" name="referral_referee_bonus_enabled" value="true" {% if configs.referral_referee_bonus_enabled == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_referee_bonus_enabled"></label>
+              </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_referee_bonus_points">Recruit Welcome Points</label>
+                <small class="text-muted d-block">Points awarded to recruit upon reaching qualification threshold.</small>
+              </div>
+              <div style="min-width: 140px; max-width: 180px;">
+                <input type="number" class="form-control font-monospace text-end" id="referral_referee_bonus_points" name="referral_referee_bonus_points" value="{{ configs.referral_referee_bonus_points }}" min="0" required>
+              </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_award_category">Scoreboard Category</label>
+                <small class="text-muted d-block">Category name displayed under Awards telemetry.</small>
+              </div>
+              <div style="min-width: 220px; max-width: 280px;">
+                <input type="text" class="form-control font-monospace" id="referral_award_category" name="referral_award_category" value="{{ configs.referral_award_category }}" required>
+              </div>
+            </li>
+          </ul>
         </div>
 
         <!-- 3. Proof-of-Play & Participant Visibility -->
         <div class="card shadow-sm border-1 mb-4">
-          <div class="card-header bg-transparent border-bottom font-monospace fw-bold">
-            3. Proof-of-Play & Participant Visibility
+          <div class="card-header bg-light border-bottom font-monospace fw-bold text-dark py-3">
+            3. Proof-of-Play &amp; Participant Visibility
           </div>
-          <div class="card-body p-4">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <label class="form-label font-monospace fw-bold mb-1">Minimum Challenge Points to Qualify:</label>
-                  <input type="number" class="form-control font-monospace mb-2" name="referral_min_points_to_qualify" value="{{ configs.referral_min_points_to_qualify }}" min="0" required>
-                  <small class="text-muted font-monospace d-block">Recruit must score at least this many challenge points before bonus unlocks.</small>
-                </div>
+          <ul class="list-group list-group-flush font-monospace">
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_min_points_to_qualify">Minimum Challenge Points to Qualify</label>
+                <small class="text-muted d-block">Recruit must score at least this many challenge points before bonus unlocks.</small>
               </div>
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <label class="form-label font-monospace fw-bold mb-1">Minimum Challenge Solves Count:</label>
-                  <input type="number" class="form-control font-monospace mb-2" name="referral_min_solves_to_qualify" value="{{ configs.referral_min_solves_to_qualify }}" min="1" required>
-                  <small class="text-muted font-monospace d-block">Recruit must solve at least this many separate challenges.</small>
-                </div>
+              <div style="min-width: 140px; max-width: 180px;">
+                <input type="number" class="form-control font-monospace text-end" id="referral_min_points_to_qualify" name="referral_min_points_to_qualify" value="{{ configs.referral_min_points_to_qualify }}" min="0" required>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_exclude_zero_point_chals" name="referral_exclude_zero_point_chals" value="true" {% if configs.referral_exclude_zero_point_chals == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_exclude_zero_point_chals">Exclude 0-Point Challenges</label>
-                  </div>
-                  <small class="text-muted d-block font-monospace">Ignore 0-point informational challenges from milestone calculations.</small>
-                </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_min_solves_to_qualify">Minimum Challenge Solves Count</label>
+                <small class="text-muted d-block">Recruit must solve at least this many separate challenges.</small>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_show_progress_in_roster" name="referral_show_progress_in_roster" value="true" {% if configs.referral_show_progress_in_roster == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_show_progress_in_roster">Show Progress in Recruited Operatives Roster</label>
-                  </div>
-                  <small class="text-muted d-block font-monospace">When disabled, progress like "0/12 PTS" and progress bars are hidden from participants.</small>
-                </div>
+              <div style="min-width: 140px; max-width: 180px;">
+                <input type="number" class="form-control font-monospace text-end" id="referral_min_solves_to_qualify" name="referral_min_solves_to_qualify" value="{{ configs.referral_min_solves_to_qualify }}" min="1" required>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_show_bonus_notice" name="referral_show_bonus_notice" value="true" {% if configs.referral_show_bonus_notice == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_show_bonus_notice">Show Bonus Requirement Notice</label>
-                  </div>
-                  <small class="text-muted d-block font-monospace">Displays the requirement alert to end users on /settings and /referrals.</small>
-                </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_exclude_zero_point_chals">Exclude 0-Point Challenges</label>
+                <small class="text-muted d-block">Ignore 0-point informational challenges from milestone calculations.</small>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <label class="form-label font-monospace fw-bold mb-1">Custom Bonus Notice Text:</label>
-                  <input type="text" class="form-control font-monospace mb-2" name="referral_bonus_notice_text" value="{{ configs.referral_bonus_notice_text or '' }}" placeholder="Earn +{points} PTS per recruit who scores ≥ {min_points} points (Leave blank for default)">
-                  <small class="text-muted d-block font-monospace">Custom message shown to end users. Leave blank to auto-generate from points and thresholds.</small>
-                </div>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_exclude_zero_point_chals" name="referral_exclude_zero_point_chals" value="true" {% if configs.referral_exclude_zero_point_chals == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_exclude_zero_point_chals"></label>
               </div>
-            </div>
-          </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_show_progress_in_roster">Show Progress in Recruited Operatives Roster</label>
+                <small class="text-muted d-block">When disabled, progress like "0/12 PTS" and progress bars are hidden from participants.</small>
+              </div>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_show_progress_in_roster" name="referral_show_progress_in_roster" value="true" {% if configs.referral_show_progress_in_roster == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_show_progress_in_roster"></label>
+              </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_show_bonus_notice">Show Bonus Requirement Notice</label>
+                <small class="text-muted d-block">Displays requirement alert to end users on /settings and /referrals.</small>
+              </div>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_show_bonus_notice" name="referral_show_bonus_notice" value="true" {% if configs.referral_show_bonus_notice == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_show_bonus_notice"></label>
+              </div>
+            </li>
+            <li class="list-group-item py-3">
+              <label class="fw-bold d-block text-dark mb-1" for="referral_bonus_notice_text">Custom Bonus Notice Text</label>
+              <small class="text-muted d-block mb-2">Custom message shown to end users. Leave blank to auto-generate from points and thresholds.</small>
+              <input type="text" class="form-control font-monospace" id="referral_bonus_notice_text" name="referral_bonus_notice_text" value="{{ configs.referral_bonus_notice_text or '' }}" placeholder="Earn +{points} PTS per recruit who scores ≥ {min_points} points (Leave blank for default)">
+            </li>
+          </ul>
         </div>
 
         <!-- 4. Anti-Cheat & Security Shields -->
         <div class="card shadow-sm border-1 mb-4">
-          <div class="card-header bg-transparent border-bottom font-monospace fw-bold">
-            4. Anti-Cheat & Security Shields
+          <div class="card-header bg-light border-bottom font-monospace fw-bold text-dark py-3">
+            4. Anti-Cheat &amp; Security Shields
           </div>
-          <div class="card-body p-4">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="fw-bold font-monospace mb-2 text-dark">Identical IP Detection Policy</div>
-                  <select class="form-select font-monospace mb-2" name="referral_ip_policy">
-                    <option value="flag" {% if configs.referral_ip_policy == 'flag' %}selected{% endif %}>Flag & Hold for Admin Approval (Recommended)</option>
-                    <option value="block" {% if configs.referral_ip_policy == 'block' %}selected{% endif %}>Strict: Block Referral Completely</option>
-                    <option value="allow" {% if configs.referral_ip_policy == 'allow' %}selected{% endif %}>Allow Same IP (Local LAN / Testing Mode)</option>
-                  </select>
-                  <small class="text-muted font-monospace d-block">Action taken when recruit and recruiter connect from identical IP addresses.</small>
-                </div>
+          <ul class="list-group list-group-flush font-monospace">
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="fw-bold d-block text-dark mb-1" for="referral_ip_policy">Identical IP Detection Policy</label>
+                <small class="text-muted d-block">Action taken when recruit and recruiter connect from identical IP addresses.</small>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="fw-bold font-monospace mb-2 text-dark">Subnet Collision Screening</div>
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_block_subnets" name="referral_block_subnets" value="true" {% if configs.referral_block_subnets == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_block_subnets">Screen Subnet Collisions (/24 CIDR)</label>
-                  </div>
-                  <small class="text-muted font-monospace d-block">Flag accounts sharing the same local subnet class.</small>
-                </div>
+              <div style="min-width: 280px; max-width: 360px;">
+                <select class="custom-select font-monospace" id="referral_ip_policy" name="referral_ip_policy">
+                  <option value="flag" {% if configs.referral_ip_policy == 'flag' %}selected{% endif %}>Flag &amp; Hold for Admin Approval (Recommended)</option>
+                  <option value="block" {% if configs.referral_ip_policy == 'block' %}selected{% endif %}>Strict: Block Referral Completely</option>
+                  <option value="allow" {% if configs.referral_ip_policy == 'allow' %}selected{% endif %}>Allow Same IP (Local LAN / Testing Mode)</option>
+                </select>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="fw-bold font-monospace mb-2 text-dark">Teammate Exploitation Shield</div>
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_disallow_teammates" name="referral_disallow_teammates" value="true" {% if configs.referral_disallow_teammates == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_disallow_teammates">Prohibit Teammate Referrals in Team Mode</label>
-                  </div>
-                  <small class="text-muted font-monospace d-block">Prevent players from referring members of their own syndicate team to farm points.</small>
-                </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_block_subnets">Subnet Collision Screening</label>
+                <small class="text-muted d-block">Flag accounts sharing the same local subnet class (/24 CIDR).</small>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <div class="p-3 border rounded bg-light h-100">
-                  <div class="fw-bold font-monospace mb-2 text-dark">Sanction Synchronization</div>
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="referral_auto_revoke_on_ban" name="referral_auto_revoke_on_ban" value="true" {% if configs.referral_auto_revoke_on_ban == 'true' %}checked{% endif %}>
-                    <label class="form-check-label fw-bold font-monospace" for="referral_auto_revoke_on_ban">Auto-Revoke Bonus if Recruit is Banned / Hidden</label>
-                  </div>
-                  <small class="text-muted font-monospace d-block">Automatically strip awarded referral points if the recruited operative is penalized.</small>
-                </div>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_block_subnets" name="referral_block_subnets" value="true" {% if configs.referral_block_subnets == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_block_subnets"></label>
               </div>
-            </div>
-          </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_disallow_teammates">Teammate Exploitation Shield</label>
+                <small class="text-muted d-block">Prevent players from referring members of their own syndicate team to farm points.</small>
+              </div>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_disallow_teammates" name="referral_disallow_teammates" value="true" {% if configs.referral_disallow_teammates == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_disallow_teammates"></label>
+              </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div class="mr-4">
+                <label class="form-check-label fw-bold d-block text-dark mb-1" for="referral_auto_revoke_on_ban">Sanction Synchronization</label>
+                <small class="text-muted d-block">Automatically strip awarded referral points if the recruited operative is banned or hidden.</small>
+              </div>
+              <div class="custom-control custom-switch ml-4 flex-shrink-0">
+                <input type="checkbox" class="custom-control-input" id="referral_auto_revoke_on_ban" name="referral_auto_revoke_on_ban" value="true" {% if configs.referral_auto_revoke_on_ban == 'true' %}checked{% endif %}>
+                <label class="custom-control-label" for="referral_auto_revoke_on_ban"></label>
+              </div>
+            </li>
+          </ul>
         </div>
 
-        <div class="text-end mb-4">
+        <div class="text-right mb-4">
           <button type="submit" class="btn btn-primary font-monospace px-4 py-2" id="save-referral-config-btn">
             Save Configuration
           </button>

@@ -63,6 +63,23 @@ def load(app):
             r.live_score, r.live_solves = ReferralScoring.get_referee_progress(r.referee_id)
         is_disabled = ReferralConfig.is_team_disabled(team_id)
         points_earned = sum(r.award.value for r in recruits if r.award and r.award.value)
+
+        my_ref = None
+        if team:
+            if team.id:
+                my_ref = Referrals.query.filter_by(referee_team_id=team.id).first()
+            if not my_ref and team.captain_id:
+                my_ref = Referrals.query.filter_by(referee_id=team.captain_id).first()
+            if not my_ref and team.members:
+                member_ids = [m.id for m in team.members]
+                my_ref = Referrals.query.filter(Referrals.referee_id.in_(member_ids)).first()
+            if my_ref and not my_ref.referee_team_id:
+                try:
+                    my_ref.referee_team_id = team.id
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+
         return {
             "captain_code": captain_code_obj.code if captain_code_obj else None,
             "captain_name": captain_name,
@@ -73,6 +90,7 @@ def load(app):
             "qualified_count": sum(1 for r in recruits if r.status == "qualified"),
             "pending_count": sum(1 for r in recruits if r.status in ("pending", "flagged")),
             "points_earned": points_earned,
+            "my_referral": my_ref,
             "is_disabled": is_disabled,
             "configs": ReferralConfig.get_all(),
         }
