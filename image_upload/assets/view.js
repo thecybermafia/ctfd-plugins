@@ -1,11 +1,15 @@
-CTFd._internal.challenge.data = undefined;
-CTFd._internal.challenge.renderer = null;
-CTFd._internal.challenge.preRender = function() {};
-CTFd._internal.challenge.render = null;
-CTFd._internal.challenge.postRender = function() {
+window.CTFd = window.CTFd || {};
+window.CTFd._internal = window.CTFd._internal || {};
+window.CTFd._internal.challenge = window.CTFd._internal.challenge || {};
+
+window.CTFd._internal.challenge.data = undefined;
+window.CTFd._internal.challenge.renderer = null;
+window.CTFd._internal.challenge.preRender = function() {};
+window.CTFd._internal.challenge.render = null;
+window.CTFd._internal.challenge.postRender = function() {
   setTimeout(initImageUploadChallenge, 50);
 };
-CTFd._internal.challenge.submit = function() {
+window.CTFd._internal.challenge.submit = function() {
   return Promise.resolve();
 };
 
@@ -13,6 +17,21 @@ function initImageUploadChallenge() {
   const chalIdEl = document.getElementById("challenge-id");
   if (!chalIdEl) return;
   const challengeId = chalIdEl.value;
+
+  // Ensure full width fit inside modal tab panel
+  const container = document.getElementById("image-upload-container");
+  if (container) {
+    const col = container.closest(".col-sm-8");
+    if (col) {
+      col.classList.remove("col-sm-8");
+      col.classList.add("col-12");
+    }
+    const submitRow = container.closest(".submit-row");
+    if (submitRow) {
+      const keySubmit = submitRow.querySelector(".key-submit");
+      if (keySubmit) keySubmit.style.display = "none";
+    }
+  }
 
   const statusAlert = document.getElementById("iu-status-alert");
   const statusIcon = document.getElementById("iu-status-icon");
@@ -119,6 +138,8 @@ document.addEventListener("shown.bs.modal", () => {
   setTimeout(initImageUploadChallenge, 50);
 });
 
-CTFd.plugin.run(() => {
-  setTimeout(initImageUploadChallenge, 100);
-});
+if (window.CTFd && window.CTFd.plugin && window.CTFd.plugin.run) {
+  window.CTFd.plugin.run(() => {
+    setTimeout(initImageUploadChallenge, 100);
+  });
+}
