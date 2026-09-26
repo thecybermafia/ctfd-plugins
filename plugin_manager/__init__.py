@@ -74,7 +74,7 @@ def admin_plugins():
 
     plugins_list.sort(key=lambda x: (not x["is_core"], x["title"].lower()))
 
-    return render_template("admin/plugins.html", plugins=plugins_list)
+    return render_template("admin/plugins.html", installed_plugins=plugins_list)
 
 
 @plugin_manager_bp.route("/admin/plugins/toggle", methods=["POST"])
@@ -89,6 +89,10 @@ def admin_plugins_toggle():
 
     if plugin_name in CORE_PLUGINS:
         flash(f"Cannot modify core plugin '{plugin_name}'.", "danger")
+        return redirect(url_for("plugin_manager.admin_plugins"))
+
+    if plugin_name not in get_plugin_names():
+        flash(f"Unrecognized plugin '{plugin_name}'.", "danger")
         return redirect(url_for("plugin_manager.admin_plugins"))
 
     disabled = set(get_disabled_plugins())

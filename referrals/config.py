@@ -14,7 +14,9 @@ DEFAULT_CONFIGS = {
     "referral_referee_bonus_points": "25",
     "referral_award_category": "Recruitment Directive",
 
-    # 3. Qualification & Proof of Play
+    # 3. Qualification & Proof of Play (Recruit Training)
+    "referral_qualification_mode": "points_only",  # 'points_only', 'challenge_only', 'both', 'either'
+    "referral_required_challenge_id": "",
     "referral_min_points_to_qualify": "100",
     "referral_min_solves_to_qualify": "1",
     "referral_exclude_zero_point_chals": "true",
@@ -23,17 +25,24 @@ DEFAULT_CONFIGS = {
     "referral_max_per_account": "5",
     "referral_global_point_cap": "0",  # 0 = unlimited
 
-    # 5. Anti-Cheat & Security Shields
+    # 5. Referrer Access Gate (Prerequisites to unlock / access referral terminal)
+    "referral_unlock_mode": "none",  # 'none', 'points', 'solves', 'challenge', 'all', 'any'
+    "referral_unlock_min_points": "0",
+    "referral_unlock_min_solves": "0",
+    "referral_unlock_challenge_id": "",
+    "referral_access_denied_message": "Referral system access restricted: Complete prerequisite training or contact command staff.",
+
+    # 6. Anti-Cheat & Security Shields
     "referral_ip_policy": "flag",  # 'flag', 'block', 'allow'
     "referral_disallow_teammates": "true",
     "referral_block_subnets": "false",
     "referral_auto_revoke_on_ban": "true",
 
-    # 6. Exclusions & Suspensions (User and Team IDs)
+    # 7. Exclusions & Suspensions (User and Team IDs)
     "referral_disabled_user_ids": "",
     "referral_disabled_team_ids": "",
 
-    # 7. UI & Messaging
+    # 8. UI & Messaging
     "referral_broadcast_feed": "true",
     "referral_show_bonus_notice": "true",
     "referral_bonus_notice_text": "",
@@ -67,7 +76,8 @@ class ReferralConfig:
         try:
             return int(val)
         except (ValueError, TypeError):
-            def_val = DEFAULT_CONFIGS.get(key, 0)
+            return int(DEFAULT_CONFIGS.get(key, 0))
+
     @staticmethod
     def get_bonus_notice_text():
         custom = (ReferralConfig.get("referral_bonus_notice_text") or "").strip()
@@ -75,6 +85,24 @@ class ReferralConfig:
             return custom
         pts = ReferralConfig.get_int("referral_points")
         req_pts = ReferralConfig.get_int("referral_min_points_to_qualify")
+        mode = ReferralConfig.get("referral_qualification_mode", "points_only")
+        chal_id = ReferralConfig.get("referral_required_challenge_id", "")
+        chal_name = None
+        if chal_id:
+            try:
+                from CTFd.models import Challenges
+                c = Challenges.query.filter_by(id=int(chal_id)).first()
+                if c:
+                    chal_name = c.name
+            except Exception:
+                pass
+
+        if mode == "challenge_only" and chal_name:
+            return f"Earn +{pts} PTS per recruit who completes training by solving challenge '{chal_name}'."
+        elif mode == "both" and chal_name:
+            return f"Earn +{pts} PTS per recruit who scores ≥ {req_pts} points and solves challenge '{chal_name}'."
+        elif mode == "either" and chal_name:
+            return f"Earn +{pts} PTS per recruit who scores ≥ {req_pts} points or solves challenge '{chal_name}'."
         return f"Earn +{pts} PTS per recruit who proves capability by scoring ≥ {req_pts} points."
 
     @staticmethod

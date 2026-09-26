@@ -510,6 +510,9 @@ def sso_callback(provider=None):
                 return redirect(url_for("auth.login", fallback=1))
 
             xml_data = base64.b64decode(saml_response)
+            if b"<!ENTITY" in xml_data or b"<!DOCTYPE" in xml_data:
+                flash("Invalid SAML response: DOCTYPE and ENTITY declarations are forbidden.", "danger")
+                return redirect(url_for("auth.login", fallback=1))
             root = ET.fromstring(xml_data)
             ns = {
                 "saml": "urn:oasis:names:tc:SAML:2.0:assertion",

@@ -1,5 +1,5 @@
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
-from CTFd.models import Awards, Solves, Users, Teams, db
+from CTFd.models import Awards, Challenges, Solves, Users, Teams, db
 from CTFd.utils import get_config
 from CTFd.utils.decorators import admins_only, authed_only
 from CTFd.utils.user import get_current_user, get_ip
@@ -51,6 +51,12 @@ def join_via_referral():
 @authed_only
 def referrals_dashboard():
     user = get_current_user()
+    accessible, reason = ReferralScoring.is_referral_accessible_for_user(user)
+    if not accessible:
+        msg = ReferralConfig.get("referral_access_denied_message") or reason
+        flash(msg, "warning")
+        return redirect(url_for("views.settings"))
+
     prefix = ReferralConfig.get("referral_code_prefix", "REF-")
     code_obj = ReferralCodes.get_or_create(user.id, prefix=prefix)
 
@@ -106,6 +112,11 @@ def referrals_dashboard():
 @authed_only
 def api_referrals_me():
     user = get_current_user()
+    accessible, reason = ReferralScoring.is_referral_accessible_for_user(user)
+    if not accessible:
+        msg = ReferralConfig.get("referral_access_denied_message") or reason
+        return jsonify({"success": False, "message": msg, "locked": True}), 403
+
     prefix = ReferralConfig.get("referral_code_prefix", "REF-")
     code_obj = ReferralCodes.get_or_create(user.id, prefix=prefix)
 
@@ -206,10 +217,13 @@ def admin_referrals():
     disabled_users = Users.query.filter(Users.id.in_(disabled_user_ids)).all() if disabled_user_ids else []
     disabled_teams = Teams.query.filter(Teams.id.in_(disabled_team_ids)).all() if disabled_team_ids else []
 
+    challenges = Challenges.query.order_by(Challenges.category.asc(), Challenges.name.asc()).all()
+
     return render_template(
         "admin/referrals.html",
         configs=configs,
         referrals=referrals_list,
+        challenges=challenges,
         total_codes=total_codes,
         total_recruits=total_recruits,
         total_qualified=total_qualified,

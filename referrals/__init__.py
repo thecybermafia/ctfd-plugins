@@ -95,8 +95,13 @@ def load(app):
             "configs": ReferralConfig.get_all(),
         }
 
+    def is_referral_accessible_helper(user=None):
+        accessible, _ = ReferralScoring.is_referral_accessible_for_user(user)
+        return accessible
+
     app.jinja_env.globals["get_user_referral_info"] = get_user_referral_info
     app.jinja_env.globals["get_team_referral_info"] = get_team_referral_info
+    app.jinja_env.globals["is_referral_accessible_for_user"] = is_referral_accessible_helper
 
     register_plugin_assets_directory(app, base_path="/plugins/referrals/assets/")
 

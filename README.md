@@ -12,6 +12,8 @@ A production-ready collection of game-changing challenge types and operational i
 
 | Plugin | Type | Description |
 | :--- | :--- | :--- |
+| [**`referrals`**](./referrals) | Community & Growth | Gamified player recruitment system with proof-of-play milestone qualification, anti-cheat IP/subnet quarantine, teammate collusion shields, and super-configurable admin controls. |
+| [**`plugin_manager`**](./plugin_manager) | Administration | Dynamic plugin enable/disable manager with nested admin dropdown menu organization and core plugin protections. |
 | [**`bingo`**](./bingo) | Challenge Type | Interactive 3×3, 4×4, or 5×5 Cyber Bingo board with instant tile validation, row/col/diagonal line bonuses, and blackout prizes. |
 | [**`crossword`**](./crossword) | Challenge Type | Cyber Crossword puzzle challenge with simple `Clue \| Answer` setup and master solution keyword verification. |
 | [**`image_upload`**](./image_upload) | Challenge Type | Secure manual review challenge for OSINT, physical hacking, hardware badges, and telemetry proof with admin scoring console. |
@@ -36,12 +38,22 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
    - **Magic Bytes Validation**: Verifies the genuine byte signatures of image payloads to stop disguised webshells.
    - **Input Sanitization**: Score inputs and notes are clamped to prevent database injection and DoS.
 4. **Input Boundary Enforcement & XSS Elimination (Textarea)**:
-   - Submissions are clamped to configurable character thresholds and a hard 100,000-character ceiling to prevent DoS.
+   - Submissions are clamped to configurable character thresholds and a hard 50,000-character ceiling to prevent DoS.
    - Writeups are strictly escaped in both the admin scoring console and user modals to prevent Stored XSS.
 5. **SSO Policy Synchronization & Authentication Lockdown (SSO)**:
    - Synchronizes `registration_visibility = "private"` when SSO is mandatory for all users, closing race conditions where unmanaged accounts could be registered publicly.
    - Rejects password logins when SSO is required, with an emergency admin recovery bypass (`?emergency_auth=true`) for disaster response.
-6. **CTF Lifecycle Enforcement**:
+   - Explicitly rejects XML `DOCTYPE` and `ENTITY` declarations to protect SAML workflows from XXE and entity expansion attacks.
+6. **Multi-Vector Anti-Cheat & Sybil Protection (Referrals)**:
+   - Blocks self-referrals, matching email addresses, circular referral loops (`A -> B -> A`), and teammate self-farming.
+   - Restricts onboarding linkers to the initial 5-minute registration window, preventing retro-claiming by aged accounts.
+   - Proof-of-play milestones prevent reward allocation to inactive dummy accounts.
+   - IP matching and subnet CIDR screening automatically flags suspected multi-accounting into administrative quarantine.
+   - Auto-revokes awarded scoreboard bonus points if recruit accounts are banned or hidden.
+7. **Privilege Boundary & Safe Execution (Plugin Manager)**:
+   - Strictly validates plugin names against known filesystem manifests to eliminate path traversal.
+   - Prevents disablement of core CTFd functional plugins (`challenges`, `flags`, `plugin_manager`).
+8. **CTF Lifecycle Enforcement**:
    - Solves and submissions are blocked if the competition is frozen, paused, or has not started yet (unless submitted by an admin).
    - Hidden challenges cannot be queried or solved by non-admin participants.
 
@@ -54,7 +66,7 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
 1. Copy the desired plugin folder(s) directly into your CTFd `CTFd/plugins/` directory:
    ```bash
    # Copy all plugins
-   cp -r bingo crossword image_upload textarea sso google_chat /path/to/CTFd/CTFd/plugins/
+   cp -r referrals plugin_manager bingo crossword image_upload textarea sso google_chat /path/to/CTFd/CTFd/plugins/
    ```
 
 2. Restart your CTFd application or container:

@@ -1,11 +1,111 @@
 import datetime
 from CTFd.models import Awards, Challenges, Solves, Users, Teams, db
 from CTFd.utils import get_config
+from CTFd.utils.user import get_current_user
 from CTFd.plugins.referrals.config import ReferralConfig
 from CTFd.plugins.referrals.models import Referrals
 
 
 class ReferralScoring:
+    @staticmethod
+    def is_referral_accessible_for_user(user=None):
+        """
+        Determines whether the referral system is accessible for the specified user.
+        Checks:
+        1. Authentication
+        2. Admin bypass
+        3. Competition paused
+        4. Plugin master enabled
+        5. User banned or hidden
+        6. User or team suspension from referral program
+        7. Referrer Access Gate (Points, Solves, or Prerequisite Challenge)
+        Returns: (is_accessible: bool, message: str)
+        """
+        if user is None:
+            user = get_current_user()
+
+        if not user:
+            return False, "Authentication required."
+
+        # Admins always have access to manage and preview
+        if getattr(user, "type", None) == "admin":
+            return True, ""
+
+        # 1. CTFd Pause check
+        if get_config("paused"):
+            return False, "Competition is currently paused."
+
+        # 2. Master Referral System toggle
+        if not ReferralConfig.get_bool("referral_enabled"):
+            return False, "Referral system is currently disabled."
+
+        # 3. User banned or hidden
+        if getattr(user, "banned", False) or getattr(user, "hidden", False):
+            return False, "Account access restricted."
+
+        # 4. User or Team suspension from referrals
+        if ReferralConfig.is_user_disabled(user.id):
+            return False, "Your referral privileges have been suspended."
+
+        if getattr(user, "team_id", None) and ReferralConfig.is_team_disabled(user.team_id):
+            return False, "Your team's referral privileges have been suspended."
+
+        # 5. Referrer Access Gate (Prerequisite training / solves / points)
+        mode = ReferralConfig.get("referral_unlock_mode", "none")
+        if mode != "none":
+            req_points = ReferralConfig.get_int("referral_unlock_min_points")
+            req_solves = ReferralConfig.get_int("referral_unlock_min_solves")
+            target_chal_id = ReferralConfig.get("referral_unlock_challenge_id")
+
+            # Calculate user's score & solves
+            user_solves = Solves.query.filter_by(user_id=user.id).all()
+            user_points = sum((s.challenge.value or 0) for s in user_solves if s.challenge)
+            user_solves_count = len(user_solves)
+
+            solved_target = False
+            target_name = "prerequisite challenge"
+            if target_chal_id:
+                try:
+                    target_id_int = int(target_chal_id)
+                    solved_target = any(s.challenge_id == target_id_int for s in user_solves)
+                    target_obj = Challenges.query.filter_by(id=target_id_int).first()
+                    if target_obj:
+                        target_name = f"'{target_obj.name}'"
+                except (ValueError, TypeError):
+                    solved_target = False
+
+            meets_pts = (user_points >= req_points) if req_points > 0 else True
+            meets_solves = (user_solves_count >= req_solves) if req_solves > 0 else True
+            meets_chal = solved_target if target_chal_id else True
+
+            unlocked = False
+            reason = "Prerequisite training requirements not yet met."
+
+            if mode == "points":
+                unlocked = meets_pts
+                reason = f"Unlock requirement: Score at least {req_points} points (Current: {user_points} PTS)."
+            elif mode == "solves":
+                unlocked = meets_solves
+                reason = f"Unlock requirement: Solve at least {req_solves} challenges (Current: {user_solves_count} solves)."
+            elif mode == "challenge":
+                unlocked = meets_chal
+                reason = f"Unlock requirement: Solve challenge {target_name} to unlock recruitment directives."
+            elif mode in ("all", "both"):
+                unlocked = (meets_pts and meets_solves and meets_chal)
+                reason = f"Unlock requirement: Meet all criteria ({req_points} PTS, {req_solves} solves, and {target_name})."
+            elif mode == "any":
+                unlocked = (
+                    (req_points > 0 and meets_pts) or
+                    (req_solves > 0 and meets_solves) or
+                    (target_chal_id and meets_chal)
+                )
+                reason = "Unlock requirement: Complete at least one prerequisite training milestone."
+
+            if not unlocked:
+                custom_msg = ReferralConfig.get("referral_access_denied_message")
+                return False, custom_msg or reason
+
+        return True, ""
     @staticmethod
     def get_referee_progress(referee_id, connection=None):
         """
@@ -60,8 +160,48 @@ class ReferralScoring:
         meets_points = (score >= min_points)
         meets_solves = (solve_count >= min_solves)
 
-        if not (meets_points and meets_solves):
-            return False, f"Progress: {score}/{min_points} PTS, {solve_count}/{min_solves} solves."
+        qual_mode = ReferralConfig.get("referral_qualification_mode", "points_only")
+        req_chal_id = ReferralConfig.get("referral_required_challenge_id")
+
+        solved_required_chal = False
+        if req_chal_id:
+            try:
+                req_chal_id_int = int(req_chal_id)
+                if connection is not None:
+                    row = connection.execute(
+                        db.select(Solves.id).where(
+                            Solves.user_id == referral.referee_id,
+                            Solves.challenge_id == req_chal_id_int,
+                        )
+                    ).first()
+                    solved_required_chal = (row is not None)
+                else:
+                    solved_required_chal = (
+                        Solves.query.filter_by(
+                            user_id=referral.referee_id,
+                            challenge_id=req_chal_id_int,
+                        ).first()
+                        is not None
+                    )
+            except (ValueError, TypeError):
+                solved_required_chal = False
+
+        is_qualified = False
+        if qual_mode == "challenge_only":
+            is_qualified = solved_required_chal
+            reason_msg = f"Requires solving designated challenge (Solved: {solved_required_chal})."
+        elif qual_mode == "both":
+            is_qualified = (meets_points and meets_solves and solved_required_chal)
+            reason_msg = f"Progress: {score}/{min_points} PTS, {solve_count}/{min_solves} solves, designated challenge solved: {solved_required_chal}."
+        elif qual_mode == "either":
+            is_qualified = ((meets_points and meets_solves) or solved_required_chal)
+            reason_msg = f"Progress: {score}/{min_points} PTS, {solve_count}/{min_solves} solves, designated challenge solved: {solved_required_chal}."
+        else:  # points_only (default)
+            is_qualified = (meets_points and meets_solves)
+            reason_msg = f"Progress: {score}/{min_points} PTS, {solve_count}/{min_solves} solves."
+
+        if not is_qualified:
+            return False, reason_msg
 
         user_mode = get_config("user_mode")
         max_cap = ReferralConfig.get_int("referral_max_per_account")

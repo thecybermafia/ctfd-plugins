@@ -25,7 +25,7 @@
   <div class="card shadow-sm border-1 mb-4">
     <div class="card-header bg-light border-bottom font-monospace fw-bold text-dark py-3 d-flex justify-content-between align-items-center">
       <span>Installed Plugins</span>
-      <span class="badge badge-secondary text-white">{{ plugins|length }} Installed</span>
+      <span class="badge badge-secondary text-white">{{ installed_plugins|length }} Installed</span>
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -41,7 +41,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for p in plugins %}
+            {% for p in installed_plugins %}
               <tr>
                 <td class="font-weight-bold text-dark">{{ p.title }}</td>
                 <td><code>{{ p.name }}</code></td>
