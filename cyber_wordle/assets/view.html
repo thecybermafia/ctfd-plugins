@@ -1,0 +1,61 @@
+{% extends "challenge.html" %}
+
+{% block input %}
+<input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
+
+<div class="wordle-challenge-wrapper my-3" 
+     id="wordle-container"
+     data-word-len="{{ challenge.word_length or 5 }}"
+     data-max-attempts="{{ challenge.max_attempts or 6 }}"
+     data-solved="{% if challenge.is_solved %}true{% else %}false{% endif %}">
+
+  <script type="application/json" id="wordle-history-json">
+  {{ (challenge.guesses_history or []) | tojson }}
+  </script>
+
+  <!-- Wordle Status & Info Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <span class="badge bg-secondary font-monospace">
+      Word Length: {{ challenge.word_length or 5 }} Letters
+    </span>
+    <span id="wordle-status-badge" class="badge {% if challenge.is_solved %}bg-success{% else %}bg-dark border border-secondary text-light{% endif %} font-monospace">
+      {% if challenge.is_solved %}Solved{% else %}Attempts: {{ (challenge.guesses_history or []) | length }} / {{ challenge.max_attempts or 6 }}{% endif %}
+    </span>
+  </div>
+
+  <!-- Hint Alert (if revealed) -->
+  <div id="wordle-hint-container" class="{% if not challenge.hint_text %}d-none{% endif %} alert alert-warning border border-warning p-2 mb-3 bg-dark text-warning small font-monospace">
+    Hint: <span id="wordle-hint-text">{{ challenge.hint_text or '' }}</span>
+  </div>
+
+  <!-- Wordle Tile Grid -->
+  <div class="d-flex justify-content-center mb-3">
+    <div id="wordle-grid" class="d-flex flex-column gap-2" style="max-width: 360px; width: 100%;">
+      <!-- Populated dynamically by view.js -->
+    </div>
+  </div>
+
+  <!-- Virtual Keyboard -->
+  <div id="wordle-keyboard" class="d-flex flex-column gap-1 align-items-center mb-3" style="max-width: 480px; margin: 0 auto; user-select: none;">
+    <!-- Populated by view.js -->
+  </div>
+
+  <!-- Submit / Status Button -->
+  {% if not challenge.is_solved %}
+  <div class="d-grid mt-2">
+    <button id="challenge-submit" class="challenge-submit btn btn-primary py-2 fw-bold font-monospace" type="button" disabled>
+      Submit Word
+    </button>
+  </div>
+  {% else %}
+  <div class="alert alert-success border border-success text-center py-2 font-monospace mb-0">
+    Cipher Successfully Decrypted
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block submit %}
+<!-- Handled inside input block -->
+{% endblock %}

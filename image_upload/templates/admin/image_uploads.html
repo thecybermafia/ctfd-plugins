@@ -3,7 +3,7 @@
 {% block content %}
 <div class="jumbotron">
   <div class="container">
-    <h1>Image Upload Challenge Reviews</h1>
+    <div class="fs-4 fw-bold">Image &amp; Document Challenge Reviews</div>
   </div>
 </div>
 
@@ -14,17 +14,17 @@
       <ul class="nav nav-pills">
         <li class="nav-item">
           <a class="nav-link {% if current_status == 'pending' %}active{% endif %}" href="{{ url_for('image_upload.admin_image_uploads', status='pending') }}">
-            <i class="fas fa-clock"></i> Pending Reviews
+            Pending Reviews
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% if current_status == 'approved' %}active{% endif %}" href="{{ url_for('image_upload.admin_image_uploads', status='approved') }}">
-            <i class="fas fa-check-circle"></i> Approved
+            Approved
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% if current_status == 'rejected' %}active{% endif %}" href="{{ url_for('image_upload.admin_image_uploads', status='rejected') }}">
-            <i class="fas fa-times-circle"></i> Rejected
+            Rejected
           </a>
         </li>
         <li class="nav-item">
@@ -41,8 +41,7 @@
     <div class="col-md-12">
       {% if not submissions %}
         <div class="alert alert-secondary text-center py-5">
-          <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
-          <h4>No submissions found for status: <strong>{{ current_status }}</strong></h4>
+          <div class="fs-5 fw-bold">No submissions found for status: <strong>{{ current_status }}</strong></div>
         </div>
       {% else %}
         <div class="table-responsive">
@@ -70,7 +69,7 @@
                         class="img-thumbnail shadow-sm rounded mb-1 proof-img-thumb" 
                         style="width: 80px; height: 60px; object-fit: cover; cursor: pointer; background: #212529;"
                         onclick="openProofModal('{{ sub.file_url }}', '{{ sub.challenge_name | escape }}', '{{ (sub.team_name or sub.user_name) | escape }}')"
-                        title="Click to inspect full image proof"
+                        title="Click to inspect full proof"
                       >
                       <button 
                         type="button" 
@@ -78,7 +77,7 @@
                         style="font-size: 0.75rem;"
                         onclick="openProofModal('{{ sub.file_url }}', '{{ sub.challenge_name | escape }}', '{{ (sub.team_name or sub.user_name) | escape }}')"
                       >
-                        <i class="fas fa-search-plus"></i> View
+                        View File
                       </button>
                     </div>
                   {% else %}
@@ -119,10 +118,10 @@
                   <input type="text" class="form-control form-control-sm mb-2" id="fb-{{ sub.id }}" placeholder="Feedback notes..." value="{{ sub.feedback }}">
                   <div class="btn-group btn-group-sm w-100">
                     <button class="btn btn-success approve-btn" data-sub-id="{{ sub.id }}">
-                      <i class="fas fa-check"></i> Approve
+                      Approve
                     </button>
                     <button class="btn btn-danger reject-btn" data-sub-id="{{ sub.id }}">
-                      <i class="fas fa-times"></i> Reject
+                      Reject
                     </button>
                   </div>
                 </td>
@@ -136,15 +135,13 @@
   </div>
 </div>
 
-<!-- Proof Image Inspection Modal -->
+<!-- Proof Inspection Modal -->
 <div class="modal fade" id="proofModal" tabindex="-1" role="dialog" aria-labelledby="proofModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="proofModalLabel">Proof Inspection — <span id="proof-modal-chal"></span></h5>
-        <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" onclick="closeProofModal()">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" onclick="closeProofModal()"></button>
       </div>
       <div class="modal-body text-center p-3" style="background: #0d1117;">
         <img id="proof-modal-img" src="" alt="Proof Full Resolution" class="img-fluid rounded" style="max-height: 70vh; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
@@ -152,7 +149,7 @@
       </div>
       <div class="modal-footer d-flex justify-content-between">
         <a id="proof-modal-download" href="" target="_blank" download class="btn btn-outline-primary btn-sm">
-          <i class="fas fa-external-link-alt"></i> Open Raw in New Tab
+          Open Raw in New Tab
         </a>
         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal" data-bs-dismiss="modal" onclick="closeProofModal()">Close</button>
       </div>

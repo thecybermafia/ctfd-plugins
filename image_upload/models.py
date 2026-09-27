@@ -1,8 +1,11 @@
+import json
 from datetime import datetime
 from CTFd.models import Challenges, Files, db
 
+
 class ImageUploadFiles(Files):
     __mapper_args__ = {"polymorphic_identity": "image_upload"}
+
 
 class ImageUploadChallenge(Challenges):
     __mapper_args__ = {"polymorphic_identity": "image_upload"}
@@ -10,12 +13,22 @@ class ImageUploadChallenge(Challenges):
         db.Integer, db.ForeignKey("challenges.id", ondelete="CASCADE"), primary_key=True
     )
     max_file_size_mb = db.Column(db.Integer, default=10)
-    allowed_extensions = db.Column(db.String(128), default="png,jpg,jpeg,webp,gif")
+    allowed_extensions = db.Column(db.String(256), default="png,jpg,jpeg,webp,gif,pdf,docx,txt,zip")
+    rubric_json = db.Column(db.Text, default="[]")
 
     def __init__(self, *args, **kwargs):
+        self.max_file_size_mb = int(kwargs.pop("max_file_size_mb", 10) or 10)
+        self.allowed_extensions = kwargs.pop("allowed_extensions", "png,jpg,jpeg,webp,gif,pdf,docx,txt,zip")
+        self.rubric_json = kwargs.pop("rubric_json", "[]")
+        kwargs.pop("rubric_text", None)
         super(ImageUploadChallenge, self).__init__(**kwargs)
-        self.max_file_size_mb = kwargs.get("max_file_size_mb", 10)
-        self.allowed_extensions = kwargs.get("allowed_extensions", "png,jpg,jpeg,webp,gif")
+
+    @property
+    def rubric_data(self):
+        try:
+            return json.loads(self.rubric_json or "[]")
+        except Exception:
+            return []
 
 
 class ImageUploadSubmission(db.Model):

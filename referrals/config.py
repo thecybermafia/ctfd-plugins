@@ -47,6 +47,7 @@ DEFAULT_CONFIGS = {
     "referral_show_bonus_notice": "true",
     "referral_bonus_notice_text": "",
     "referral_show_progress_in_roster": "true",
+    "referral_leaderboard_visible": "true",
     "referral_instructions": (
         "Share your unique recruit link with operatives to expand your syndicate. "
         "Bonus points unlock when your recruit proves field capability by reaching the challenge score milestone!"
@@ -64,19 +65,19 @@ class ReferralConfig:
         return val
 
     @staticmethod
-    def get_bool(key):
-        val = ReferralConfig.get(key)
+    def get_bool(key, default=False):
+        val = ReferralConfig.get(key, default)
         if isinstance(val, bool):
             return val
         return str(val).lower() in ("true", "1", "yes", "on")
 
     @staticmethod
-    def get_int(key):
-        val = ReferralConfig.get(key)
+    def get_int(key, default=0):
+        val = ReferralConfig.get(key, default)
         try:
             return int(val)
         except (ValueError, TypeError):
-            return int(DEFAULT_CONFIGS.get(key, 0))
+            return int(DEFAULT_CONFIGS.get(key, default))
 
     @staticmethod
     def get_bonus_notice_text():
@@ -134,6 +135,7 @@ class ReferralConfig:
                 "referral_block_subnets",
                 "referral_disallow_teammates",
                 "referral_auto_revoke_on_ban",
+                "referral_leaderboard_visible",
             ):
                 ReferralConfig.set(k, "false")
 

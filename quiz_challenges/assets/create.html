@@ -1,0 +1,60 @@
+{% extends "admin/challenges/create.html" %}
+
+{% block type %}
+<input type="hidden" value="quiz" name="type" id="chaltype">
+{% endblock %}
+
+{% block value %}
+<div class="form-group mb-3">
+	<label for="value" class="form-label fw-bold">Points</label>
+	<div class="form-text text-muted small mb-1">Points awarded upon solving this quiz question.</div>
+	<input type="number" class="form-control" name="value" placeholder="e.g. 100" value="100" required>
+</div>
+
+<div class="form-group mb-3">
+	<label for="question_mode" class="form-label fw-bold">Question Selection Mode</label>
+	<div class="form-text text-muted small mb-1">Choose whether participants pick one option or multiple options.</div>
+	<select class="form-select form-control" name="question_mode" id="question_mode">
+		<option value="single" selected>Single Choice (Radio - One correct answer)</option>
+		<option value="multiple">Multiple Select (Checkboxes - One or more correct answers)</option>
+	</select>
+</div>
+
+<div class="form-group mb-3">
+	<label for="options_text" class="form-label fw-bold">Answer Options</label>
+	<div class="form-text text-muted small mb-1">
+		Enter one option per line. Prefix correct option(s) with an asterisk (*) or [x].
+	</div>
+	<textarea class="form-control font-monospace" name="options_text" rows="6" placeholder="* Phishing email with deceptive link&#10;Legitimate corporate newsletter&#10;* Social engineering telephone pretext&#10;Scheduled routine server reboot" required>* Phishing email with deceptive link
+Legitimate corporate newsletter
+* Social engineering telephone pretext
+Scheduled routine server reboot</textarea>
+</div>
+
+<div class="row g-3 mb-3">
+	<div class="col-md-6">
+		<label for="max_attempts" class="form-label fw-bold">Maximum Attempts</label>
+		<div class="form-text text-muted small mb-1">Maximum allowed submissions (enter 0 for unlimited).</div>
+		<input type="number" class="form-control" name="max_attempts" value="0" min="0">
+	</div>
+	<div class="col-md-6">
+		<label for="penalty_per_attempt" class="form-label fw-bold">Penalty Per Failed Attempt</label>
+		<div class="form-text text-muted small mb-1">Points deducted for each incorrect attempt (0 for no penalty).</div>
+		<input type="number" class="form-control" name="penalty_per_attempt" value="0" min="0">
+	</div>
+</div>
+
+<div class="form-group mb-3">
+	<div class="form-check form-switch">
+		<input class="form-check-input" type="checkbox" name="randomize_options" id="randomize_options" value="true" checked>
+		<label class="form-check-label fw-bold" for="randomize_options">Randomize Option Order</label>
+	</div>
+	<div class="form-text text-muted small">Shuffles the display order of options for each user/team to deter simple answer copying.</div>
+</div>
+
+<div class="form-group mb-3">
+	<label for="explanation" class="form-label fw-bold">Post-Solve Explanation</label>
+	<div class="form-text text-muted small mb-1">Educational context revealed to participants immediately after they submit the correct answer.</div>
+	<textarea class="form-control" name="explanation" rows="3" placeholder="Provide background context or rationale for why this answer is correct..."></textarea>
+</div>
+{% endblock %}

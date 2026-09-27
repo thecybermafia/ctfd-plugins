@@ -1,6 +1,7 @@
 from datetime import datetime
 from CTFd.models import Challenges, db
 
+
 class TextareaChallenge(Challenges):
     __mapper_args__ = {"polymorphic_identity": "textarea"}
     id = db.Column(
@@ -9,11 +10,21 @@ class TextareaChallenge(Challenges):
     min_chars = db.Column(db.Integer, default=0)
     max_chars = db.Column(db.Integer, default=5000)
     placeholder = db.Column(db.Text, default="")
+    auto_grade = db.Column(db.Boolean, default=False)
+    required_keywords = db.Column(db.Text, default="")
+    auto_pass_mode = db.Column(db.String(32), default="all")  # all | any
+    auto_award_points = db.Column(db.Integer, default=0)  # 0 to use challenge.value
 
     def __init__(self, *args, **kwargs):
-        self.min_chars = kwargs.pop("min_chars", 0)
-        self.max_chars = kwargs.pop("max_chars", 5000)
+        self.min_chars = int(kwargs.pop("min_chars", 0) or 0)
+        self.max_chars = int(kwargs.pop("max_chars", 5000) or 5000)
         self.placeholder = kwargs.pop("placeholder", "")
+        self.auto_grade = kwargs.pop("auto_grade", False)
+        if isinstance(self.auto_grade, str):
+            self.auto_grade = self.auto_grade.lower() in ("true", "1", "yes", "on")
+        self.required_keywords = kwargs.pop("required_keywords", "")
+        self.auto_pass_mode = kwargs.pop("auto_pass_mode", "all")
+        self.auto_award_points = int(kwargs.pop("auto_award_points", 0) or 0)
         super(TextareaChallenge, self).__init__(**kwargs)
 
 

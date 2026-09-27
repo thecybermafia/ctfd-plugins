@@ -1,6 +1,9 @@
+from flask import Blueprint
 from CTFd.models import db
-from CTFd.plugins.challenges import BaseChallenge
+from CTFd.plugins.challenges import BaseChallenge, ChallengeResponse
 from CTFd.plugins.textarea.models import TextareaChallenge
+from CTFd.utils.user import is_admin
+
 
 class TextareaChallengeType(BaseChallenge):
     id = "textarea"
@@ -28,30 +31,55 @@ class TextareaChallengeType(BaseChallenge):
                 "max_chars": c.max_chars,
                 "placeholder": c.placeholder,
             })
+            if is_admin():
+                data.update({
+                    "auto_grade": bool(c.auto_grade),
+                    "required_keywords": c.required_keywords or "",
+                    "auto_pass_mode": c.auto_pass_mode or "all",
+                    "auto_award_points": c.auto_award_points or 0,
+                })
         return data
+
+    @classmethod
+    def create(cls, request):
+        challenge = super().create(request)
+        data = request.form or request.get_json() or {}
+
+        c = TextareaChallenge.query.filter_by(id=challenge.id).first()
+        if c:
+            c.min_chars = int(data.get("min_chars", 0) or 0)
+            c.max_chars = int(data.get("max_chars", 5000) or 5000)
+            c.placeholder = data.get("placeholder", "")
+            c.auto_grade = str(data.get("auto_grade", "false")).lower() in ("true", "1", "yes", "on")
+            c.required_keywords = data.get("required_keywords", "")
+            c.auto_pass_mode = data.get("auto_pass_mode", "all")
+            c.auto_award_points = int(data.get("auto_award_points", 0) or 0)
+            db.session.commit()
+
+        return challenge
 
     @classmethod
     def update(cls, challenge, request):
         data = request.form or request.get_json() or {}
-        for attr in ("min_chars", "max_chars"):
-            if attr in data and data[attr] is not None and str(data[attr]).isdigit():
-                setattr(challenge, attr, int(data[attr]))
-        if "placeholder" in data:
-            challenge.placeholder = str(data["placeholder"])
+        for attr in ("min_chars", "max_chars", "auto_award_points"):
+            if attr in data:
+                try:
+                    setattr(challenge, attr, int(data[attr] or 0))
+                except (ValueError, TypeError):
+                    pass
+
+        for attr in ("placeholder", "required_keywords", "auto_pass_mode"):
+            if attr in data:
+                setattr(challenge, attr, data[attr])
+
+        if "auto_grade" in data:
+            challenge.auto_grade = str(data["auto_grade"]).lower() in ("true", "1", "yes", "on")
+
         return super().update(challenge, request)
 
     @classmethod
-    def delete(cls, challenge):
-        from CTFd.models import Awards
-        from CTFd.plugins.textarea.models import TextareaSubmission
-        TextareaSubmission.query.filter_by(challenge_id=challenge.id).delete()
-        # Clean up any manual review adjustment awards for this challenge
-        awards = Awards.query.filter_by(category="Manual Review").all()
-        for a in awards:
-            if f"Challenge #{challenge.id}" in (a.name or "") or (challenge.name and challenge.name in (a.name or "")):
-                db.session.delete(a)
-        super().delete(challenge)
-
-    @classmethod
     def attempt(cls, challenge, request):
-        return False, "This mission requires manual evaluation by Mission Control. Please submit your text writeup."
+        return ChallengeResponse(
+            status="incorrect",
+            message="This is an open response / writeup challenge. Please submit your response using the writeup box."
+        )

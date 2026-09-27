@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from CTFd.models import Challenges, db
 
+
 class BingoChallenge(Challenges):
     __mapper_args__ = {"polymorphic_identity": "bingo"}
     id = db.Column(
@@ -11,12 +12,16 @@ class BingoChallenge(Challenges):
     cells_json = db.Column(db.Text, default="[]")
     line_bonus = db.Column(db.Integer, default=50)
     blackout_bonus = db.Column(db.Integer, default=250)
+    shuffle_cards = db.Column(db.Boolean, default=False)
 
     def __init__(self, *args, **kwargs):
         self.grid_size = kwargs.pop("grid_size", 5)
         self.cells_json = kwargs.pop("cells_json", "[]")
         self.line_bonus = kwargs.pop("line_bonus", 50)
         self.blackout_bonus = kwargs.pop("blackout_bonus", 250)
+        self.shuffle_cards = kwargs.pop("shuffle_cards", False)
+        if isinstance(self.shuffle_cards, str):
+            self.shuffle_cards = self.shuffle_cards.lower() in ("true", "1", "yes", "on")
         kwargs.pop("squares_text", None)
         super(BingoChallenge, self).__init__(**kwargs)
 
@@ -30,6 +35,7 @@ class BingoChallenge(Challenges):
                     "title": c.get("title", ""),
                     "desc": c.get("desc", ""),
                     "points": c.get("points", 10),
+                    "challenge_id": c.get("challenge_id"),
                 }
                 for idx, c in enumerate(raw)
             ]

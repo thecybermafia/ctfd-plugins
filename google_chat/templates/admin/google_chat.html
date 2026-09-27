@@ -14,7 +14,7 @@
       <!-- Instructions Card -->
       <div class="card mb-4">
         <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-info-circle text-info me-2"></i> How to Setup Google Chat Incoming Webhook</h5>
+          <h5 class="mb-0">How to Setup Google Chat Incoming Webhook</h5>
         </div>
         <div class="card-body">
           <ol class="mb-0 ps-3">
@@ -30,7 +30,7 @@
       <!-- Settings Form Card -->
       <div class="card shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="fas fa-cog text-primary me-2"></i> Webhook Configuration</h5>
+          <h5 class="mb-0">Webhook Configuration</h5>
           <div class="form-check form-switch mb-0">
             <input class="form-check-input" type="checkbox" id="gchat-enabled" {% if configs.enabled %}checked{% endif %}>
             <label class="form-check-label fw-bold" for="gchat-enabled">Integration Active</label>
@@ -121,10 +121,10 @@
           <!-- Action Buttons -->
           <div class="d-flex gap-2">
             <button type="button" class="btn btn-primary px-4" id="save-settings-btn">
-              <i class="fas fa-save me-1"></i> Save Settings
+              Save Settings
             </button>
             <button type="button" class="btn btn-outline-info" id="test-webhook-btn">
-              <i class="fas fa-paper-plane me-1"></i> Send Test Message
+              Send Test Message
             </button>
             <span id="save-status-msg" class="align-self-center ms-2 fw-bold"></span>
           </div>
@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   saveBtn.addEventListener("click", function() {
     saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+    saveBtn.innerHTML = 'Saving...';
     statusMsg.textContent = "";
 
     fetch("/admin/google_chat/save", {
@@ -173,7 +173,7 @@ document.addEventListener("DOMContentLoaded", function() {
       .then(r => r.json())
       .then(res => {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save Settings';
+        saveBtn.innerHTML = 'Save Settings';
         if (res.success) {
           statusMsg.className = "align-self-center ms-2 text-success fw-bold";
           statusMsg.textContent = "Saved successfully!";
@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", function() {
       })
       .catch(err => {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save Settings';
+        saveBtn.innerHTML = 'Save Settings';
         statusMsg.className = "align-self-center ms-2 text-danger fw-bold";
         statusMsg.textContent = "Error: " + err;
       });
@@ -199,7 +199,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     testBtn.disabled = true;
-    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Testing...';
+    testBtn.innerHTML = 'Testing...';
     statusMsg.textContent = "";
 
     fetch("/admin/google_chat/test", {
@@ -213,7 +213,7 @@ document.addEventListener("DOMContentLoaded", function() {
       .then(r => r.json())
       .then(res => {
         testBtn.disabled = false;
-        testBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Send Test Message';
+        testBtn.innerHTML = 'Send Test Message';
         if (res.success) {
           alert("Success! Check your Google Chat space for the test message.");
         } else {
@@ -222,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function() {
       })
       .catch(err => {
         testBtn.disabled = false;
-        testBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Send Test Message';
+        testBtn.innerHTML = 'Send Test Message';
         alert("Error testing webhook: " + err);
       });
   });

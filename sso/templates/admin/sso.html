@@ -121,7 +121,6 @@
           </div>
           <div class="card-body">
             <div class="alert alert-info py-2 px-3 small mb-3">
-              <i class="fas fa-info-circle me-1"></i>
               Note that setting this to <strong>"All Users"</strong> will also set the registration visibility below to <strong>"Private"</strong>.
             </div>
 
@@ -167,7 +166,6 @@
           </div>
           <div class="card-body">
             <div id="reg-warning-alert" class="alert alert-warning py-2 px-3 small mb-3" style="display: none;">
-              <i class="fas fa-exclamation-triangle me-1"></i>
               <strong>Security Warning</strong>: If registration is allowed while "User Settings" is set to "All Users", a public account could be registered.
             </div>
 
@@ -209,11 +207,11 @@
         <div class="card mb-4 shadow-sm border-info bg-light">
           <div class="card-body">
             <h6 class="fw-bold text-primary mb-1">CTFd Fallback URL &amp; Local Account Access</h6>
-            <p class="small text-muted mb-2">
+            <div class="small text-muted mb-2">
               When any Single Sign On configuration is enabled, users with local CTFd accounts may still login by browsing directly to 
               <code class="user-select-all fw-bold text-dark">{{ request.url_root.rstrip('/') }}/admin</code> or 
               <code class="user-select-all fw-bold text-dark">{{ request.url_root.rstrip('/') }}/login?fallback=1</code>.
-            </p>
+            </div>
           </div>
         </div>
       </div>
@@ -252,7 +250,7 @@
               <label class="form-label fw-bold">SAML SP URL</label>
               <div class="input-group">
                 <input type="text" class="form-control font-monospace" id="sp-url-input" name="sso_saml_sp_url" value="{{ saml_sp_url }}" readonly>
-                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('sp-url-input')"><i class="fas fa-copy"></i> Copy</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('sp-url-input')">Copy</button>
               </div>
               <div class="form-text text-muted">SAML Service Provider URL</div>
             </div>
@@ -261,7 +259,7 @@
               <label class="form-label fw-bold">SAML Login URL</label>
               <div class="input-group">
                 <input type="text" class="form-control font-monospace" id="sp-login-input" name="sso_saml_sp_login_url" value="{{ saml_sp_login_url }}" readonly>
-                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('sp-login-input')"><i class="fas fa-copy"></i> Copy</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('sp-login-input')">Copy</button>
               </div>
               <div class="form-text text-muted">SAML Service Provider Login URL</div>
             </div>
@@ -288,7 +286,7 @@
               <label class="form-label fw-bold">Callback URL</label>
               <div class="input-group">
                 <input type="text" class="form-control font-monospace" id="discord-callback-url" value="{{ callbacks.discord }}" readonly>
-                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('discord-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('discord-callback-url')">Copy</button>
               </div>
               <div class="form-text text-muted">Add this URL as a redirect URI in your Discord application</div>
             </div>
@@ -326,7 +324,7 @@
               <label class="form-label fw-bold">Callback URL</label>
               <div class="input-group">
                 <input type="text" class="form-control font-monospace" id="github-callback-url" value="{{ callbacks.github }}" readonly>
-                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('github-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('github-callback-url')">Copy</button>
               </div>
               <div class="form-text text-muted">Add this URL as a redirect URI in your GitHub OAuth application</div>
             </div>
@@ -354,7 +352,7 @@
                 <strong class="text-uppercase small">GitHub Enterprise</strong>
               </div>
               <div class="card-body">
-                <p class="small text-muted mb-3">Leave these blank to use the public GitHub endpoints.</p>
+                <div class="small text-muted mb-3">Leave these blank to use the public GitHub endpoints.</div>
                 <div class="mb-3">
                   <label class="form-label fw-bold">Base URL</label>
                   <input type="url" class="form-control font-monospace" name="sso_github_base_url" value="{{ github_base_url }}" placeholder="https://github.example.com/">
@@ -388,7 +386,7 @@
               <label class="form-label fw-bold">Callback URL</label>
               <div class="input-group">
                 <input type="text" class="form-control font-monospace" id="google-callback-url" value="{{ callbacks.google }}" readonly>
-                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('google-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('google-callback-url')">Copy</button>
               </div>
               <div class="form-text text-muted">Add this URL as an authorized redirect URI in your Google Cloud Console</div>
             </div>
@@ -432,7 +430,7 @@
               <label class="form-label fw-bold">Callback URL</label>
               <div class="input-group">
                 <input type="text" class="form-control font-monospace" id="azure-callback-url" value="{{ callbacks.azure }}" readonly>
-                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('azure-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('azure-callback-url')">Copy</button>
               </div>
               <div class="form-text text-muted">Add this URL as a redirect URI in your Azure app registration</div>
             </div>
@@ -476,7 +474,7 @@
               <label class="form-label fw-bold">Callback URL</label>
               <div class="input-group">
                 <input type="text" class="form-control font-monospace" id="okta-callback-url" value="{{ callbacks.okta }}" readonly>
-                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('okta-callback-url')"><i class="fas fa-copy"></i> Copy</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyInputText('okta-callback-url')">Copy</button>
               </div>
               <div class="form-text text-muted">Add this URL as a sign-in redirect URI in your Okta application</div>
             </div>
@@ -510,7 +508,7 @@
                 <strong class="text-uppercase small">Advanced</strong>
               </div>
               <div class="card-body">
-                <p class="small text-muted mb-3">Override the default Okta authorization and token endpoints.</p>
+                <div class="small text-muted mb-3">Override the default Okta authorization and token endpoints.</div>
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Authorization URL</label>
@@ -519,6 +517,63 @@
                   <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Token URL</label>
                     <input type="url" class="form-control font-monospace" name="sso_okta_token_url" value="{{ okta_token_url }}" placeholder="https://your-org.okta.com/oauth2/default/v1/token">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Okta Claim & Attribute Mappings Sub-Card -->
+            <div class="card border bg-light mt-4">
+              <div class="card-header py-2">
+                <strong class="text-uppercase small">Claim &amp; Attribute Mappings</strong>
+              </div>
+              <div class="card-body">
+                <div class="small text-muted mb-3">
+                  Map claims and profile attributes returned by Okta directly into CTFd user properties (team assignment, affiliation, country, website, and custom tags).
+                </div>
+
+                <!-- Team Mapping Option & Switch -->
+                <div class="card p-3 mb-3 bg-white border">
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" name="sso_okta_team_mapping_enabled" id="sso_okta_team_mapping_enabled" value="true" {% if okta_team_mapping_enabled|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="sso_okta_team_mapping_enabled">Enable Automatic Team Creation &amp; Assignment</label>
+                  </div>
+                  <div class="small text-muted mb-2">
+                    When disabled, Okta team claims are ignored and users will not be automatically assigned or moved into teams.
+                  </div>
+                  <div class="row">
+                    <div class="col-md-12">
+                      <label class="form-label fw-bold">Team Name Claim</label>
+                      <input type="text" class="form-control font-monospace" name="sso_okta_team_claim" value="{{ okta_team_claim }}" placeholder="e.g. team, group, division">
+                      <div class="form-text text-muted">Claim key containing the user's team name (e.g. <code>team</code> or <code>group</code>).</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Profile Field Direct Mappings -->
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Affiliation Claim</label>
+                    <input type="text" class="form-control font-monospace" name="sso_okta_affiliation_claim" value="{{ okta_affiliation_claim }}" placeholder="e.g. team, company, org">
+                    <div class="form-text text-muted">Claim mapped directly to user profile affiliation (e.g. map Okta team/company name to user affiliation).</div>
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Country Code Claim</label>
+                    <input type="text" class="form-control font-monospace" name="sso_okta_country_claim" value="{{ okta_country_claim }}" placeholder="e.g. country, locale, c">
+                    <div class="form-text text-muted">Claim containing the 2-letter ISO country code (e.g. US, IN, GB).</div>
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Website URL Claim</label>
+                    <input type="text" class="form-control font-monospace" name="sso_okta_website_claim" value="{{ okta_website_claim }}" placeholder="e.g. website, profile_url">
+                    <div class="form-text text-muted">Claim mapped to user profile website link.</div>
+                  </div>
+                </div>
+
+                <!-- Custom User Fields / Tags Mapping -->
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Custom User Fields &amp; Tags Mapping Rules</label>
+                  <textarea class="form-control font-monospace" name="sso_okta_custom_field_mappings" rows="3" placeholder="department:Department, title:Job Title, internal_team:Internal Team">{{ okta_custom_field_mappings }}</textarea>
+                  <div class="form-text text-muted">
+                    Format: <code>claim_name:CTFd Field Name</code> (comma or newline separated). If the target field does not exist, CTFd will auto-create the custom user field and populate it. You can also specify <code>claim:Affiliation</code> to route any custom claim into user affiliation.
                   </div>
                 </div>
               </div>
@@ -532,10 +587,10 @@
     <div class="card shadow-sm sticky-bottom mb-5 border-top border-2 border-primary">
       <div class="card-body py-3 d-flex justify-content-between align-items-center bg-white">
         <span class="text-muted small">
-          <i class="fas fa-info-circle me-1"></i> Changes apply immediately to new authentication requests.
+          Changes apply immediately to new authentication requests.
         </span>
         <button type="submit" class="btn btn-success btn-lg px-4 shadow-sm fw-bold">
-          <i class="fas fa-save me-2"></i> Save SSO Configuration
+          Save SSO Configuration
         </button>
       </div>
     </div>

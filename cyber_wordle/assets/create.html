@@ -1,0 +1,61 @@
+{% extends "admin/challenges/create.html" %}
+
+{% block type %}
+<input type="hidden" value="wordle" name="type" id="chaltype">
+{% endblock %}
+
+{% block value %}
+<div class="form-group mb-3">
+	<label for="value" class="form-label fw-bold">Points</label>
+	<div class="form-text text-muted small mb-1">Points awarded for successfully guessing the target cipher word.</div>
+	<input type="number" class="form-control" name="value" placeholder="e.g. 150" value="150" required>
+</div>
+
+<div class="row g-3 mb-3">
+	<div class="col-md-8">
+		<label for="target_word" class="form-label fw-bold">Secret Target Word</label>
+		<div class="form-text text-muted small mb-1">The secret word to be guessed (letters only, automatically converted to uppercase).</div>
+		<input type="text" class="form-control font-monospace text-uppercase" name="target_word" id="target_word" placeholder="e.g. CYBER" value="CYBER" required>
+	</div>
+	<div class="col-md-4">
+		<label for="word_length" class="form-label fw-bold">Word Length</label>
+		<div class="form-text text-muted small mb-1">Length of the word (defaults to length of target word).</div>
+		<input type="number" class="form-control" name="word_length" id="word_length" value="5" min="3" max="16">
+	</div>
+</div>
+
+<div class="row g-3 mb-3">
+	<div class="col-md-6">
+		<label for="max_attempts" class="form-label fw-bold">Maximum Guesses</label>
+		<div class="form-text text-muted small mb-1">Total allowed guesses before lockout (standard is 6).</div>
+		<input type="number" class="form-control" name="max_attempts" value="6" min="1" max="10">
+	</div>
+	<div class="col-md-6">
+		<label for="reveal_hint_after" class="form-label fw-bold">Reveal Hint After Attempt</label>
+		<div class="form-text text-muted small mb-1">Show hint text after this number of failed attempts.</div>
+		<input type="number" class="form-control" name="reveal_hint_after" value="4" min="1" max="10">
+	</div>
+</div>
+
+<div class="form-group mb-3">
+	<label for="hint_text" class="form-label fw-bold">Optional Clue / Hint Text</label>
+	<div class="form-text text-muted small mb-1">Hint displayed after player exceeds the configured attempt threshold.</div>
+	<textarea class="form-control" name="hint_text" rows="2" placeholder="e.g. Relates to digital computers and information systems..."></textarea>
+</div>
+
+<div class="form-group mb-3">
+	<div class="form-check form-switch mb-2">
+		<input class="form-check-input" type="checkbox" name="dynamic_scoring" id="dynamic_scoring" value="true" checked>
+		<label class="form-check-label fw-bold" for="dynamic_scoring">Dynamic Bonus for Fewer Guesses</label>
+	</div>
+	<div class="form-text text-muted small">Rewards solvers with higher placement when guessed in fewer tries.</div>
+</div>
+
+<div class="form-group mb-3">
+	<div class="form-check form-switch mb-2">
+		<input class="form-check-input" type="checkbox" name="dictionary_enforced" id="dictionary_enforced" value="true">
+		<label class="form-check-label fw-bold" for="dictionary_enforced">Strict Dictionary Validation</label>
+	</div>
+	<div class="form-text text-muted small">When disabled, players can submit any alphabetical combination of letters.</div>
+</div>
+{% endblock %}

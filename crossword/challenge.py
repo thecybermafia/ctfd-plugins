@@ -1,19 +1,14 @@
 import hashlib
 import hmac
 import json
-from CTFd.models import Flags, db
+from CTFd.models import Awards, Flags, db
 from CTFd.plugins.challenges import BaseChallenge, ChallengeResponse
 from CTFd.plugins.flags import get_flag_class
-from CTFd.plugins.crossword.models import CrosswordChallenge
-from CTFd.utils.user import is_admin
+from CTFd.plugins.crossword.models import CrosswordChallenge, CrosswordWordSolve
+from CTFd.utils.user import get_current_user, get_current_team, is_admin
+
 
 def parse_simple_clues(text):
-    """
-    Parses simple lines:
-    Clue Question | Answer
-    e.g.:
-    Protocol for secure web browsing | HTTPS
-    """
     lines = [l.strip() for l in (text or "").split("\n") if l.strip()]
     clues = []
     for i, line in enumerate(lines):
@@ -28,6 +23,7 @@ def parse_simple_clues(text):
         })
     return clues
 
+
 def clues_to_simple_text(clues_json):
     try:
         clues = json.loads(clues_json or "[]")
@@ -37,6 +33,7 @@ def clues_to_simple_text(clues_json):
         return "\n".join(lines)
     except Exception:
         return ""
+
 
 class CrosswordChallengeType(BaseChallenge):
     id = "crossword"
@@ -58,35 +55,50 @@ class CrosswordChallengeType(BaseChallenge):
     def read(cls, challenge):
         data = super().read(challenge)
         c = CrosswordChallenge.query.filter_by(id=challenge.id).first()
-        if c:
-            # ANTI-CHEAT: Send clues with length and number, but WITHOUT the cleartext answers!
-            sanitized_clues = []
-            try:
-                raw_clues = json.loads(c.clues_json or "[]")
-                for item in raw_clues:
-                    sanitized_clues.append({
-                        "number": item.get("number"),
-                        "clue": item.get("clue"),
-                        "length": item.get("length", len(item.get("answer", ""))),
-                    })
-            except Exception as e:
-                print("Error parsing clues JSON:", e)
+        if not c:
+            return data
 
-            data.update({
-                "clues_data": sanitized_clues,
-            })
-            if is_admin():
-                data["clues_text"] = clues_to_simple_text(c.clues_json)
+        user = get_current_user()
+        team = get_current_team()
+
+        sanitized_clues = []
+        try:
+            raw_clues = json.loads(c.clues_json or "[]")
+            for item in raw_clues:
+                sanitized_clues.append({
+                    "number": item.get("number"),
+                    "clue": item.get("clue"),
+                    "length": item.get("length", len(item.get("answer", ""))),
+                })
+        except Exception as e:
+            print("Error parsing clues JSON:", e)
+
+        # Get solved clue numbers for user/team
+        solved_clues = []
+        if user:
+            filter_kwargs = {"challenge_id": c.id}
+            if team:
+                filter_kwargs["team_id"] = team.id
+            else:
+                filter_kwargs["user_id"] = user.id
+            solves = CrosswordWordSolve.query.filter_by(**filter_kwargs).all()
+            solved_clues = [s.clue_number for s in solves]
+
+        data.update({
+            "clues_data": sanitized_clues,
+            "solved_clues": solved_clues,
+            "partial_scoring": bool(c.partial_scoring),
+            "points_per_word": c.points_per_word or 10,
+        })
+        if is_admin():
+            data["clues_text"] = clues_to_simple_text(c.clues_json)
         return data
 
     @classmethod
     def create(cls, request):
-        # Create the base challenge first, then persist crossword-specific
-        # fields. Previously these were written to a local dict and discarded
-        # because super().create(request) received the original request.
         challenge = super().create(request)
-
         data = request.form or request.get_json() or {}
+
         clues_text = data.get("clues_text", "")
         if clues_text:
             clues = parse_simple_clues(clues_text)
@@ -100,12 +112,8 @@ class CrosswordChallengeType(BaseChallenge):
             challenge.solution_word = sol_word
             challenge.solution_hash = hashlib.sha256(sol_word.upper().encode("utf-8")).hexdigest()
 
-        for attr in ("grid_width", "grid_height"):
-            if attr in data:
-                try:
-                    setattr(challenge, attr, int(data[attr]))
-                except (TypeError, ValueError):
-                    pass
+        challenge.partial_scoring = str(data.get("partial_scoring", "false")).lower() in ("true", "1", "yes", "on")
+        challenge.points_per_word = int(data.get("points_per_word", 10) or 10)
 
         db.session.commit()
         return challenge
@@ -124,6 +132,12 @@ class CrosswordChallengeType(BaseChallenge):
                 challenge.solution_word.upper().encode("utf-8")
             ).hexdigest()
 
+        if "partial_scoring" in data:
+            challenge.partial_scoring = str(data["partial_scoring"]).lower() in ("true", "1", "yes", "on")
+
+        if "points_per_word" in data:
+            challenge.points_per_word = int(data["points_per_word"] or 10)
+
         return super().update(challenge, request)
 
     @classmethod
@@ -135,8 +149,10 @@ class CrosswordChallengeType(BaseChallenge):
 
         c = CrosswordChallenge.query.filter_by(id=challenge.id).first()
         norm_sub = submission.upper()
+        user = get_current_user()
+        team = get_current_team()
 
-        # Check solution word
+        # Check solution word (full solve)
         if c and c.solution_word and hmac.compare_digest(norm_sub.encode("utf-8"), c.solution_word.strip().upper().encode("utf-8")):
             return ChallengeResponse(status="correct", message="Crossword solved successfully!")
 
@@ -162,6 +178,54 @@ class CrosswordChallengeType(BaseChallenge):
                 flag_class = get_flag_class(flag.type)
                 if flag_class.compare(flag, submission):
                     return ChallengeResponse(status="correct", message="Crossword solved successfully!")
+            except Exception:
+                pass
+
+        # Check individual clue answers if partial scoring is enabled
+        if c and c.partial_scoring and user:
+            try:
+                clues = json.loads(c.clues_json or "[]")
+                for clue in clues:
+                    ans = (clue.get("answer") or "").upper().strip()
+                    if ans and hmac.compare_digest(norm_sub.encode("utf-8"), ans.encode("utf-8")):
+                        clue_num = clue.get("number")
+                        filter_args = {"challenge_id": challenge.id, "clue_number": clue_num}
+                        if team:
+                            filter_args["team_id"] = team.id
+                        else:
+                            filter_args["user_id"] = user.id
+
+                        existing = CrosswordWordSolve.query.filter_by(**filter_args).first()
+                        if not existing:
+                            word_solve = CrosswordWordSolve(
+                                challenge_id=challenge.id,
+                                user_id=user.id,
+                                team_id=team.id if team else None,
+                                clue_number=clue_num,
+                                word=ans
+                            )
+                            db.session.add(word_solve)
+                            pts = c.points_per_word or 10
+                            if pts > 0:
+                                award = Awards(
+                                    user_id=None if team else user.id,
+                                    team_id=team.id if team else None,
+                                    name=f"Crossword Clue #{clue_num} [{challenge.name}]",
+                                    description=f"Solved clue #{clue_num} in {challenge.name}",
+                                    value=pts,
+                                    category=challenge.category
+                                )
+                                db.session.add(award)
+                            db.session.commit()
+                            return ChallengeResponse(
+                                status="incorrect",
+                                message=f"Answer confirmed! Clue #{clue_num} solved (+{pts} pts awarded)."
+                            )
+                        else:
+                            return ChallengeResponse(
+                                status="incorrect",
+                                message=f"You have already validated the answer for Clue #{clue_num}."
+                            )
             except Exception:
                 pass
 

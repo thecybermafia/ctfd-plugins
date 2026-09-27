@@ -16,7 +16,7 @@ from flask import (
     url_for,
 )
 
-from CTFd.models import Users, db
+from CTFd.models import Teams, UserFields, UserFieldEntries, Users, db
 from CTFd.utils import get_config, set_config
 from CTFd.utils.decorators import admins_only
 from CTFd.utils.security.auth import login_user
@@ -122,7 +122,15 @@ def admin_sso():
         set_config("sso_okta_base_url", request.form.get("sso_okta_base_url", "").strip())
         set_config("sso_okta_scope", request.form.get("sso_okta_scope", "").strip() or "openid email profile")
         set_config("sso_okta_auth_url", request.form.get("sso_okta_auth_url", "").strip())
-        set_config("sso_okta_token_url", request.form.get("sso_okta_token_url", "").strip())
+        # ----------------------------------------------------
+        # Okta Attribute & Claim Mapping Configuration
+        # ----------------------------------------------------
+        set_config("sso_okta_team_mapping_enabled", "true" if request.form.get("sso_okta_team_mapping_enabled") else "false")
+        set_config("sso_okta_team_claim", request.form.get("sso_okta_team_claim", "").strip())
+        set_config("sso_okta_affiliation_claim", request.form.get("sso_okta_affiliation_claim", "").strip())
+        set_config("sso_okta_country_claim", request.form.get("sso_okta_country_claim", "").strip())
+        set_config("sso_okta_website_claim", request.form.get("sso_okta_website_claim", "").strip())
+        set_config("sso_okta_custom_field_mappings", request.form.get("sso_okta_custom_field_mappings", "").strip())
 
         flash("Single Sign-On configuration updated successfully!", "success")
         return redirect(url_for("sso.admin_sso"))
@@ -143,6 +151,12 @@ def admin_sso():
         sso_user_settings=get_config("sso_user_settings", "all_users"),
         registration_visibility=get_config("registration_visibility", "public"),
         callbacks=callbacks,
+        okta_team_mapping_enabled=get_config("sso_okta_team_mapping_enabled", "false"),
+        okta_team_claim=get_config("sso_okta_team_claim", "team"),
+        okta_affiliation_claim=get_config("sso_okta_affiliation_claim", ""),
+        okta_country_claim=get_config("sso_okta_country_claim", "country"),
+        okta_website_claim=get_config("sso_okta_website_claim", ""),
+        okta_custom_field_mappings=get_config("sso_okta_custom_field_mappings", "department:Department, title:Job Title"),
         # SAML
         saml_idp_metadata_url=get_config("sso_saml_idp_metadata_url", ""),
         saml_idp_metadata_xml=get_config("sso_saml_idp_metadata_xml", ""),
@@ -291,6 +305,123 @@ def sso_login():
     return redirect(url_for("auth.login", fallback=1))
 
 
+def apply_sso_attribute_mappings(user, u_data):
+    if not u_data or not user:
+        return
+
+    # 1. Automatic Team Name Mapping (Only when explicitly enabled by admin)
+    team_mapping_enabled = str(get_config("sso_okta_team_mapping_enabled", "false")).lower() in ("true", "1", "yes")
+    team_claim = get_config("sso_okta_team_claim")
+    if team_mapping_enabled and team_claim:
+        raw_team = u_data.get(team_claim)
+        if isinstance(raw_team, list) and raw_team:
+            raw_team = raw_team[0]
+        if raw_team and isinstance(raw_team, str):
+            team_name = raw_team.strip()
+            if team_name:
+                user_mode = get_config("user_mode")
+                if user_mode == "teams":
+                    existing_team = Teams.query.filter_by(name=team_name).first()
+                    if not existing_team:
+                        existing_team = Teams(
+                            name=team_name,
+                            email=f"team_{user.id}_{secrets.token_hex(4)}@ctfd.local",
+                            captain_id=user.id,
+                        )
+                        db.session.add(existing_team)
+                        db.session.flush()
+                    user.team_id = existing_team.id
+
+    # 2. Affiliation Mapping (e.g. map Okta team/company/org to user.affiliation)
+    affil_claim = get_config("sso_okta_affiliation_claim")
+    if affil_claim:
+        raw_affil = u_data.get(affil_claim)
+        if isinstance(raw_affil, list) and raw_affil:
+            raw_affil = raw_affil[0]
+        if raw_affil:
+            user.affiliation = str(raw_affil).strip()[:128]
+
+    # 3. Country Mapping
+    country_claim = get_config("sso_okta_country_claim")
+    if country_claim:
+        raw_country = u_data.get(country_claim)
+        if isinstance(raw_country, list) and raw_country:
+            raw_country = raw_country[0]
+        if raw_country and isinstance(raw_country, str):
+            user.country = raw_country.strip().upper()[:32]
+
+    # 4. Website Mapping
+    website_claim = get_config("sso_okta_website_claim")
+    if website_claim:
+        raw_website = u_data.get(website_claim)
+        if isinstance(raw_website, list) and raw_website:
+            raw_website = raw_website[0]
+        if raw_website:
+            user.website = str(raw_website).strip()[:128]
+
+    # 5. User Tags & Custom Attributes Mapping Rules
+    # Supports "claim_key:Target Field Name" or comma/newline separated claims
+    custom_rules = get_config("sso_okta_custom_field_mappings") or get_config("sso_okta_tag_claims")
+    if custom_rules:
+        rules = [r.strip() for r in custom_rules.replace("\n", ",").split(",") if r.strip()]
+        for rule in rules:
+            if ":" in rule:
+                claim_name, field_label = rule.split(":", 1)
+                claim_name = claim_name.strip()
+                field_label = field_label.strip()
+            else:
+                claim_name = rule.strip()
+                field_label = claim_name.replace("_", " ").title()
+
+            if not claim_name or not field_label:
+                continue
+
+            claim_val = u_data.get(claim_name)
+            if claim_val is None:
+                continue
+
+            if isinstance(claim_val, list):
+                val_str = ", ".join(str(x) for x in claim_val)
+            else:
+                val_str = str(claim_val).strip()
+
+            target_lower = field_label.lower()
+            if target_lower in ("affiliation", "user.affiliation"):
+                user.affiliation = val_str[:128]
+            elif target_lower in ("country", "user.country"):
+                user.country = val_str.upper()[:32]
+            elif target_lower in ("website", "user.website"):
+                user.website = val_str[:128]
+            else:
+                # Custom User Field in CTFd
+                uf = UserFields.query.filter_by(name=field_label).first()
+                if not uf:
+                    uf = UserFields(
+                        name=field_label,
+                        type="user",
+                        description=f"Auto-mapped from SSO claim '{claim_name}'",
+                        field_type="text",
+                        editable=False,
+                        public=True,
+                    )
+                    db.session.add(uf)
+                    db.session.flush()
+
+                entry = UserFieldEntries.query.filter_by(user_id=user.id, field_id=uf.id).first()
+                if entry:
+                    entry.value = val_str
+                else:
+                    entry = UserFieldEntries(
+                        type="user",
+                        user_id=user.id,
+                        field_id=uf.id,
+                        value=val_str,
+                    )
+                    db.session.add(entry)
+
+    db.session.commit()
+
+
 @sso_bp.route("/oauth/<provider>/authorized", methods=["GET", "POST"])
 @sso_bp.route("/sso/<provider>/callback", methods=["GET", "POST"])
 @sso_bp.route("/sso/callback", methods=["GET", "POST"])
@@ -314,6 +445,7 @@ def sso_callback(provider=None):
     email = None
     name = None
     oauth_uid = None
+    u_data = {}
 
     try:
         if provider == "github":
@@ -557,6 +689,12 @@ def sso_callback(provider=None):
         if not user.oauth_id and oauth_uid:
             user.oauth_id = oauth_uid
             db.session.commit()
+
+    if u_data:
+        try:
+            apply_sso_attribute_mappings(user, u_data)
+        except Exception as e:
+            print(f"Error applying SSO attribute mappings: {e}")
 
     login_user(user)
     session.pop("sso_state", None)

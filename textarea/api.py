@@ -64,6 +64,19 @@ def submit_textarea(challenge_id):
     # Hard ceiling clamp to prevent database DoS
     content = content[:50000]
 
+    # Check auto_grade if enabled
+    auto_passed = False
+    if chal.auto_grade and chal.required_keywords:
+        kw_list = [k.strip().lower() for k in chal.required_keywords.replace("\n", ",").split(",") if k.strip()]
+        lower_content = content.lower()
+        if kw_list:
+            if chal.auto_pass_mode == "any":
+                matched = any(k in lower_content for k in kw_list)
+            else:
+                matched = all(k in lower_content for k in kw_list)
+            if matched:
+                auto_passed = True
+
     # Find existing pending submission or create new
     sub_filter = {"challenge_id": challenge_id}
     if team:
@@ -71,9 +84,16 @@ def submit_textarea(challenge_id):
     else:
         sub_filter["user_id"] = user.id
 
+    sub_status = "approved" if auto_passed else "pending"
+    points = (chal.auto_award_points or chal.value) if auto_passed else 0
+    fb = "Automated verification successful: required key criteria matched." if auto_passed else ""
+
     existing_sub = TextareaSubmission.query.filter_by(**sub_filter).order_by(TextareaSubmission.id.desc()).first()
     if existing_sub and existing_sub.status == "pending":
         existing_sub.content = content
+        existing_sub.status = sub_status
+        existing_sub.points_awarded = points
+        existing_sub.feedback = fb
         existing_sub.created_at = datetime.utcnow()
     else:
         new_sub = TextareaSubmission(
@@ -81,14 +101,39 @@ def submit_textarea(challenge_id):
             user_id=user.id,
             team_id=team.id if team else None,
             content=content,
-            status="pending",
-            points_awarded=0,
-            feedback="",
+            status=sub_status,
+            points_awarded=points,
+            feedback=fb,
             created_at=datetime.utcnow()
         )
         db.session.add(new_sub)
 
+    if auto_passed:
+        existing_solve = Solves.query.filter_by(**sub_filter).first()
+        if not existing_solve:
+            solve = Solves(
+                user_id=user.id,
+                team_id=team.id if team else None,
+                challenge_id=challenge_id,
+                ip=request.remote_addr,
+                provided=content[:100]
+            )
+            db.session.add(solve)
+
     db.session.commit()
+
+    if auto_passed:
+        try:
+            from CTFd.cache import clear_standings
+            clear_standings()
+        except Exception:
+            pass
+        return jsonify({
+            "success": True,
+            "message": "Writeup automatically verified and approved! Points awarded.",
+            "status": "approved"
+        })
+
     return jsonify({
         "success": True,
         "message": "Writeup submitted successfully! Pending Mission Control review.",
