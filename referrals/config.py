@@ -59,6 +59,13 @@ class ReferralConfig:
     @staticmethod
     def get(key, default=None):
         def_val = DEFAULT_CONFIGS.get(key, default)
+        try:
+            from CTFd.models import Configs
+            cfg = Configs.query.filter_by(key=key).first()
+            if cfg is not None and cfg.value is not None and cfg.value != "":
+                return cfg.value
+        except Exception:
+            pass
         val = get_config(key)
         if val is None or val == "":
             return def_val
@@ -69,6 +76,8 @@ class ReferralConfig:
         val = ReferralConfig.get(key, default)
         if isinstance(val, bool):
             return val
+        if val is None:
+            return default
         return str(val).lower() in ("true", "1", "yes", "on")
 
     @staticmethod
@@ -109,6 +118,11 @@ class ReferralConfig:
     @staticmethod
     def set(key, value):
         set_config(key, str(value))
+        try:
+            from CTFd.cache import clear_config
+            clear_config()
+        except Exception:
+            pass
 
     @staticmethod
     def get_all():
@@ -138,6 +152,11 @@ class ReferralConfig:
                 "referral_leaderboard_visible",
             ):
                 ReferralConfig.set(k, "false")
+        try:
+            from CTFd.cache import clear_config
+            clear_config()
+        except Exception:
+            pass
 
     # --- Exclusion Management for Users & Teams ---
     @staticmethod

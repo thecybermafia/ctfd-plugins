@@ -24,7 +24,8 @@ PLUGIN_TITLES = {
     "cyber_wordle": "Cyber Wordle Challenges",
     "dynamic_challenges": "Dynamic Value Challenges (Core)",
     "flags": "Flag Handlers (Core)",
-    "google_chat": "Google Chat Notifications",
+    "chat_notifications": "Chat & Webhook Notifications",
+    "google_chat": "Chat & Webhook Notifications",
     "image_upload": "Image Review & Submissions",
     "quiz_challenges": "Quiz & Multiple Choice Challenges",
     "referrals": "Referral Directive",
@@ -35,7 +36,8 @@ PLUGIN_TITLES = {
 }
 
 SETTINGS_ROUTES = {
-    "google_chat": "/admin/google_chat",
+    "chat_notifications": "/admin/chat_notifications",
+    "google_chat": "/admin/chat_notifications",
     "image_upload": "/admin/image_review",
     "referrals": "/admin/referrals",
     "sso": "/admin/sso",

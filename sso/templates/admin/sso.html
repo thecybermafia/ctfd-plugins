@@ -271,6 +271,62 @@
             </div>
           </div>
         </div>
+
+        <!-- SAML Claim & Attribute Mappings Card -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold">SAML Claim &amp; Attribute Mappings</h5>
+          </div>
+          <div class="card-body">
+            <div class="small text-muted mb-3">
+              Map SAML attributes and assertion claims returned by your IdP (Azure AD, Okta, Keycloak, Ping, OneLogin) directly into CTFd user properties (team assignment, affiliation, country, website, and custom attributes like Gang).
+            </div>
+
+            <!-- Team Mapping Switch -->
+            <div class="card p-3 mb-3 bg-white border">
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" name="sso_saml_team_mapping_enabled" id="sso_saml_team_mapping_enabled" value="true" {% if saml_team_mapping_enabled|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold" for="sso_saml_team_mapping_enabled">Enable Automatic Team Creation &amp; Assignment</label>
+              </div>
+              <div class="small text-muted mb-2">
+                When enabled, operatives are automatically placed into the CTFd team specified by the SAML assertion attribute.
+              </div>
+              <div>
+                <label class="form-label fw-bold">Team Name Attribute / Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_saml_team_claim" value="{{ saml_team_claim }}" placeholder="e.g. team, group, division">
+                <div class="form-text text-muted">SAML attribute name or URI containing the operative's team name (e.g. <code>team</code> or <code>http://schemas.xmlsoap.org/claims/Group</code>).</div>
+              </div>
+            </div>
+
+            <!-- Profile Attributes -->
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Affiliation Attribute</label>
+                <input type="text" class="form-control font-monospace" name="sso_saml_affiliation_claim" value="{{ saml_affiliation_claim }}" placeholder="e.g. company, department, affiliation">
+                <div class="form-text text-muted">Attribute mapped directly to operative affiliation.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Country Code Attribute</label>
+                <input type="text" class="form-control font-monospace" name="sso_saml_country_claim" value="{{ saml_country_claim }}" placeholder="e.g. country, c, countryCode">
+                <div class="form-text text-muted">2-letter ISO country code mapped to operative country.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Website Attribute</label>
+                <input type="text" class="form-control font-monospace" name="sso_saml_website_claim" value="{{ saml_website_claim }}" placeholder="e.g. website, url">
+                <div class="form-text text-muted">Attribute mapped to operative website.</div>
+              </div>
+            </div>
+
+            <!-- Custom Attributes & Gang Mapping -->
+            <div class="card p-3 bg-white border">
+              <label class="form-label fw-bold">Custom Attribute &amp; Tag Mappings</label>
+              <textarea class="form-control font-monospace" name="sso_saml_custom_field_mappings" rows="3" placeholder="gang:Gang, department:Department, discord:Discord Handle">{{ saml_custom_field_mappings }}</textarea>
+              <div class="form-text text-muted mt-2">
+                Map SAML attributes to CTFd custom fields. Format: <code>saml_attribute_name:Target Field Label</code>, comma-separated (e.g. <code>gang:Gang, division:Division</code>). CTFd will create the custom field automatically if it does not exist.
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ===================================================================
@@ -306,6 +362,62 @@
               <label class="form-label fw-bold">Scope</label>
               <input type="text" class="form-control font-monospace" name="sso_discord_scope" value="{{ discord_scope }}" placeholder="identify email">
               <div class="form-text text-muted">Space-separated OAuth scopes.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discord Claim & Attribute Mappings Card -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold">Discord Claim &amp; Attribute Mappings</h5>
+          </div>
+          <div class="card-body">
+            <div class="small text-muted mb-3">
+              Map claims and attributes returned by Discord (@me endpoint) directly into CTFd user properties (team assignment, affiliation, country, website, and custom attributes like Discord ID or Display Name).
+            </div>
+
+            <!-- Team Mapping Option & Switch -->
+            <div class="card p-3 mb-3 bg-white border">
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" name="sso_discord_team_mapping_enabled" id="sso_discord_team_mapping_enabled" value="true" {% if discord_team_mapping_enabled|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold" for="sso_discord_team_mapping_enabled">Enable Automatic Team Creation &amp; Assignment</label>
+              </div>
+              <div class="small text-muted mb-2">
+                When enabled, operatives are automatically placed into the CTFd team specified by the Discord claim.
+              </div>
+              <div>
+                <label class="form-label fw-bold">Team Name Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_discord_team_claim" value="{{ discord_team_claim }}" placeholder="e.g. guild, team">
+                <div class="form-text text-muted">Claim key containing the user team name.</div>
+              </div>
+            </div>
+
+            <!-- Profile Field Direct Mappings -->
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Affiliation Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_discord_affiliation_claim" value="{{ discord_affiliation_claim }}" placeholder="e.g. guild, community">
+                <div class="form-text text-muted">Claim mapped directly to user profile affiliation.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Country Code / Locale Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_discord_country_claim" value="{{ discord_country_claim }}" placeholder="e.g. locale">
+                <div class="form-text text-muted">Claim containing country code or user locale.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Website Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_discord_website_claim" value="{{ discord_website_claim }}" placeholder="e.g. website, url">
+                <div class="form-text text-muted">Claim mapped to user website.</div>
+              </div>
+            </div>
+
+            <!-- Custom User Fields / Tags Mapping -->
+            <div class="card p-3 bg-white border">
+              <label class="form-label fw-bold">Custom User Fields &amp; Tags Mapping Rules</label>
+              <textarea class="form-control font-monospace" name="sso_discord_custom_field_mappings" rows="3" placeholder="global_name:Display Name, id:Discord ID">{{ discord_custom_field_mappings }}</textarea>
+              <div class="form-text text-muted mt-2">
+                Map Discord attributes to CTFd custom fields. Format: <code>discord_attribute:Target Field Label</code>, comma-separated (e.g. <code>global_name:Display Name, id:Discord ID</code>).
+              </div>
             </div>
           </div>
         </div>
@@ -371,6 +483,62 @@
             </div>
           </div>
         </div>
+
+        <!-- GitHub Claim & Attribute Mappings Card -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold">GitHub Claim &amp; Attribute Mappings</h5>
+          </div>
+          <div class="card-body">
+            <div class="small text-muted mb-3">
+              Map claims and attributes returned by GitHub (/user API) directly into CTFd user properties (team assignment, affiliation, country, portfolio website, and custom fields).
+            </div>
+
+            <!-- Team Mapping Option & Switch -->
+            <div class="card p-3 mb-3 bg-white border">
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" name="sso_github_team_mapping_enabled" id="sso_github_team_mapping_enabled" value="true" {% if github_team_mapping_enabled|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold" for="sso_github_team_mapping_enabled">Enable Automatic Team Creation &amp; Assignment</label>
+              </div>
+              <div class="small text-muted mb-2">
+                When enabled, operatives are automatically placed into the CTFd team specified by the GitHub claim.
+              </div>
+              <div>
+                <label class="form-label fw-bold">Team Name Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_github_team_claim" value="{{ github_team_claim }}" placeholder="e.g. company, org">
+                <div class="form-text text-muted">Claim key containing the user team name (e.g. <code>company</code>).</div>
+              </div>
+            </div>
+
+            <!-- Profile Field Direct Mappings -->
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Affiliation Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_github_affiliation_claim" value="{{ github_affiliation_claim }}" placeholder="e.g. company">
+                <div class="form-text text-muted">GitHub organization or company mapped to affiliation.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Country / Location Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_github_country_claim" value="{{ github_country_claim }}" placeholder="e.g. location">
+                <div class="form-text text-muted">GitHub location attribute mapped to operative country.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Website / Blog Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_github_website_claim" value="{{ github_website_claim }}" placeholder="e.g. blog">
+                <div class="form-text text-muted">GitHub blog URL mapped to operative website.</div>
+              </div>
+            </div>
+
+            <!-- Custom User Fields / Tags Mapping -->
+            <div class="card p-3 bg-white border">
+              <label class="form-label fw-bold">Custom User Fields &amp; Tags Mapping Rules</label>
+              <textarea class="form-control font-monospace" name="sso_github_custom_field_mappings" rows="3" placeholder="bio:Bio, twitter_username:Twitter, location:Location">{{ github_custom_field_mappings }}</textarea>
+              <div class="form-text text-muted mt-2">
+                Map GitHub attributes to CTFd custom fields. Format: <code>github_attribute:Target Field Label</code>, comma-separated (e.g. <code>bio:Bio, twitter_username:Twitter</code>).
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ===================================================================
@@ -415,6 +583,62 @@
             </div>
           </div>
         </div>
+
+        <!-- Google Claim & Attribute Mappings Card -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold">Google Claim &amp; Attribute Mappings</h5>
+          </div>
+          <div class="card-body">
+            <div class="small text-muted mb-3">
+              Map claims and attributes returned by Google (OIDC userinfo endpoint) directly into CTFd user properties (hosted domain affiliation, country/locale, website, and custom attributes).
+            </div>
+
+            <!-- Team Mapping Option & Switch -->
+            <div class="card p-3 mb-3 bg-white border">
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" name="sso_google_team_mapping_enabled" id="sso_google_team_mapping_enabled" value="true" {% if google_team_mapping_enabled|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold" for="sso_google_team_mapping_enabled">Enable Automatic Team Creation &amp; Assignment</label>
+              </div>
+              <div class="small text-muted mb-2">
+                When enabled, operatives are automatically placed into the CTFd team specified by the Google claim.
+              </div>
+              <div>
+                <label class="form-label fw-bold">Team Name Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_google_team_claim" value="{{ google_team_claim }}" placeholder="e.g. hd, domain">
+                <div class="form-text text-muted">Claim key containing team name (e.g. <code>hd</code> for organization domain).</div>
+              </div>
+            </div>
+
+            <!-- Profile Field Direct Mappings -->
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Affiliation Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_google_affiliation_claim" value="{{ google_affiliation_claim }}" placeholder="e.g. hd, domain">
+                <div class="form-text text-muted">Google hosted domain (hd) mapped directly to affiliation.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Country Code / Locale Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_google_country_claim" value="{{ google_country_claim }}" placeholder="e.g. locale">
+                <div class="form-text text-muted">Google locale mapped to operative country.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Website Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_google_website_claim" value="{{ google_website_claim }}" placeholder="e.g. profile">
+                <div class="form-text text-muted">Claim mapped to user profile website.</div>
+              </div>
+            </div>
+
+            <!-- Custom User Fields / Tags Mapping -->
+            <div class="card p-3 bg-white border">
+              <label class="form-label fw-bold">Custom User Fields &amp; Tags Mapping Rules</label>
+              <textarea class="form-control font-monospace" name="sso_google_custom_field_mappings" rows="3" placeholder="hd:Organization Domain, locale:Locale">{{ google_custom_field_mappings }}</textarea>
+              <div class="form-text text-muted mt-2">
+                Map Google attributes to CTFd custom fields. Format: <code>google_attribute:Target Field Label</code>, comma-separated (e.g. <code>hd:Organization Domain, locale:Locale</code>).
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ===================================================================
@@ -456,6 +680,62 @@
               <label class="form-label fw-bold">Scope</label>
               <input type="text" class="form-control font-monospace" name="sso_azure_scope" value="{{ azure_scope }}" placeholder="openid email profile">
               <div class="form-text text-muted">Space-separated OAuth scopes.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Azure Claim & Attribute Mappings Card -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold">Azure AD Claim &amp; Attribute Mappings</h5>
+          </div>
+          <div class="card-body">
+            <div class="small text-muted mb-3">
+              Map claims and attributes returned by Microsoft Graph API (/v1.0/me) directly into CTFd user properties (team assignment, company affiliation, country, website, and directory extension fields).
+            </div>
+
+            <!-- Team Mapping Option & Switch -->
+            <div class="card p-3 mb-3 bg-white border">
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" name="sso_azure_team_mapping_enabled" id="sso_azure_team_mapping_enabled" value="true" {% if azure_team_mapping_enabled|string|lower in ['true', '1', 'yes'] %}checked{% endif %}>
+                <label class="form-check-label fw-bold" for="sso_azure_team_mapping_enabled">Enable Automatic Team Creation &amp; Assignment</label>
+              </div>
+              <div class="small text-muted mb-2">
+                When enabled, operatives are automatically placed into the CTFd team specified by the Azure AD claim.
+              </div>
+              <div>
+                <label class="form-label fw-bold">Team Name Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_azure_team_claim" value="{{ azure_team_claim }}" placeholder="e.g. department, officeLocation, companyName">
+                <div class="form-text text-muted">Azure Graph attribute containing the user team name.</div>
+              </div>
+            </div>
+
+            <!-- Profile Field Direct Mappings -->
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Affiliation Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_azure_affiliation_claim" value="{{ azure_affiliation_claim }}" placeholder="e.g. companyName, department">
+                <div class="form-text text-muted">Azure companyName or department mapped to affiliation.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Country Code Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_azure_country_claim" value="{{ azure_country_claim }}" placeholder="e.g. country, usageLocation">
+                <div class="form-text text-muted">Azure country code mapped to operative country.</div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Website Claim</label>
+                <input type="text" class="form-control font-monospace" name="sso_azure_website_claim" value="{{ azure_website_claim }}" placeholder="e.g. website, url">
+                <div class="form-text text-muted">Claim mapped to user website.</div>
+              </div>
+            </div>
+
+            <!-- Custom User Fields / Tags Mapping -->
+            <div class="card p-3 bg-white border">
+              <label class="form-label fw-bold">Custom User Fields &amp; Tags Mapping Rules</label>
+              <textarea class="form-control font-monospace" name="sso_azure_custom_field_mappings" rows="3" placeholder="jobTitle:Job Title, department:Department, officeLocation:Office">{{ azure_custom_field_mappings }}</textarea>
+              <div class="form-text text-muted mt-2">
+                Map Azure attributes to CTFd custom fields. Format: <code>azure_attribute:Target Field Label</code>, comma-separated (e.g. <code>jobTitle:Job Title, department:Department</code>).
+              </div>
             </div>
           </div>
         </div>

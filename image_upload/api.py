@@ -124,6 +124,18 @@ def submit_image(challenge_id):
         db.session.add(new_sub)
 
     db.session.commit()
+
+    # Dispatch Admin Alert to Chat Notifications Admin Space
+    try:
+        try:
+            from CTFd.plugins.chat_notifications.notifier import notify_admin_submission
+        except ImportError:
+            from CTFd.plugins.google_chat.notifier import notify_admin_submission
+        submitter_label = team.name if team else user.name
+        notify_admin_submission(chal, submitter_label, submission_type="Image / Document Proof", details=notes)
+    except Exception:
+        pass
+
     return jsonify({
         "success": True,
         "message": "Image submitted successfully! Pending admin evaluation.",

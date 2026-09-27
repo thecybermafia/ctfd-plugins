@@ -134,6 +134,17 @@ def submit_textarea(challenge_id):
             "status": "approved"
         })
 
+    # Dispatch Admin Alert to Chat Notifications Admin Space
+    try:
+        try:
+            from CTFd.plugins.chat_notifications.notifier import notify_admin_submission
+        except ImportError:
+            from CTFd.plugins.google_chat.notifier import notify_admin_submission
+        submitter_label = team.name if team else user.name
+        notify_admin_submission(chal, submitter_label, submission_type="Textarea Writeup", details=content[:200])
+    except Exception:
+        pass
+
     return jsonify({
         "success": True,
         "message": "Writeup submitted successfully! Pending Mission Control review.",

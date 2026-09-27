@@ -1,9 +1,26 @@
 {% extends "admin/base.html" %}
 
 {% block content %}
+<style>
+.modal-header .close, .modal-header .btn-close {
+  background: none !important;
+  border: none !important;
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  color: #333333 !important;
+  opacity: 0.7 !important;
+  padding: 0.25rem 0.75rem !important;
+  cursor: pointer !important;
+}
+.modal-header .close:hover, .modal-header .btn-close:hover {
+  opacity: 1 !important;
+  color: #000000 !important;
+}
+</style>
 <div class="jumbotron">
   <div class="container">
-    <div class="fs-4 fw-bold">Image &amp; Document Challenge Reviews</div>
+    <h1>Image &amp; Document Challenge Reviews</h1>
   </div>
 </div>
 
@@ -141,7 +158,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="proofModalLabel">Proof Inspection — <span id="proof-modal-chal"></span></h5>
-        <button type="button" class="btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" onclick="closeProofModal()"></button>
+        <button type="button" class="close btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" onclick="closeProofModal()">&times;</button>
       </div>
       <div class="modal-body text-center p-3" style="background: #0d1117;">
         <img id="proof-modal-img" src="" alt="Proof Full Resolution" class="img-fluid rounded" style="max-height: 70vh; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">

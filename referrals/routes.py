@@ -88,7 +88,8 @@ def referrals_dashboard():
     # Check if current user was recruited by someone
     my_referral = Referrals.query.filter_by(referee_id=user.id).first()
 
-    leaderboard_visible = ReferralConfig.get_bool("referral_leaderboard_visible", True)
+    raw_lb = ReferralConfig.get("referral_leaderboard_visible")
+    leaderboard_visible = str(raw_lb).lower() not in ("false", "0", "no", "off") if raw_lb is not None else True
     top_recruiters = []
     if leaderboard_visible:
         try:
@@ -319,8 +320,31 @@ def admin_referrals():
 def admin_save_settings():
     form_data = request.form.to_dict()
     ReferralConfig.update_all(form_data)
+    try:
+        from CTFd.cache import clear_config
+        clear_config()
+    except Exception:
+        pass
     flash("Referral system configuration saved successfully.", "success")
     return redirect(url_for("referrals.admin_referrals", tab=request.args.get("tab", "settings")))
+
+
+@referrals_bp.route("/admin/referrals/settings/ajax", methods=["POST"])
+@admins_only
+def admin_save_settings_ajax():
+    data = request.get_json() or request.form.to_dict()
+    from CTFd.plugins.referrals.config import DEFAULT_CONFIGS
+    for k, v in data.items():
+        if k in DEFAULT_CONFIGS:
+            if isinstance(v, bool):
+                v = "true" if v else "false"
+            ReferralConfig.set(k, str(v))
+    try:
+        from CTFd.cache import clear_config
+        clear_config()
+    except Exception:
+        pass
+    return jsonify({"success": True, "message": "Settings updated successfully."})
 
 
 @referrals_bp.route("/admin/referrals/actions", methods=["POST"])

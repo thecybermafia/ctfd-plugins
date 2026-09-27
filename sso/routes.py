@@ -80,16 +80,28 @@ def admin_sso():
         set_config("sso_saml_sp_url", request.form.get("sso_saml_sp_url", "").strip() or default_saml_sp_url)
         set_config("sso_saml_sp_login_url", request.form.get("sso_saml_sp_login_url", "").strip() or default_saml_login_url)
         set_config("sso_saml_sp_metadata_xml", request.form.get("sso_saml_sp_metadata_xml", "").strip() or default_sp_xml)
+        set_config("sso_saml_team_mapping_enabled", "true" if request.form.get("sso_saml_team_mapping_enabled") else "false")
+        set_config("sso_saml_team_claim", request.form.get("sso_saml_team_claim", "").strip())
+        set_config("sso_saml_affiliation_claim", request.form.get("sso_saml_affiliation_claim", "").strip())
+        set_config("sso_saml_country_claim", request.form.get("sso_saml_country_claim", "").strip())
+        set_config("sso_saml_website_claim", request.form.get("sso_saml_website_claim", "").strip())
+        set_config("sso_saml_custom_field_mappings", request.form.get("sso_saml_custom_field_mappings", "").strip())
 
         # ----------------------------------------------------
-        # Discord OAuth Configuration
+        # Discord OAuth & Claim Mapping Configuration
         # ----------------------------------------------------
         set_config("sso_discord_client_id", request.form.get("sso_discord_client_id", "").strip())
         set_config("sso_discord_client_secret", request.form.get("sso_discord_client_secret", "").strip())
         set_config("sso_discord_scope", request.form.get("sso_discord_scope", "").strip() or "identify email")
+        set_config("sso_discord_team_mapping_enabled", "true" if request.form.get("sso_discord_team_mapping_enabled") else "false")
+        set_config("sso_discord_team_claim", request.form.get("sso_discord_team_claim", "").strip())
+        set_config("sso_discord_affiliation_claim", request.form.get("sso_discord_affiliation_claim", "").strip())
+        set_config("sso_discord_country_claim", request.form.get("sso_discord_country_claim", "").strip())
+        set_config("sso_discord_website_claim", request.form.get("sso_discord_website_claim", "").strip())
+        set_config("sso_discord_custom_field_mappings", request.form.get("sso_discord_custom_field_mappings", "").strip())
 
         # ----------------------------------------------------
-        # GitHub OAuth Configuration
+        # GitHub OAuth & Claim Mapping Configuration
         # ----------------------------------------------------
         set_config("sso_github_client_id", request.form.get("sso_github_client_id", "").strip())
         set_config("sso_github_client_secret", request.form.get("sso_github_client_secret", "").strip())
@@ -97,22 +109,40 @@ def admin_sso():
         set_config("sso_github_base_url", request.form.get("sso_github_base_url", "").strip())
         set_config("sso_github_auth_url", request.form.get("sso_github_auth_url", "").strip())
         set_config("sso_github_token_url", request.form.get("sso_github_token_url", "").strip())
+        set_config("sso_github_team_mapping_enabled", "true" if request.form.get("sso_github_team_mapping_enabled") else "false")
+        set_config("sso_github_team_claim", request.form.get("sso_github_team_claim", "").strip())
+        set_config("sso_github_affiliation_claim", request.form.get("sso_github_affiliation_claim", "").strip())
+        set_config("sso_github_country_claim", request.form.get("sso_github_country_claim", "").strip())
+        set_config("sso_github_website_claim", request.form.get("sso_github_website_claim", "").strip())
+        set_config("sso_github_custom_field_mappings", request.form.get("sso_github_custom_field_mappings", "").strip())
 
         # ----------------------------------------------------
-        # Google OAuth Configuration
+        # Google OAuth & Claim Mapping Configuration
         # ----------------------------------------------------
         set_config("sso_google_client_id", request.form.get("sso_google_client_id", "").strip())
         set_config("sso_google_client_secret", request.form.get("sso_google_client_secret", "").strip())
         set_config("sso_google_scope", request.form.get("sso_google_scope", "").strip() or "openid email profile")
         set_config("sso_google_hosted_domain", request.form.get("sso_google_hosted_domain", "").strip())
+        set_config("sso_google_team_mapping_enabled", "true" if request.form.get("sso_google_team_mapping_enabled") else "false")
+        set_config("sso_google_team_claim", request.form.get("sso_google_team_claim", "").strip())
+        set_config("sso_google_affiliation_claim", request.form.get("sso_google_affiliation_claim", "").strip())
+        set_config("sso_google_country_claim", request.form.get("sso_google_country_claim", "").strip())
+        set_config("sso_google_website_claim", request.form.get("sso_google_website_claim", "").strip())
+        set_config("sso_google_custom_field_mappings", request.form.get("sso_google_custom_field_mappings", "").strip())
 
         # ----------------------------------------------------
-        # Azure OAuth Configuration
+        # Azure OAuth & Claim Mapping Configuration
         # ----------------------------------------------------
         set_config("sso_azure_client_id", request.form.get("sso_azure_client_id", "").strip())
         set_config("sso_azure_client_secret", request.form.get("sso_azure_client_secret", "").strip())
         set_config("sso_azure_tenant", request.form.get("sso_azure_tenant", "").strip() or "common")
         set_config("sso_azure_scope", request.form.get("sso_azure_scope", "").strip() or "openid email profile")
+        set_config("sso_azure_team_mapping_enabled", "true" if request.form.get("sso_azure_team_mapping_enabled") else "false")
+        set_config("sso_azure_team_claim", request.form.get("sso_azure_team_claim", "").strip())
+        set_config("sso_azure_affiliation_claim", request.form.get("sso_azure_affiliation_claim", "").strip())
+        set_config("sso_azure_country_claim", request.form.get("sso_azure_country_claim", "").strip())
+        set_config("sso_azure_website_claim", request.form.get("sso_azure_website_claim", "").strip())
+        set_config("sso_azure_custom_field_mappings", request.form.get("sso_azure_custom_field_mappings", "").strip())
 
         # ----------------------------------------------------
         # Okta OAuth Configuration
@@ -151,6 +181,7 @@ def admin_sso():
         sso_user_settings=get_config("sso_user_settings", "all_users"),
         registration_visibility=get_config("registration_visibility", "public"),
         callbacks=callbacks,
+        # Okta
         okta_team_mapping_enabled=get_config("sso_okta_team_mapping_enabled", "false"),
         okta_team_claim=get_config("sso_okta_team_claim", "team"),
         okta_affiliation_claim=get_config("sso_okta_affiliation_claim", ""),
@@ -163,10 +194,22 @@ def admin_sso():
         saml_sp_url=get_config("sso_saml_sp_url", default_saml_sp_url),
         saml_sp_login_url=get_config("sso_saml_sp_login_url", default_saml_login_url),
         saml_sp_metadata_xml=get_config("sso_saml_sp_metadata_xml", default_sp_xml),
+        saml_team_mapping_enabled=get_config("sso_saml_team_mapping_enabled", "false"),
+        saml_team_claim=get_config("sso_saml_team_claim", "team"),
+        saml_affiliation_claim=get_config("sso_saml_affiliation_claim", ""),
+        saml_country_claim=get_config("sso_saml_country_claim", "country"),
+        saml_website_claim=get_config("sso_saml_website_claim", ""),
+        saml_custom_field_mappings=get_config("sso_saml_custom_field_mappings", "department:Department, title:Job Title"),
         # Discord
         discord_client_id=get_config("sso_discord_client_id", ""),
         discord_client_secret=get_config("sso_discord_client_secret", ""),
         discord_scope=get_config("sso_discord_scope", "identify email"),
+        discord_team_mapping_enabled=get_config("sso_discord_team_mapping_enabled", "false"),
+        discord_team_claim=get_config("sso_discord_team_claim", ""),
+        discord_affiliation_claim=get_config("sso_discord_affiliation_claim", ""),
+        discord_country_claim=get_config("sso_discord_country_claim", "locale"),
+        discord_website_claim=get_config("sso_discord_website_claim", ""),
+        discord_custom_field_mappings=get_config("sso_discord_custom_field_mappings", "global_name:Display Name, id:Discord ID"),
         # GitHub
         github_client_id=get_config("sso_github_client_id", ""),
         github_client_secret=get_config("sso_github_client_secret", ""),
@@ -174,16 +217,34 @@ def admin_sso():
         github_base_url=get_config("sso_github_base_url", ""),
         github_auth_url=get_config("sso_github_auth_url", ""),
         github_token_url=get_config("sso_github_token_url", ""),
+        github_team_mapping_enabled=get_config("sso_github_team_mapping_enabled", "false"),
+        github_team_claim=get_config("sso_github_team_claim", "company"),
+        github_affiliation_claim=get_config("sso_github_affiliation_claim", "company"),
+        github_country_claim=get_config("sso_github_country_claim", "location"),
+        github_website_claim=get_config("sso_github_website_claim", "blog"),
+        github_custom_field_mappings=get_config("sso_github_custom_field_mappings", "bio:Bio, twitter_username:Twitter, location:Location"),
         # Google
         google_client_id=get_config("sso_google_client_id", ""),
         google_client_secret=get_config("sso_google_client_secret", ""),
         google_scope=get_config("sso_google_scope", "openid email profile"),
         google_hosted_domain=get_config("sso_google_hosted_domain", ""),
+        google_team_mapping_enabled=get_config("sso_google_team_mapping_enabled", "false"),
+        google_team_claim=get_config("sso_google_team_claim", "hd"),
+        google_affiliation_claim=get_config("sso_google_affiliation_claim", "hd"),
+        google_country_claim=get_config("sso_google_country_claim", "locale"),
+        google_website_claim=get_config("sso_google_website_claim", ""),
+        google_custom_field_mappings=get_config("sso_google_custom_field_mappings", "hd:Organization Domain, locale:Locale"),
         # Azure
         azure_client_id=get_config("sso_azure_client_id", ""),
         azure_client_secret=get_config("sso_azure_client_secret", ""),
         azure_tenant=get_config("sso_azure_tenant", "common"),
         azure_scope=get_config("sso_azure_scope", "openid email profile"),
+        azure_team_mapping_enabled=get_config("sso_azure_team_mapping_enabled", "false"),
+        azure_team_claim=get_config("sso_azure_team_claim", "department"),
+        azure_affiliation_claim=get_config("sso_azure_affiliation_claim", "companyName"),
+        azure_country_claim=get_config("sso_azure_country_claim", "country"),
+        azure_website_claim=get_config("sso_azure_website_claim", ""),
+        azure_custom_field_mappings=get_config("sso_azure_custom_field_mappings", "jobTitle:Job Title, department:Department, officeLocation:Office"),
         # Okta
         okta_client_id=get_config("sso_okta_client_id", ""),
         okta_client_secret=get_config("sso_okta_client_secret", ""),
@@ -305,13 +366,25 @@ def sso_login():
     return redirect(url_for("auth.login", fallback=1))
 
 
-def apply_sso_attribute_mappings(user, u_data):
+def apply_sso_attribute_mappings(user, u_data, provider="okta"):
     if not u_data or not user:
         return
 
+    def get_claim_config(key, default=""):
+        if provider:
+            val = get_config(f"sso_{provider}_{key}")
+            if val is not None and val != "":
+                return val
+        return get_config(f"sso_{key}") or get_config(f"sso_okta_{key}") or default
+
     # 1. Automatic Team Name Mapping (Only when explicitly enabled by admin)
-    team_mapping_enabled = str(get_config("sso_okta_team_mapping_enabled", "false")).lower() in ("true", "1", "yes")
-    team_claim = get_config("sso_okta_team_claim")
+    team_mapping_enabled = False
+    if provider:
+        team_mapping_enabled = str(get_config(f"sso_{provider}_team_mapping_enabled", "false")).lower() in ("true", "1", "yes")
+    if not team_mapping_enabled:
+        team_mapping_enabled = str(get_config("sso_okta_team_mapping_enabled", "false")).lower() in ("true", "1", "yes")
+
+    team_claim = get_claim_config("team_claim")
     if team_mapping_enabled and team_claim:
         raw_team = u_data.get(team_claim)
         if isinstance(raw_team, list) and raw_team:
@@ -332,8 +405,8 @@ def apply_sso_attribute_mappings(user, u_data):
                         db.session.flush()
                     user.team_id = existing_team.id
 
-    # 2. Affiliation Mapping (e.g. map Okta team/company/org to user.affiliation)
-    affil_claim = get_config("sso_okta_affiliation_claim")
+    # 2. Affiliation Mapping (e.g. map team/company/org to user.affiliation)
+    affil_claim = get_claim_config("affiliation_claim")
     if affil_claim:
         raw_affil = u_data.get(affil_claim)
         if isinstance(raw_affil, list) and raw_affil:
@@ -342,7 +415,7 @@ def apply_sso_attribute_mappings(user, u_data):
             user.affiliation = str(raw_affil).strip()[:128]
 
     # 3. Country Mapping
-    country_claim = get_config("sso_okta_country_claim")
+    country_claim = get_claim_config("country_claim")
     if country_claim:
         raw_country = u_data.get(country_claim)
         if isinstance(raw_country, list) and raw_country:
@@ -351,7 +424,7 @@ def apply_sso_attribute_mappings(user, u_data):
             user.country = raw_country.strip().upper()[:32]
 
     # 4. Website Mapping
-    website_claim = get_config("sso_okta_website_claim")
+    website_claim = get_claim_config("website_claim")
     if website_claim:
         raw_website = u_data.get(website_claim)
         if isinstance(raw_website, list) and raw_website:
@@ -361,7 +434,7 @@ def apply_sso_attribute_mappings(user, u_data):
 
     # 5. User Tags & Custom Attributes Mapping Rules
     # Supports "claim_key:Target Field Name" or comma/newline separated claims
-    custom_rules = get_config("sso_okta_custom_field_mappings") or get_config("sso_okta_tag_claims")
+    custom_rules = get_claim_config("custom_field_mappings") or get_claim_config("tag_claims")
     if custom_rules:
         rules = [r.strip() for r in custom_rules.replace("\n", ",").split(",") if r.strip()]
         for rule in rules:
@@ -493,6 +566,8 @@ def sso_callback(provider=None):
                     if e.get("primary") and e.get("verified"):
                         email = e.get("email")
                         break
+            if email:
+                u_data["email"] = email
 
         elif provider == "google":
             code = request.args.get("code")
@@ -599,6 +674,8 @@ def sso_callback(provider=None):
             oauth_uid = str(u_data.get("id"))
             email = u_data.get("mail") or u_data.get("userPrincipalName")
             name = u_data.get("displayName") or (email.split("@")[0] if email else None)
+            if email:
+                u_data["email"] = email
 
         elif provider == "okta":
             code = request.args.get("code")
@@ -650,13 +727,41 @@ def sso_callback(provider=None):
                 "saml": "urn:oasis:names:tc:SAML:2.0:assertion",
                 "samlp": "urn:oasis:names:tc:SAML:2.0:protocol",
             }
+
+            # Parse SAML Attributes from AttributeStatement
+            u_data = {}
+            for attr in root.findall(".//saml:Attribute", ns):
+                attr_name = attr.get("Name")
+                friendly_name = attr.get("FriendlyName")
+                vals = [v.text.strip() for v in attr.findall("saml:AttributeValue", ns) if v.text]
+                if not vals:
+                    continue
+                val_to_store = vals[0] if len(vals) == 1 else vals
+                if attr_name:
+                    u_data[attr_name] = val_to_store
+                    # Extract short name suffix (e.g. uri/claims/emailaddress -> emailaddress)
+                    short_name = attr_name.split("/")[-1].split(":")[-1]
+                    if short_name and short_name not in u_data:
+                        u_data[short_name] = val_to_store
+                if friendly_name and friendly_name not in u_data:
+                    u_data[friendly_name] = val_to_store
+
             name_id = root.find(".//saml:NameID", ns)
             if name_id is not None and name_id.text:
                 email = name_id.text.strip()
                 name = email.split("@")[0]
                 oauth_uid = email
-            else:
-                flash("Could not parse NameID from SAML response assertion.", "danger")
+
+            # If NameID was not an email or attributes have explicit email
+            attr_email = u_data.get("email") or u_data.get("mail") or u_data.get("emailaddress")
+            if attr_email and "@" in str(attr_email):
+                email = str(attr_email).strip()
+            attr_name = u_data.get("displayName") or u_data.get("name") or u_data.get("givenName")
+            if attr_name:
+                name = str(attr_name).strip()
+
+            if not email and not name_id:
+                flash("Could not parse NameID or email from SAML response assertion.", "danger")
                 return redirect(url_for("auth.login", fallback=1))
 
     except Exception as e:
@@ -692,7 +797,7 @@ def sso_callback(provider=None):
 
     if u_data:
         try:
-            apply_sso_attribute_mappings(user, u_data)
+            apply_sso_attribute_mappings(user, u_data, provider=provider)
         except Exception as e:
             print(f"Error applying SSO attribute mappings: {e}")
 

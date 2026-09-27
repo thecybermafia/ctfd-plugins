@@ -19,7 +19,7 @@ A production-ready collection of game-changing challenge types and operational i
 | [**`image_upload`**](./image_upload) | Challenge Type | Secure manual review challenge for OSINT, physical hacking, hardware badges, and telemetry proof with admin scoring console. |
 | [**`textarea`**](./textarea) | Challenge Type | Monospace long-form text submission and manual evaluation challenge with character counter, DoS clamping, and admin review console. |
 | [**`sso`**](./sso) | Authentication | Enterprise Single Sign-On supporting SAML 2.0, Discord, GitHub, Google, Azure, and Okta with policy enforcement and private registration sync. |
-| [**`google_chat`**](./google_chat) | Admin Integration | Real-time webhook notifications to Google Chat spaces for First Bloods, challenge solves, and team registrations. |
+| [**`chat_notifications`**](./chat_notifications) | Webhooks & Broadcasts | Real-time notifications and webhooks for Discord, Slack, Teams, Google Chat, Telegram, and Generic Webhooks with independent dual-channel routing. |
 
 ---
 
@@ -66,7 +66,7 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
 1. Copy the desired plugin folder(s) directly into your CTFd `CTFd/plugins/` directory:
    ```bash
    # Copy all plugins
-   cp -r referrals plugin_manager bingo crossword image_upload textarea sso google_chat /path/to/CTFd/CTFd/plugins/
+   cp -r referrals plugin_manager bingo crossword image_upload textarea sso chat_notifications /path/to/CTFd/CTFd/plugins/
    ```
 
 2. Restart your CTFd application or container:

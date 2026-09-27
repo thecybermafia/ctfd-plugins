@@ -1,0 +1,1095 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>Chat &amp; Webhook Notifications</h1>
+  </div>
+</div>
+
+<style>
+  #chatTabs {
+    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 1.5rem !important;
+  }
+  #chatTabs .nav-item {
+    margin-bottom: -2px;
+  }
+  #chatTabs .nav-link {
+    color: #495057;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.65rem 1.25rem;
+    border: 2px solid transparent;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+  }
+  #chatTabs .nav-link:hover {
+    color: #007bff;
+    border-color: #e9ecef #e9ecef #dee2e6;
+  }
+  #chatTabs .nav-link.active {
+    color: #007bff !important;
+    font-weight: 600;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff !important;
+  }
+  .secret-mask {
+    -webkit-text-security: disc;
+    letter-spacing: 2px;
+  }
+  .secret-unmask {
+    -webkit-text-security: none;
+    letter-spacing: normal;
+  }
+</style>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-11 mx-auto">
+
+      <!-- Navigation Tabs Styled like Theme Settings & SSO -->
+      <ul class="nav nav-tabs mb-4" id="chatTabs" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="setup-tab-btn" data-toggle="tab" data-bs-toggle="tab" href="#setup-tab" role="tab">
+            Setup &amp; Overview
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="discord-tab-btn" data-toggle="tab" data-bs-toggle="tab" href="#discord-tab" role="tab">
+            Discord
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="slack-tab-btn" data-toggle="tab" data-bs-toggle="tab" href="#slack-tab" role="tab">
+            Slack &amp; Mattermost
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="teams-tab-btn" data-toggle="tab" data-bs-toggle="tab" href="#teams-tab" role="tab">
+            Microsoft Teams
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="gchat-tab-btn" data-toggle="tab" data-bs-toggle="tab" href="#gchat-tab" role="tab">
+            Google Chat
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="telegram-tab-btn" data-toggle="tab" data-bs-toggle="tab" href="#telegram-tab" role="tab">
+            Telegram
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="custom-tab-btn" data-toggle="tab" data-bs-toggle="tab" href="#custom-tab" role="tab">
+            Custom Webhooks &amp; HMAC
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="events-tab-btn" data-toggle="tab" data-bs-toggle="tab" href="#events-tab" role="tab">
+            Event Subscriptions
+          </a>
+        </li>
+      </ul>
+
+      <!-- Tab Content Area -->
+      <div class="tab-content" id="chatTabContent">
+
+        <!-- ================================================================= -->
+        <!-- TAB 1: Setup & Overview                                           -->
+        <!-- ================================================================= -->
+        <div class="tab-pane fade show active" id="setup-tab" role="tabpanel">
+
+          <!-- Shared Secret Overview Card -->
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+              <span class="fs-5 font-monospace fw-bold">Instance Shared Secret &amp; HMAC Token</span>
+              <span class="badge bg-primary text-white font-monospace">HMAC-SHA256</span>
+            </div>
+            <div class="card-body">
+              <div class="small text-secondary mb-2">
+                This shared secret authenticates and cryptographically signs all outbound webhook notifications dispatched by CTFd. Endpoints can verify authenticity using the <code>Ctfd-Webhook-Signature</code> header.
+              </div>
+              <div class="input-group">
+                <input type="text" id="shared-secret-input" class="form-control font-monospace secret-mask" value="{{ configs.shared_secret }}" readonly>
+                <div class="input-group-append">
+                  <button type="button" id="btn-toggle-secret" class="btn btn-outline-secondary">Show</button>
+                  <button type="button" id="btn-copy-secret" class="btn btn-outline-primary">Copy</button>
+                  <button type="button" id="btn-regen-secret" class="btn btn-outline-danger">Regenerate</button>
+                </div>
+              </div>
+              <div id="secret-status" class="small mt-1 text-muted"></div>
+            </div>
+          </div>
+
+          <!-- 1. Participant Channel Webhook Card -->
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+              <span class="fs-5 font-monospace fw-bold">1. Participant Broadcast Channel</span>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="chat-enabled" {% if configs.enabled %}checked{% endif %}>
+                <label class="form-check-label fw-bold ms-1" for="chat-enabled">Channel Active</label>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Target Platform</label>
+                  <select class="form-select form-control font-monospace" id="chat-platform">
+                    <option value="auto" {% if configs.platform == 'auto' %}selected{% endif %}>Auto-Detect (URL Hostname)</option>
+                    <option value="discord" {% if configs.platform == 'discord' %}selected{% endif %}>Discord (Embeds)</option>
+                    <option value="slack" {% if configs.platform == 'slack' %}selected{% endif %}>Slack / Mattermost (Block Kit)</option>
+                    <option value="teams" {% if configs.platform == 'teams' %}selected{% endif %}>Microsoft Teams (MessageCard)</option>
+                    <option value="google_chat" {% if configs.platform == 'google_chat' %}selected{% endif %}>Google Chat (CardsV2)</option>
+                    <option value="telegram" {% if configs.platform == 'telegram' %}selected{% endif %}>Telegram (Bot API)</option>
+                    <option value="generic" {% if configs.platform == 'generic' %}selected{% endif %}>Generic / Custom Webhook (JSON)</option>
+                  </select>
+                  <div class="form-text small text-secondary">Platform adapter for payload serialization.</div>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Participant Webhook URL</label>
+                  <input type="text" class="form-control font-monospace" id="chat-webhook-url" value="{{ configs.webhook_url }}" placeholder="https://discord.com/api/webhooks/... or https://hooks.slack.com/...">
+                  <div class="form-text small text-secondary">Public channel destination for announcement, release, and solve events.</div>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Bot Identity Prefix / Name</label>
+                  <input type="text" class="form-control font-monospace" id="chat-prefix" value="{{ configs.prefix }}" placeholder="[CTFd]">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Telegram Chat ID (Optional)</label>
+                  <input type="text" class="form-control font-monospace" id="chat-telegram-chat-id" value="{{ configs.telegram_chat_id }}" placeholder="-1001234567890">
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                <div class="text-secondary small">
+                  Dispatches competitor notifications to Discord, Slack, Teams, Google Chat, or Telegram.
+                </div>
+                <button type="button" class="btn btn-outline-info btn-sm font-monospace" id="btn-test-participant">
+                  Test Participant Webhook
+                </button>
+              </div>
+              <div id="test-participant-status" class="small mt-2 font-monospace"></div>
+            </div>
+          </div>
+
+          <!-- 2. Admin Operations Channel Webhook Card -->
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+              <span class="fs-5 font-monospace fw-bold">2. Admin Operations Channel</span>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="admin-chat-enabled" {% if configs.admin_enabled %}checked{% endif %}>
+                <label class="form-check-label fw-bold ms-1" for="admin-chat-enabled">Admin Channel Active</label>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Admin Platform</label>
+                  <select class="form-select form-control font-monospace" id="admin-platform">
+                    <option value="auto" {% if configs.admin_platform == 'auto' %}selected{% endif %}>Auto-Detect (URL Hostname)</option>
+                    <option value="discord" {% if configs.admin_platform == 'discord' %}selected{% endif %}>Discord (Embeds)</option>
+                    <option value="slack" {% if configs.admin_platform == 'slack' %}selected{% endif %}>Slack / Mattermost (Block Kit)</option>
+                    <option value="teams" {% if configs.admin_platform == 'teams' %}selected{% endif %}>Microsoft Teams (MessageCard)</option>
+                    <option value="google_chat" {% if configs.admin_platform == 'google_chat' %}selected{% endif %}>Google Chat (CardsV2)</option>
+                    <option value="telegram" {% if configs.admin_platform == 'telegram' %}selected{% endif %}>Telegram (Bot API)</option>
+                    <option value="generic" {% if configs.admin_platform == 'generic' %}selected{% endif %}>Generic / Custom Webhook (JSON)</option>
+                  </select>
+                  <div class="form-text small text-secondary">Independent platform adapter for administrative alerts.</div>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Admin Webhook URL</label>
+                  <input type="text" class="form-control font-monospace" id="admin-webhook-url" value="{{ configs.admin_webhook_url }}" placeholder="https://hooks.slack.com/services/... or https://discord.com/api/webhooks/...">
+                  <div class="form-text small text-secondary">Private staff channel destination for reviews, registrations, and fraud alerts.</div>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Admin Bot Prefix / Tag</label>
+                  <input type="text" class="form-control font-monospace" id="admin-prefix" value="{{ configs.admin_prefix }}" placeholder="[CTFd-Admin]">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Admin Telegram Chat ID (Optional)</label>
+                  <input type="text" class="form-control font-monospace" id="admin-telegram-chat-id" value="{{ configs.admin_telegram_chat_id }}" placeholder="-1009876543210">
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                <div class="text-secondary small">
+                  Dispatches staff alerts (manual challenge reviews, new registrations, anti-cheat milestones).
+                </div>
+                <button type="button" class="btn btn-outline-warning btn-sm font-monospace" id="btn-test-admin">
+                  Test Admin Webhook
+                </button>
+              </div>
+              <div id="test-admin-status" class="small mt-2 font-monospace"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 2: Discord Webhooks                                           -->
+        <!-- ================================================================= -->
+        <div class="tab-pane fade" id="discord-tab" role="tabpanel">
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent font-monospace fw-bold">
+              <span class="fs-5">Discord Integration Guide &amp; Controls</span>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info py-2">
+                <strong>Discord Webhook Support:</strong> CTFd dispatches rich embeds with dynamic status colors, thumbnail avatars, structured fields, and formatted timestamps.
+              </div>
+
+              <div class="fw-bold mb-2">Step-by-Step Setup:</div>
+              <ol class="ps-3 mb-4 small text-secondary">
+                <li>Open your Discord Server, right-click the destination channel and select <strong>Edit Channel</strong>.</li>
+                <li>Navigate to <strong>Integrations</strong> &gt; <strong>Webhooks</strong> &gt; click <strong>New Webhook</strong>.</li>
+                <li>Assign a name (e.g. <code>CTFd Operative Feed</code>) and click <strong>Copy Webhook URL</strong>.</li>
+                <li>Paste the copied URL below and assign it to Participant or Admin channel.</li>
+              </ol>
+
+              <div class="row mb-3">
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Discord Webhook Destination</label>
+                  <input type="text" class="form-control font-monospace" id="discord-quick-url" placeholder="https://discord.com/api/webhooks/...">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Apply To Channel</label>
+                  <select class="form-select form-control font-monospace" id="discord-channel-target">
+                    <option value="participant">Participant Broadcast</option>
+                    <option value="admin">Admin Operations</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <button type="button" class="btn btn-outline-primary btn-sm font-monospace" id="btn-apply-discord">
+                  Apply URL to Selected Channel
+                </button>
+                <button type="button" class="btn btn-outline-info btn-sm font-monospace ms-2" id="btn-test-discord">
+                  Validate &amp; Test Discord Webhook
+                </button>
+                <div id="discord-test-status" class="small mt-2 font-monospace"></div>
+              </div>
+
+              <div class="fw-bold mb-2">Embed Visual Palette:</div>
+              <div class="row text-center small font-monospace">
+                <div class="col-md-3 mb-2">
+                  <div class="p-2 border rounded" style="border-left: 5px solid #FFD700 !important; background: #fffcf0;">
+                    <strong style="color: #b45309;">FIRST BLOOD</strong><br>
+                    <span class="text-muted">#FFD700 (Gold)</span>
+                  </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <div class="p-2 border rounded" style="border-left: 5px solid #00FF41 !important; background: #f0fdf4;">
+                    <strong style="color: #15803d;">CHALLENGE SOLVE</strong><br>
+                    <span class="text-muted">#00FF41 (Green)</span>
+                  </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <div class="p-2 border rounded" style="border-left: 5px solid #00E5FF !important; background: #ecfeff;">
+                    <strong style="color: #0e7490;">CHALLENGE RELEASE</strong><br>
+                    <span class="text-muted">#00E5FF (Cyan)</span>
+                  </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <div class="p-2 border rounded" style="border-left: 5px solid #E74C3C !important; background: #fef2f2;">
+                    <strong style="color: #b91c1c;">ADMIN REVIEW</strong><br>
+                    <span class="text-muted">#E74C3C (Red)</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 3: Slack & Mattermost Webhooks                                -->
+        <!-- ================================================================= -->
+        <div class="tab-pane fade" id="slack-tab" role="tabpanel">
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent font-monospace fw-bold">
+              <span class="fs-5">Slack &amp; Mattermost Integration Guide &amp; Controls</span>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info py-2">
+                <strong>Block Kit Formatting:</strong> CTFd sends native Slack Block Kit payloads with bold section headers, mrkdwn body snippets, and two-column fact matrices. Compatible with Mattermost incoming webhooks.
+              </div>
+
+              <div class="fw-bold mb-2">Step-by-Step Setup:</div>
+              <ol class="ps-3 mb-4 small text-secondary">
+                <li>In your Slack Workspace, visit <strong>Apps</strong> &gt; search for <strong>Incoming WebHooks</strong>.</li>
+                <li>Click <strong>Add to Slack</strong>, pick your broadcast channel, and click <strong>Add Incoming WebHooks integration</strong>.</li>
+                <li>Copy the Webhook URL (format: <code>https://hooks.slack.com/services/T00/B00/X00</code>).</li>
+                <li>Paste the URL below and assign it to Participant or Admin channel.</li>
+              </ol>
+
+              <div class="row mb-3">
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Slack / Mattermost Webhook URL</label>
+                  <input type="text" class="form-control font-monospace" id="slack-quick-url" placeholder="https://hooks.slack.com/services/...">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Apply To Channel</label>
+                  <select class="form-select form-control font-monospace" id="slack-channel-target">
+                    <option value="participant">Participant Broadcast</option>
+                    <option value="admin">Admin Operations</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <button type="button" class="btn btn-outline-primary btn-sm font-monospace" id="btn-apply-slack">
+                  Apply URL to Selected Channel
+                </button>
+                <button type="button" class="btn btn-outline-info btn-sm font-monospace ms-2" id="btn-test-slack">
+                  Validate &amp; Test Slack Webhook
+                </button>
+                <div id="slack-test-status" class="small mt-2 font-monospace"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 4: Microsoft Teams                                            -->
+        <!-- ================================================================= -->
+        <div class="tab-pane fade" id="teams-tab" role="tabpanel">
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent font-monospace fw-bold">
+              <span class="fs-5">Microsoft Teams Integration Guide &amp; Controls</span>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info py-2">
+                <strong>Office 365 MessageCard Format:</strong> Webhooks to Microsoft Teams are serialized as actionable MessageCards with color highlights, structured fact badges, and subtitle headers. Compatible with Power Automate workflows.
+              </div>
+
+              <div class="fw-bold mb-2">Step-by-Step Setup:</div>
+              <ol class="ps-3 mb-4 small text-secondary">
+                <li>In Microsoft Teams, navigate to the target channel &gt; click <strong>... (More options)</strong> &gt; <strong>Connectors</strong> (or <strong>Workflows</strong>).</li>
+                <li>Search for <strong>Incoming Webhook</strong> &gt; click <strong>Configure</strong>.</li>
+                <li>Provide a bot name (e.g. <code>CTFd Operative Broadcast</code>) and click <strong>Create</strong>.</li>
+                <li>Copy the generated Office 365 / Logic App Webhook URL and paste below.</li>
+              </ol>
+
+              <div class="row mb-3">
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Microsoft Teams Webhook URL</label>
+                  <input type="text" class="form-control font-monospace" id="teams-quick-url" placeholder="https://subdomain.webhook.office.com/webhookb2/...">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Apply To Channel</label>
+                  <select class="form-select form-control font-monospace" id="teams-channel-target">
+                    <option value="participant">Participant Broadcast</option>
+                    <option value="admin">Admin Operations</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <button type="button" class="btn btn-outline-primary btn-sm font-monospace" id="btn-apply-teams">
+                  Apply URL to Selected Channel
+                </button>
+                <button type="button" class="btn btn-outline-info btn-sm font-monospace ms-2" id="btn-test-teams">
+                  Validate &amp; Test Teams Webhook
+                </button>
+                <div id="teams-test-status" class="small mt-2 font-monospace"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 5: Google Chat                                                -->
+        <!-- ================================================================= -->
+        <div class="tab-pane fade" id="gchat-tab" role="tabpanel">
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent font-monospace fw-bold">
+              <span class="fs-5">Google Chat Integration Guide &amp; Controls</span>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info py-2">
+                <strong>Google Chat CardsV2 Format:</strong> Webhooks to Google Chat Spaces are rendered as CardsV2 widgets with round avatar headers, bold text blocks, and decorated text status chips.
+              </div>
+
+              <div class="fw-bold mb-2">Step-by-Step Setup:</div>
+              <ol class="ps-3 mb-4 small text-secondary">
+                <li>In Google Chat, open your target Space header &gt; select <strong>Apps &amp; integrations</strong>.</li>
+                <li>Click <strong>Manage webhooks</strong> &gt; click <strong>Add webhook</strong>.</li>
+                <li>Name the webhook (e.g. <code>CTFd Live Feed</code>) and save.</li>
+                <li>Copy the generated <code>https://chat.googleapis.com/v1/spaces/...</code> URL and paste below.</li>
+              </ol>
+
+              <div class="row mb-3">
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Google Chat Space Webhook URL</label>
+                  <input type="text" class="form-control font-monospace" id="gchat-quick-url" placeholder="https://chat.googleapis.com/v1/spaces/...">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Apply To Channel</label>
+                  <select class="form-select form-control font-monospace" id="gchat-channel-target">
+                    <option value="participant">Participant Broadcast</option>
+                    <option value="admin">Admin Operations</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <button type="button" class="btn btn-outline-primary btn-sm font-monospace" id="btn-apply-gchat">
+                  Apply URL to Selected Channel
+                </button>
+                <button type="button" class="btn btn-outline-info btn-sm font-monospace ms-2" id="btn-test-gchat">
+                  Validate &amp; Test Google Chat Webhook
+                </button>
+                <div id="gchat-test-status" class="small mt-2 font-monospace"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 6: Telegram Bot                                               -->
+        <!-- ================================================================= -->
+        <div class="tab-pane fade" id="telegram-tab" role="tabpanel">
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent font-monospace fw-bold">
+              <span class="fs-5">Telegram Bot API Guide &amp; Controls</span>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info py-2">
+                <strong>Telegram Bot API:</strong> Outbound messages are delivered directly via Telegram Bot API with HTML formatted captions and link previews disabled.
+              </div>
+
+              <div class="fw-bold mb-2">Step-by-Step Setup:</div>
+              <ol class="ps-3 mb-4 small text-secondary">
+                <li>Message <code>@BotFather</code> on Telegram and create a bot using the <code>/newbot</code> command.</li>
+                <li>Copy your Bot Token and enter URL format: <code>https://api.telegram.org/bot&lt;TOKEN&gt;/sendMessage</code>.</li>
+                <li>Add your bot to your target channel or group as an administrator.</li>
+                <li>Enter the numeric <strong>Telegram Chat ID</strong> (e.g. <code>-1001234567890</code>) below.</li>
+              </ol>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Telegram Bot Webhook URL</label>
+                  <input type="text" class="form-control font-monospace" id="telegram-quick-url" placeholder="https://api.telegram.org/bot<TOKEN>/sendMessage">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-bold">Telegram Chat ID</label>
+                  <input type="text" class="form-control font-monospace" id="telegram-quick-chat-id" placeholder="-1001234567890">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-bold">Apply To Channel</label>
+                  <select class="form-select form-control font-monospace" id="telegram-channel-target">
+                    <option value="participant">Participant Broadcast</option>
+                    <option value="admin">Admin Operations</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <button type="button" class="btn btn-outline-primary btn-sm font-monospace" id="btn-apply-telegram">
+                  Apply to Selected Channel
+                </button>
+                <button type="button" class="btn btn-outline-info btn-sm font-monospace ms-2" id="btn-test-telegram">
+                  Validate &amp; Test Telegram Bot
+                </button>
+                <div id="telegram-test-status" class="small mt-2 font-monospace"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 7: Custom Webhooks & HMAC-SHA256 (Official CTFd Standard)    -->
+        <!-- ================================================================= -->
+        <div class="tab-pane fade" id="custom-tab" role="tabpanel">
+
+          <!-- Ownership Verification Challenge Card -->
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent font-monospace fw-bold">
+              <span class="fs-5">Endpoint Ownership Verification (GET Challenge)</span>
+            </div>
+            <div class="card-body">
+              <div class="small text-secondary mb-3">
+                CTFd proves and verifies endpoint ownership before streaming production events. CTFd will send a <code>GET</code> request with a <code>?token=&lt;token&gt;</code> parameter. The endpoint must respond with JSON containing the token hashed with HMAC-SHA256 using the instance Shared Secret:
+                <code>{"response": hmac_sha256(SHARED_SECRET, token)}</code>.
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Target Webhook Endpoint URL</label>
+                  <input type="text" class="form-control font-monospace" id="validate-endpoint-url" placeholder="https://example.com/api/v1/ctfd-webhook">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button type="button" class="btn btn-success font-monospace w-100" id="btn-validate-endpoint">
+                    Verify Endpoint Ownership
+                  </button>
+                </div>
+              </div>
+              <div id="endpoint-validation-result" class="small font-monospace"></div>
+            </div>
+          </div>
+
+          <!-- Security Headers Specification Card -->
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent font-monospace fw-bold">
+              <span class="fs-5">Security Headers &amp; Signature Specification</span>
+            </div>
+            <div class="card-body">
+              <div class="small text-secondary mb-3">
+                Every webhook event dispatched by CTFd includes cryptographic security headers to prevent spoofing and replay attacks:
+              </div>
+
+              <div class="bg-dark text-white p-3 rounded font-monospace small mb-3">
+                User-Agent: CTFd-Webhook<br>
+                Content-Type: application/json<br>
+                Ctfd-Webhook-Event: challenge.solved<br>
+                Ctfd-Webhook-Signature: t=1616995588,v1=9e8cdd253434b74119ff44a119bb2d93e3b78a3a6a1a52d71e1bf70c36c55234
+              </div>
+
+              <div class="small text-secondary mb-2">
+                <strong>Signature Verification Algorithm:</strong>
+              </div>
+              <div class="small ps-3 text-secondary mb-3">
+                The <code>Ctfd-Webhook-Signature</code> header consists of two parameters: <code>t</code> (Unix epoch timestamp) and <code>v1</code> (hex HMAC-SHA256 digest).
+                The hash is calculated as: <code>hmac_sha256(SHARED_SECRET, f"{t}.{request_body}")</code>.
+                Receivers should verify the signature matches and optionally discard requests older than 300 seconds to protect against replay attacks.
+              </div>
+
+              <div class="fw-bold mb-2">Standard JSON Event Schema Examples:</div>
+              <div class="row font-monospace small">
+                <div class="col-md-6 mb-3">
+                  <div class="p-2 border rounded bg-light">
+                    <strong>Event: user.created</strong>
+                    <pre class="mb-0 mt-1 small"><code>{
+  "event": "user.created",
+  "id": 1,
+  "name": "operative_zero",
+  "affiliation": "Special Ops",
+  "country": "US"
+}</code></pre>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="p-2 border rounded bg-light">
+                    <strong>Event: challenge.solved</strong>
+                    <pre class="mb-0 mt-1 small"><code>{
+  "event": "challenge.solved",
+  "id": 104,
+  "challenge_id": 12,
+  "user": "operative_zero",
+  "team": "Cyber Syndicate"
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fw-bold mb-2">Python Verification Script (Reference Implementation):</div>
+              <div class="bg-dark text-white p-3 rounded font-monospace small">
+<pre class="text-white mb-0"><code># receiver.py - Validates GET challenge and POST HMAC signatures
+import hashlib, hmac, json
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+SHARED_SECRET = "{{ configs.shared_secret }}"
+
+@app.route("/webhook", methods=["GET", "POST"])
+def webhook_handler():
+    if request.method == "GET":
+        token = request.args.get("token", "")
+        expected = hmac.new(SHARED_SECRET.encode(), token.encode(), hashlib.sha256).hexdigest()
+        return jsonify({"response": expected})
+
+    # Validate POST signature
+    sig_header = request.headers.get("Ctfd-Webhook-Signature", "")
+    parts = dict(kv.split("=", 1) for kv in sig_header.split(","))
+    t, v1 = parts.get("t"), parts.get("v1")
+    sig_input = f"{t}.{request.get_data(as_text=True)}"
+    expected_v1 = hmac.new(SHARED_SECRET.encode(), sig_input.encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(v1, expected_v1):
+        return "Invalid Signature", 401
+
+    payload = request.get_json()
+    return jsonify({"status": "received"}), 200</code></pre>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 8: Event Subscriptions Matrix                                 -->
+        <!-- ================================================================= -->
+        <div class="tab-pane fade" id="events-tab" role="tabpanel">
+          <div class="card shadow-sm mb-4 border-1">
+            <div class="card-header bg-transparent font-monospace fw-bold">
+              <span class="fs-5">Master Event Subscriptions Matrix</span>
+            </div>
+            <div class="card-body">
+
+              <div class="fw-bold text-primary mb-3">Participant Broadcast Events:</div>
+              <div class="row mb-3">
+                <div class="col-md-6 mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="notify-announcements" {% if configs.notify_announcements %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="notify-announcements">Platform Announcements</label>
+                    <div class="form-text small text-secondary">Broadcast competition news and admin announcements.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="notify-new-challenges" {% if configs.notify_new_challenges %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="notify-new-challenges">Challenge Releases</label>
+                    <div class="form-text small text-secondary">Alert when hidden challenges are unlocked or released.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="notify-first-blood" {% if configs.notify_first_blood %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="notify-first-blood">First Blood Solves</label>
+                    <div class="form-text small text-secondary">Highlight gold first-blood captures on any challenge.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="notify-all-solves" {% if configs.notify_all_solves %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="notify-all-solves">All Challenge Solves</label>
+                    <div class="form-text small text-secondary">Live feed for every solve submitted across the gameboard.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="notify-registrations" {% if configs.notify_registrations %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="notify-registrations">Public Competitor Registrations</label>
+                    <div class="form-text small text-secondary">Welcome new operatives and teams in public channels.</div>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="my-4">
+
+              <div class="fw-bold text-danger mb-3">Admin Operations Private Events:</div>
+              <div class="row mb-3">
+                <div class="col-md-6 mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="admin-notify-registrations" {% if configs.admin_notify_registrations %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="admin-notify-registrations">New Operative Registrations</label>
+                    <div class="form-text small text-secondary">Proctor alert when new accounts sign up or verify email.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="admin-notify-submissions" {% if configs.admin_notify_submissions %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="admin-notify-submissions">Manual Review Submissions</label>
+                    <div class="form-text small text-secondary">Alert staff when writeup (textarea) or document challenges require grading.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="admin-notify-referrals" {% if configs.admin_notify_referrals %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="admin-notify-referrals">Referral Fraud &amp; Milestones</label>
+                    <div class="form-text small text-secondary">Real-time alerts for qualification milestones and fraud blocks.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="admin-mirror-events" {% if configs.mirror_participant_events %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="admin-mirror-events">Mirror Participant Events to Admin</label>
+                    <div class="form-text small text-secondary">Duplicate participant announcements and solves into staff channel.</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- /tab-content -->
+
+      <!-- Unified Action Bar -->
+      <div class="card shadow-sm mb-5 border-1 bg-light">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <span id="save-status" class="small fw-bold"></span>
+          </div>
+          <button type="button" class="btn btn-primary px-4 fw-bold font-monospace" id="btn-save-settings">
+            Save All Webhook Settings
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const csrfToken = "{{ Session.nonce }}";
+
+  // 1. Tab Activation Engine (Supports both BS4 / BS5 & Vanilla JS fallback)
+  function activateTab(targetId) {
+    if (!targetId || !targetId.startsWith("#")) return;
+
+    // Tab Links
+    document.querySelectorAll("#chatTabs .nav-link").forEach(function(link) {
+      if (link.getAttribute("href") === targetId) {
+        link.classList.add("active");
+      } else {
+        link.classList.remove("active");
+      }
+    });
+
+    // Tab Panes
+    document.querySelectorAll("#chatTabContent > .tab-pane").forEach(function(pane) {
+      if ("#" + pane.id === targetId) {
+        pane.classList.add("show", "active");
+      } else {
+        pane.classList.remove("show", "active");
+      }
+    });
+
+    if (history.replaceState) {
+      history.replaceState(null, null, targetId);
+    }
+  }
+
+  document.querySelectorAll("#chatTabs .nav-link").forEach(function(link) {
+    link.addEventListener("click", function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute("href");
+      activateTab(targetId);
+    });
+  });
+
+  if (window.location.hash) {
+    activateTab(window.location.hash);
+  }
+
+  // 2. Shared Secret Visibility & Copy
+  const secretInput = document.getElementById("shared-secret-input");
+  const toggleSecretBtn = document.getElementById("btn-toggle-secret");
+  const copySecretBtn = document.getElementById("btn-copy-secret");
+  const regenSecretBtn = document.getElementById("btn-regen-secret");
+  const secretStatus = document.getElementById("secret-status");
+
+  if (toggleSecretBtn) {
+    toggleSecretBtn.addEventListener("click", function() {
+      if (secretInput.classList.contains("secret-mask")) {
+        secretInput.classList.remove("secret-mask");
+        secretInput.classList.add("secret-unmask");
+        this.textContent = "Hide";
+      } else {
+        secretInput.classList.remove("secret-unmask");
+        secretInput.classList.add("secret-mask");
+        this.textContent = "Show";
+      }
+    });
+  }
+
+  if (copySecretBtn) {
+    copySecretBtn.addEventListener("click", function() {
+      secretInput.select();
+      navigator.clipboard.writeText(secretInput.value).then(function() {
+        secretStatus.textContent = "Shared secret copied to clipboard!";
+        secretStatus.className = "small mt-1 text-success fw-bold";
+        setTimeout(function() { secretStatus.textContent = ""; }, 3000);
+      });
+    });
+  }
+
+  if (regenSecretBtn) {
+    regenSecretBtn.addEventListener("click", function() {
+      if (!confirm("Regenerating the shared secret will immediately invalidate HMAC signatures on existing webhooks. Proceed?")) {
+        return;
+      }
+      secretStatus.textContent = "Regenerating...";
+      secretStatus.className = "small mt-1 text-muted";
+
+      fetch("/admin/chat_notifications/secret/regenerate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": csrfToken
+        }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          secretInput.value = data.secret;
+          secretStatus.textContent = "Shared secret regenerated successfully!";
+          secretStatus.className = "small mt-1 text-success fw-bold";
+        } else {
+          secretStatus.textContent = "Failed to regenerate secret: " + data.message;
+          secretStatus.className = "small mt-1 text-danger";
+        }
+        setTimeout(function() { secretStatus.textContent = ""; }, 4000);
+      })
+      .catch(function(err) {
+        secretStatus.textContent = "Network error: " + err;
+        secretStatus.className = "small mt-1 text-danger";
+      });
+    });
+  }
+
+  // 3. Official CTFd Endpoint Ownership Verification Tool
+  const validateEndpointBtn = document.getElementById("btn-validate-endpoint");
+  const validateEndpointUrl = document.getElementById("validate-endpoint-url");
+  const validationResult = document.getElementById("endpoint-validation-result");
+
+  if (validateEndpointBtn) {
+    validateEndpointBtn.addEventListener("click", function() {
+      const url = (validateEndpointUrl.value || "").trim();
+      if (!url) {
+        validationResult.innerHTML = '<span class="text-danger fw-bold">Please specify an endpoint URL to validate.</span>';
+        return;
+      }
+      validationResult.innerHTML = '<span class="text-muted">Sending ownership token challenge over GET...</span>';
+
+      fetch("/admin/chat_notifications/validate_endpoint", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": csrfToken
+        },
+        body: JSON.stringify({ url: url })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          validationResult.innerHTML = '<span class="text-success fw-bold">' + data.message + '</span>';
+        } else {
+          validationResult.innerHTML = '<span class="text-danger fw-bold">' + data.message + '</span>';
+        }
+      })
+      .catch(function(err) {
+        validationResult.innerHTML = '<span class="text-danger fw-bold">Verification error: ' + err + '</span>';
+      });
+    });
+  }
+
+  // 4. Quick Apply Buttons from Provider Tabs
+  function setupApplyButton(btnId, urlInputId, targetSelectId) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener("click", function() {
+      const url = (document.getElementById(urlInputId).value || "").trim();
+      const target = document.getElementById(targetSelectId).value;
+      if (!url) {
+        alert("Please enter a webhook URL first.");
+        return;
+      }
+      if (target === "admin") {
+        document.getElementById("admin-webhook-url").value = url;
+        document.getElementById("admin-chat-enabled").checked = true;
+      } else {
+        document.getElementById("chat-webhook-url").value = url;
+        document.getElementById("chat-enabled").checked = true;
+      }
+      alert("URL applied to " + (target === "admin" ? "Admin Operations Channel" : "Participant Broadcast Channel") + "!");
+    });
+  }
+
+  setupApplyButton("btn-apply-discord", "discord-quick-url", "discord-channel-target");
+  setupApplyButton("btn-apply-slack", "slack-quick-url", "slack-channel-target");
+  setupApplyButton("btn-apply-teams", "teams-quick-url", "teams-channel-target");
+  setupApplyButton("btn-apply-gchat", "gchat-quick-url", "gchat-channel-target");
+
+  // Telegram Quick Apply
+  const applyTgBtn = document.getElementById("btn-apply-telegram");
+  if (applyTgBtn) {
+    applyTgBtn.addEventListener("click", function() {
+      const url = (document.getElementById("telegram-quick-url").value || "").trim();
+      const chatId = (document.getElementById("telegram-quick-chat-id").value || "").trim();
+      const target = document.getElementById("telegram-channel-target").value;
+      if (!url) {
+        alert("Please enter a Telegram webhook URL first.");
+        return;
+      }
+      if (target === "admin") {
+        document.getElementById("admin-webhook-url").value = url;
+        document.getElementById("admin-telegram-chat-id").value = chatId;
+        document.getElementById("admin-platform").value = "telegram";
+        document.getElementById("admin-chat-enabled").checked = true;
+      } else {
+        document.getElementById("chat-webhook-url").value = url;
+        document.getElementById("chat-telegram-chat-id").value = chatId;
+        document.getElementById("chat-platform").value = "telegram";
+        document.getElementById("chat-enabled").checked = true;
+      }
+      alert("Telegram configuration applied to " + (target === "admin" ? "Admin Operations Channel" : "Participant Broadcast Channel") + "!");
+    });
+  }
+
+  // 5. Test Webhook Runner
+  function runTest(url, platform, prefix, chatId, target, statusEl) {
+    statusEl.className = "small mt-2 font-monospace text-muted";
+    statusEl.textContent = "Dispatching test notification payload...";
+
+    fetch("/admin/chat_notifications/test", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": csrfToken
+      },
+      body: JSON.stringify({
+        target: target,
+        webhook_url: url,
+        platform: platform,
+        prefix: prefix,
+        telegram_chat_id: chatId,
+        admin_webhook_url: url,
+        admin_platform: platform,
+        admin_prefix: prefix,
+        admin_telegram_chat_id: chatId
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        statusEl.className = "small mt-2 font-monospace text-success fw-bold";
+        statusEl.textContent = data.message;
+      } else {
+        statusEl.className = "small mt-2 font-monospace text-danger fw-bold";
+        statusEl.textContent = data.message;
+      }
+      setTimeout(function() { statusEl.textContent = ""; }, 5000);
+    })
+    .catch(function(err) {
+      statusEl.className = "small mt-2 font-monospace text-danger fw-bold";
+      statusEl.textContent = "Error dispatching test webhook: " + err;
+    });
+  }
+
+  document.getElementById("btn-test-participant").addEventListener("click", function() {
+    const url = document.getElementById("chat-webhook-url").value;
+    const platform = document.getElementById("chat-platform").value;
+    const prefix = document.getElementById("chat-prefix").value;
+    const chatId = document.getElementById("chat-telegram-chat-id").value;
+    runTest(url, platform, prefix, chatId, "participant", document.getElementById("test-participant-status"));
+  });
+
+  document.getElementById("btn-test-admin").addEventListener("click", function() {
+    const url = document.getElementById("admin-webhook-url").value;
+    const platform = document.getElementById("admin-platform").value;
+    const prefix = document.getElementById("admin-prefix").value;
+    const chatId = document.getElementById("admin-telegram-chat-id").value;
+    runTest(url, platform, prefix, chatId, "admin", document.getElementById("test-admin-status"));
+  });
+
+  // Direct platform test buttons
+  function bindDirectTest(btnId, urlId, platform, statusId) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener("click", function() {
+      const url = (document.getElementById(urlId).value || "").trim();
+      const statusEl = document.getElementById(statusId);
+      if (!url) {
+        statusEl.className = "small mt-2 font-monospace text-danger fw-bold";
+        statusEl.textContent = "Please enter a webhook URL first.";
+        return;
+      }
+      runTest(url, platform, "[CTFd-Test]", "", "participant", statusEl);
+    });
+  }
+
+  bindDirectTest("btn-test-discord", "discord-quick-url", "discord", "discord-test-status");
+  bindDirectTest("btn-test-slack", "slack-quick-url", "slack", "slack-test-status");
+  bindDirectTest("btn-test-teams", "teams-quick-url", "teams", "teams-test-status");
+  bindDirectTest("btn-test-gchat", "gchat-quick-url", "google_chat", "gchat-test-status");
+
+  const btnTestTg = document.getElementById("btn-test-telegram");
+  if (btnTestTg) {
+    btnTestTg.addEventListener("click", function() {
+      const url = (document.getElementById("telegram-quick-url").value || "").trim();
+      const chatId = (document.getElementById("telegram-quick-chat-id").value || "").trim();
+      const statusEl = document.getElementById("telegram-test-status");
+      if (!url) {
+        statusEl.className = "small mt-2 font-monospace text-danger fw-bold";
+        statusEl.textContent = "Please enter a Telegram webhook URL first.";
+        return;
+      }
+      runTest(url, "telegram", "[CTFd-Test]", chatId, "participant", statusEl);
+    });
+  }
+
+  // 6. Save All Settings
+  document.getElementById("btn-save-settings").addEventListener("click", function() {
+    const statusEl = document.getElementById("save-status");
+    statusEl.className = "small fw-bold text-muted";
+    statusEl.textContent = "Saving all webhook configurations...";
+
+    const payload = {
+      // Participant channel
+      enabled: document.getElementById("chat-enabled").checked,
+      platform: document.getElementById("chat-platform").value,
+      webhook_url: document.getElementById("chat-webhook-url").value,
+      prefix: document.getElementById("chat-prefix").value,
+      telegram_chat_id: document.getElementById("chat-telegram-chat-id").value,
+
+      // Participant events
+      notify_announcements: document.getElementById("notify-announcements").checked,
+      notify_new_challenges: document.getElementById("notify-new-challenges").checked,
+      notify_first_blood: document.getElementById("notify-first-blood").checked,
+      notify_all_solves: document.getElementById("notify-all-solves").checked,
+      notify_registrations: document.getElementById("notify-registrations").checked,
+
+      // Admin channel
+      admin_enabled: document.getElementById("admin-chat-enabled").checked,
+      admin_platform: document.getElementById("admin-platform").value,
+      admin_webhook_url: document.getElementById("admin-webhook-url").value,
+      admin_prefix: document.getElementById("admin-prefix").value,
+      admin_telegram_chat_id: document.getElementById("admin-telegram-chat-id").value,
+
+      // Admin events
+      admin_notify_registrations: document.getElementById("admin-notify-registrations").checked,
+      admin_notify_submissions: document.getElementById("admin-notify-submissions").checked,
+      admin_notify_referrals: document.getElementById("admin-notify-referrals").checked,
+      mirror_participant_events: document.getElementById("admin-mirror-events").checked,
+
+      // Shared secret
+      shared_secret: secretInput.value
+    };
+
+    fetch("/admin/chat_notifications/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": csrfToken
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        statusEl.className = "small fw-bold text-success";
+        statusEl.textContent = "All webhook configurations saved successfully!";
+      } else {
+        statusEl.className = "small fw-bold text-danger";
+        statusEl.textContent = "Failed to save: " + (data.message || "Unknown error");
+      }
+      setTimeout(function() { statusEl.textContent = ""; }, 4000);
+    })
+    .catch(function(err) {
+      statusEl.className = "small fw-bold text-danger";
+      statusEl.textContent = "Error saving configurations: " + err;
+    });
+  });
+
+});
+</script>
+{% endblock %}
