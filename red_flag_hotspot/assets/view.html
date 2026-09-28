@@ -1,0 +1,104 @@
+{% extends "challenge.html" %}
+
+{% block input %}
+<input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
+<script type="application/json" id="hotspot-config-json">{{ challenge | tojson }}</script>
+
+<div class="red-flag-hotspot-container my-3" data-chal-id="{{ challenge.id }}">
+  <!-- Top Telemetry Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border border-secondary border-opacity-25" style="background: rgba(10, 16, 20, 0.8);">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-primary font-monospace">TACTICAL RECON</span>
+      <span class="small font-monospace text-muted">Click or tap suspicious deceptive indicators</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span id="hotspot-target-badge" class="badge bg-dark border border-secondary text-light font-monospace">
+        Targets: {{ challenge.hotspots_count }}
+      </span>
+      <span id="hotspot-markers-badge" class="badge bg-dark border border-secondary text-info font-monospace">
+        Markers: <span id="hotspot-markers-count">0</span> / {{ challenge.max_clicks }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Image Inspection Viewport -->
+  <div class="card border border-secondary border-opacity-25 mb-3" style="background: rgba(13, 20, 26, 0.95);">
+    <div class="card-header d-flex justify-content-between align-items-center p-2 border-bottom border-secondary border-opacity-25">
+      <span class="small font-monospace text-muted">Evidence Image Canvas</span>
+      <div class="d-flex gap-2">
+        <button type="button" id="hotspot-clear-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2" {% if challenge.is_solved %}disabled{% endif %}>
+          Clear Pins
+        </button>
+      </div>
+    </div>
+    
+    <div class="card-body p-0 position-relative text-center overflow-hidden" id="hotspot-canvas-container" style="user-select: none; min-height: 250px; background: #000;">
+      {% if challenge.image_url %}
+      <img id="hotspot-target-image" src="{{ challenge.image_url }}" alt="Evidence Artifact" class="img-fluid d-block mx-auto" style="max-height: 520px; width: 100%; object-fit: contain; cursor: crosshair;">
+      {% else %}
+      <div class="p-5 text-center text-muted font-monospace">No inspection image provided.</div>
+      {% endif %}
+      
+      <!-- Interactive Pins Overlay -->
+      <div id="hotspot-pins-overlay" class="position-absolute top-0 start-0 w-100 h-100 pointer-events-none" style="pointer-events: none;">
+        <!-- Pins placed dynamically via JS -->
+      </div>
+      
+      <!-- Solved Targets Overlay (revealed if challenge solved or admin) -->
+      <div id="hotspot-targets-overlay" class="position-absolute top-0 start-0 w-100 h-100" style="pointer-events: none; display: none;">
+        <!-- Target circles rendered via JS -->
+      </div>
+    </div>
+
+    <div class="card-footer p-2 border-top border-secondary border-opacity-25 font-monospace text-muted small d-flex justify-content-between align-items-center">
+      <span>Click anywhere on the image to drop a marker. Click a pin to remove it.</span>
+      <span id="hotspot-coords-preview" class="text-info">X: --% | Y: --%</span>
+    </div>
+  </div>
+
+  <!-- Educational Debrief Section -->
+  {% if challenge.is_solved or is_admin() %}
+  <div class="card mb-3 border border-success bg-dark">
+    <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
+      Red Flag Analysis &amp; Findings
+    </div>
+    <div class="card-body">
+      {% if challenge.explanation %}
+      <div class="mb-3 small font-monospace text-light">{{ challenge.explanation }}</div>
+      {% endif %}
+      <div class="list-group list-group-flush" id="hotspot-findings-list">
+        {% for spot in challenge.hotspots_data %}
+        <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 p-2">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="font-monospace fw-bold text-light">{{ spot.label or 'Red Flag #' ~ loop.index }}</span>
+            <span class="badge bg-info font-monospace">X: {{ spot.x }}% | Y: {{ spot.y }}%</span>
+          </div>
+          {% if spot.explanation %}
+          <div class="small text-muted font-monospace">{{ spot.explanation }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Submit Row -->
+  {% if not challenge.is_solved %}
+  <div class="d-grid mt-3">
+    <button id="challenge-submit" class="challenge-submit btn btn-primary py-2 fw-bold font-monospace" type="button" disabled>
+      Submit Identified Red Flags
+    </button>
+  </div>
+  {% else %}
+  <div class="alert alert-success border border-success text-center py-2 font-monospace mb-0">
+    All Red Flags Successfully Identified!
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block submit %}
+<!-- Handled inside input block -->
+{% endblock %}

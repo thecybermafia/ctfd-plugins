@@ -1,0 +1,51 @@
+{% extends "admin/challenges/create.html" %}
+
+{% block type %}
+<input type="hidden" value="red_flag_hotspot" name="type" id="chaltype">
+{% endblock %}
+
+{% block value %}
+<div class="form-group mb-3">
+	<label for="value" class="form-label fw-bold">Reward Points</label>
+	<div class="form-text text-muted small mb-1">Points awarded for successfully locating all suspicious red flags.</div>
+	<input type="number" class="form-control" name="value" placeholder="e.g. 100" value="100" required>
+</div>
+
+<div class="form-group mb-3">
+	<label for="image_url" class="form-label fw-bold">Inspection Target Image URL</label>
+	<div class="form-text text-muted small mb-1">Direct URL or uploaded CTFd file path to the evidence screenshot or photo.</div>
+	<input type="text" class="form-control font-monospace" name="image_url" placeholder="/files/evidence/phish_screenshot.png or https://..." required>
+</div>
+
+<div class="row g-3 mb-3">
+	<div class="col-md-4">
+		<label for="tolerance_radius" class="form-label fw-bold">Tolerance Radius (%)</label>
+		<div class="form-text text-muted small mb-1">Click coordinate tolerance threshold relative to image width and height.</div>
+		<input type="number" step="0.5" class="form-control" name="tolerance_radius" value="6.0" min="1" max="25" required>
+	</div>
+	<div class="col-md-4">
+		<label for="max_clicks" class="form-label fw-bold">Max Markers Allowed</label>
+		<div class="form-text text-muted small mb-1">Limit how many pins or markers the player can place on the image.</div>
+		<input type="number" class="form-control" name="max_clicks" value="5" min="1" required>
+	</div>
+	<div class="col-md-4">
+		<label for="min_hits_required" class="form-label fw-bold">Min Hits Required (0 = All)</label>
+		<div class="form-text text-muted small mb-1">Number of distinct red flags required to solve the challenge.</div>
+		<input type="number" class="form-control" name="min_hits_required" value="0" min="0">
+	</div>
+</div>
+
+<div class="form-group mb-3">
+	<label for="explanation" class="form-label fw-bold">Educational Debrief / Master Explanation</label>
+	<div class="form-text text-muted small mb-1">Shown to operatives after solving or upon exhausting attempts.</div>
+	<textarea class="form-control" name="explanation" rows="3" placeholder="Explain the key deception indicators present in the image."></textarea>
+</div>
+
+<div class="form-group mb-3">
+	<label for="hotspots_json" class="form-label fw-bold">Hotspot Coordinates JSON</label>
+	<div class="form-text text-muted small mb-2">
+		List of red flag target coordinates (percentage values x: 0-100, y: 0-100, radius, label, explanation). Leave blank for pre-configured defaults.
+	</div>
+	<textarea class="form-control font-monospace" name="hotspots_json" rows="10" placeholder='Leave blank to use pre-configured sample hotspots'></textarea>
+</div>
+{% endblock %}

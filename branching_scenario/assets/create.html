@@ -1,0 +1,57 @@
+{% extends "admin/challenges/create.html" %}
+
+{% block type %}
+<input type="hidden" value="branching_scenario" name="type" id="chaltype">
+{% endblock %}
+
+{% block value %}
+<div class="form-group mb-3">
+	<label for="value" class="form-label fw-bold">Reward Points</label>
+	<div class="form-text text-muted small mb-1">Points awarded for successfully navigating to a winning incident resolution.</div>
+	<input type="number" class="form-control" name="value" placeholder="e.g. 150" value="150" required>
+</div>
+
+<div class="row g-3 mb-3">
+	<div class="col-md-6">
+		<label for="start_node_id" class="form-label fw-bold">Initial / Start Node ID</label>
+		<div class="form-text text-muted small mb-1">The key of the narrative node that begins the scenario.</div>
+		<input type="text" class="form-control font-monospace" name="start_node_id" value="start" required>
+	</div>
+	<div class="col-md-6">
+		<label for="winning_nodes" class="form-label fw-bold">Winning Node IDs (Comma-separated)</label>
+		<div class="form-text text-muted small mb-1">Nodes that signify successful completion and grant the solve.</div>
+		<input type="text" class="form-control font-monospace" name="winning_nodes" value="win" required>
+	</div>
+</div>
+
+<div class="row g-3 mb-3">
+	<div class="col-md-6">
+		<div class="form-check form-switch pt-2">
+			<input class="form-check-input" type="checkbox" name="allow_restart" id="allow_restart" value="true" checked>
+			<label class="form-check-label fw-bold" for="allow_restart">Allow Scenario Reset / Restart</label>
+			<div class="form-text text-muted small">Permits operatives to reset the dialogue to the beginning upon reaching a failed ending.</div>
+		</div>
+	</div>
+	<div class="col-md-6">
+		<div class="form-check form-switch pt-2">
+			<input class="form-check-input" type="checkbox" name="show_feedback" id="show_feedback" value="true" checked>
+			<label class="form-check-label fw-bold" for="show_feedback">Display Choice Consequence Feedback</label>
+			<div class="form-text text-muted small">Presents immediate operational feedback after the player selects an action branch.</div>
+		</div>
+	</div>
+</div>
+
+<div class="form-group mb-3">
+	<label for="explanation" class="form-label fw-bold">Educational Debrief / Master Explanation</label>
+	<div class="form-text text-muted small mb-1">Shown to operatives after solving or upon exhausting attempts.</div>
+	<textarea class="form-control" name="explanation" rows="3" placeholder="Provide post-incident debrief and policy key takeaways."></textarea>
+</div>
+
+<div class="form-group mb-3">
+	<label for="nodes_json" class="form-label fw-bold">Scenario Decision Tree JSON</label>
+	<div class="form-text text-muted small mb-2">
+		Graph of narrative nodes, media attachments, and decision options. Leave blank for default deepfake voice vishing incident.
+	</div>
+	<textarea class="form-control font-monospace" name="nodes_json" rows="12" placeholder='Leave blank to use pre-configured high-fidelity samples'></textarea>
+</div>
+{% endblock %}

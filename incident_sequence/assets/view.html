@@ -1,0 +1,120 @@
+{% extends "challenge.html" %}
+
+{% block input %}
+<input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
+<script type="application/json" id="incident-sequence-config-json">{{ challenge | tojson }}</script>
+
+<div class="incident-sequence-container my-3" data-chal-id="{{ challenge.id }}">
+  <!-- Top Telemetry Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border border-secondary border-opacity-25" style="background: rgba(10, 16, 20, 0.8);">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-primary font-monospace">INCIDENT PLAYBOOK SEQUENCER</span>
+      <span class="small font-monospace text-muted">Arrange valid countermeasures in chronological order</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span id="sequence-progress-badge" class="badge bg-dark border border-secondary text-light font-monospace">
+        Timeline: <span id="timeline-cards-count">0</span> / {{ challenge.total_steps }}
+      </span>
+      {% if challenge.allow_distractor_bin %}
+      <span id="distractor-progress-badge" class="badge bg-dark border border-danger text-danger font-monospace">
+        Prohibited: <span id="distractor-cards-count">0</span> / {{ challenge.total_distractors }}
+      </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <!-- Main Incident Timeline Column -->
+    <div class="{% if challenge.allow_distractor_bin %}col-lg-7{% else %}col-12{% endif %}">
+      <div class="card h-100 border border-secondary border-opacity-25" style="background: rgba(13, 20, 26, 0.95);">
+        <div class="card-header p-2 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+          <span class="fw-bold font-monospace text-success small">Incident Response Timeline (1 to N)</span>
+          <span class="badge bg-dark border border-secondary font-monospace text-muted small">Drop Target</span>
+        </div>
+        <div class="card-body p-2" id="timeline-card-list" style="min-height: 280px; max-height: 480px; overflow-y: auto;">
+          <!-- Timeline cards injected / managed dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Distractor / Prohibited Actions Column -->
+    {% if challenge.allow_distractor_bin %}
+    <div class="col-lg-5">
+      <div class="card h-100 border border-danger border-opacity-25" style="background: rgba(26, 13, 13, 0.95);">
+        <div class="card-header p-2 border-bottom border-danger border-opacity-25 d-flex justify-content-between align-items-center">
+          <span class="fw-bold font-monospace text-danger small">Prohibited / Distractor Bin</span>
+          <span class="badge bg-danger bg-opacity-25 text-danger font-monospace small">Reject Here</span>
+        </div>
+        <div class="card-body p-2" id="distractor-card-list" style="min-height: 280px; max-height: 480px; overflow-y: auto;">
+          <!-- Distractor cards injected / managed dynamically -->
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Educational Post-Solve / Admin Explanation -->
+  {% if challenge.is_solved or is_admin() %}
+  <div class="card mb-3 border border-success bg-dark">
+    <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
+      Standard Operating Procedure (SOP) Debrief
+    </div>
+    <div class="card-body">
+      {% if challenge.explanation %}
+      <div class="mb-3 small font-monospace text-light">{{ challenge.explanation }}</div>
+      {% endif %}
+      <div class="mb-2 font-monospace fw-bold text-success small">Verified Playbook Steps:</div>
+      <div class="list-group list-group-flush mb-3">
+        {% for s in challenge.cards_data %}
+        {% if not s.is_distractor %}
+        <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 p-2">
+          <div class="d-flex align-items-start gap-2">
+            <span class="badge bg-success font-monospace mt-1">#{{ loop.index }}</span>
+            <div>
+              <div class="fw-bold font-monospace text-light small">{{ s.text }}</div>
+              {% if s.explanation %}
+              <div class="text-muted font-monospace small mt-1">{{ s.explanation }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if challenge.distractors_data %}
+      <div class="mb-2 font-monospace fw-bold text-danger small">Prohibited Countermeasures:</div>
+      <div class="list-group list-group-flush">
+        {% for d in challenge.distractors_data %}
+        <div class="list-group-item bg-transparent text-light border-danger border-opacity-25 p-2">
+          <div class="fw-bold font-monospace text-danger small">{{ d.text }}</div>
+          {% if d.explanation %}
+          <div class="text-muted font-monospace small mt-1">{{ d.explanation }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Submit Row -->
+  {% if not challenge.is_solved %}
+  <div class="d-grid mt-3">
+    <button id="challenge-submit" class="challenge-submit btn btn-primary py-2 fw-bold font-monospace" type="button">
+      Submit Playbook Sequence
+    </button>
+  </div>
+  {% else %}
+  <div class="alert alert-success border border-success text-center py-2 font-monospace mb-0">
+    Incident Response Playbook Sequence Verified!
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block submit %}
+<!-- Handled inside input block -->
+{% endblock %}

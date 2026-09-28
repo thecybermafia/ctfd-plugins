@@ -1,0 +1,98 @@
+{% extends "challenge.html" %}
+
+{% block input %}
+<input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
+<script type="application/json" id="branching-scenario-config-json">{{ challenge | tojson }}</script>
+
+<div class="branching-scenario-container my-3" data-chal-id="{{ challenge.id }}">
+  <!-- Top Telemetry Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border border-secondary border-opacity-25" style="background: rgba(10, 16, 20, 0.8);">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-primary font-monospace">CYBER INCIDENT SIMULATOR</span>
+      <span class="small font-monospace text-muted">Navigate operational decisions in real time</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span id="scenario-status-badge" class="badge bg-info font-monospace">ACTIVE</span>
+      {% if challenge.allow_restart %}
+      <button type="button" id="scenario-restart-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2" style="font-size: 0.75rem;">
+        Restart
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Narrative Dialogue Terminal Card -->
+  <div class="card border border-secondary border-opacity-25 mb-3" style="background: rgba(13, 20, 26, 0.95);">
+    <div class="card-header p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+      <div class="h5 mb-0 font-monospace text-light" id="scenario-node-title">Initializing Incident...</div>
+      <span class="badge bg-dark border border-secondary text-muted font-monospace small" id="scenario-node-badge">STEP 1</span>
+    </div>
+
+    <div class="card-body p-3">
+      <!-- Consequence Feedback from previous step -->
+      <div id="scenario-consequence-box" class="alert alert-info border border-info font-monospace small mb-3" style="display: none;">
+        <strong class="d-block mb-1">Operational Impact:</strong>
+        <span id="scenario-consequence-text"></span>
+      </div>
+
+      <!-- Optional Media Container (Image or Audio with accessible transcript) -->
+      <div id="scenario-media-container" class="mb-3 p-2 rounded border border-secondary border-opacity-25" style="display: none; background: rgba(0, 0, 0, 0.4);">
+        <!-- Injected dynamically: image or audio -->
+        <div id="scenario-media-element"></div>
+        <details id="scenario-transcript-box" class="mt-2 text-muted font-monospace small" style="display: none;">
+          <summary class="cursor-pointer text-info">View Accessibility Transcript</summary>
+          <div class="mt-1 p-2 bg-dark rounded border border-secondary border-opacity-25" id="scenario-transcript-text"></div>
+        </details>
+      </div>
+
+      <!-- Narrative Text -->
+      <div class="font-monospace text-light mb-4 lh-base" id="scenario-node-text" style="font-size: 0.95rem;">
+        Loading narrative scenario...
+      </div>
+
+      <!-- Decision Choices / Action Options -->
+      <div id="scenario-actions-section">
+        <div class="small font-monospace text-muted mb-2 fw-bold">Select Tactical Countermeasure:</div>
+        <div class="d-flex flex-column gap-2" id="scenario-options-container">
+          <!-- Option buttons injected dynamically -->
+        </div>
+      </div>
+
+      <!-- Outcome Card (Shown when an ending is reached) -->
+      <div id="scenario-outcome-card" class="p-3 rounded border text-center font-monospace mt-3" style="display: none;">
+        <div class="h5 fw-bold mb-2" id="scenario-outcome-title">Outcome</div>
+        <div class="small mb-3 text-light" id="scenario-outcome-desc">Outcome description</div>
+        <div id="scenario-outcome-actions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Educational Post-Solve / Admin Explanation -->
+  {% if challenge.is_solved or is_admin() %}
+  <div class="card mb-3 border border-success bg-dark">
+    <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
+      Incident Debrief &amp; Organizational Lessons
+    </div>
+    <div class="card-body">
+      {% if challenge.explanation %}
+      <div class="small font-monospace text-light">{{ challenge.explanation }}</div>
+      {% else %}
+      <div class="small font-monospace text-light">Crisis successfully resolved. Key security policy: Always verify urgent executive demands out-of-band using authenticated enterprise directories.</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Submit Row (Revealed when winning node is reached) -->
+  <div class="d-grid mt-3">
+    <button id="challenge-submit" class="challenge-submit btn btn-success py-2 fw-bold font-monospace" type="button" {% if not challenge.is_solved %}style="display: none;"{% endif %}>
+      Verify Incident Resolution
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block submit %}
+<!-- Handled inside input block -->
+{% endblock %}

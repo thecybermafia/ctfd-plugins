@@ -1,0 +1,163 @@
+{% extends "challenge.html" %}
+
+{% block input %}
+<input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
+<script type="application/json" id="inbox-emails-json">{{ challenge.emails_data | tojson }}</script>
+
+<div class="phishing-inbox-container my-3" data-chal-id="{{ challenge.id }}">
+  <!-- Top Telemetry Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border border-secondary border-opacity-25" style="background: rgba(10, 16, 20, 0.8);">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-primary font-monospace">TACTICAL MAIL TERMINAL</span>
+      <span class="small font-monospace text-muted">Review each message and assign an action</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span id="inbox-progress-badge" class="badge bg-dark border border-secondary text-light font-monospace">
+        Reviewed: <span id="inbox-reviewed-count">0</span> / {{ challenge.emails_data | length }}
+      </span>
+      {% if challenge.max_attempts and challenge.max_attempts > 0 %}
+      <span class="badge {% if challenge.attempts_used >= challenge.max_attempts %}bg-danger{% else %}bg-dark border border-secondary text-light{% endif %} font-monospace">
+        Attempts: {{ challenge.attempts_used }} / {{ challenge.max_attempts }}
+      </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Main Webmail Split Pane -->
+  <div class="row g-2 mb-3">
+    <!-- Left Pane: Message List -->
+    <div class="col-md-5 col-lg-4">
+      <div class="list-group inbox-message-list shadow-sm" style="max-height: 480px; overflow-y: auto;">
+        {% for em in challenge.emails_data %}
+        <div class="list-group-item list-group-item-action p-3 cursor-pointer inbox-item-card {{ 'active' if loop.first }}" data-email-id="{{ em.id }}" style="border-left: 3px solid transparent;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-bold font-monospace text-truncate text-light small" style="max-width: 140px;">{{ em.sender_name or em.sender_email }}</span>
+            <span class="inbox-item-status-badge badge bg-secondary font-monospace" data-email-id="{{ em.id }}" style="font-size: 0.65rem;">PENDING</span>
+          </div>
+          <div class="small fw-semibold text-truncate mb-1 text-light">{{ em.subject }}</div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted font-monospace" style="font-size: 0.7rem;">{{ em.date }}</span>
+            {% if em.attachments %}
+            <span class="badge bg-dark text-warning border border-warning border-opacity-25" style="font-size: 0.65rem;">ATT</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right Pane: Reading Pane -->
+    <div class="col-md-7 col-lg-8">
+      <div class="card h-100 border border-secondary border-opacity-25" style="background: rgba(13, 20, 26, 0.95);">
+        <!-- Active Email Header -->
+        <div class="card-header border-bottom border-secondary border-opacity-25 p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <div class="h5 mb-1 font-monospace text-light" id="active-email-subject">Subject Loading...</div>
+              <div class="small font-monospace text-muted">
+                From: <span class="text-light fw-bold" id="active-email-sender"></span> 
+                &lt;<span class="text-info" id="active-email-sender-addr"></span>&gt;
+              </div>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary font-monospace" type="button" id="toggle-headers-btn">
+              Details
+            </button>
+          </div>
+
+          <!-- Collapsible Header Details -->
+          <div id="email-headers-panel" class="p-2 mt-2 rounded border border-secondary border-opacity-25 small font-monospace" style="display: none; background: rgba(0, 0, 0, 0.4);">
+            <div class="mb-1"><strong>Reply-To:</strong> <span id="active-email-reply-to" class="text-warning"></span></div>
+            <div class="d-flex gap-2 mt-2" id="active-email-auth-badges">
+              <!-- SPF, DKIM, DMARC badges injected via JS -->
+            </div>
+          </div>
+
+          <!-- Attachments strip -->
+          <div id="active-email-attachments" class="mt-2 pt-2 border-top border-secondary border-opacity-25" style="display: none;">
+            <div class="small text-muted font-monospace mb-1">Attached Files:</div>
+            <div class="d-flex flex-wrap gap-2" id="attachments-container"></div>
+          </div>
+        </div>
+
+        <!-- Email Body -->
+        <div class="card-body p-3" style="min-height: 220px; max-height: 320px; overflow-y: auto;">
+          <div id="active-email-body-content" class="email-body-rendered text-light small lh-base"></div>
+        </div>
+
+        <!-- URL Inspection Status Bar -->
+        <div class="card-footer p-2 border-top border-secondary border-opacity-25 font-monospace text-truncate" style="background: rgba(5, 10, 15, 0.9); min-height: 34px;">
+          <span class="text-muted small">Link Inspector: </span>
+          <span id="url-status-bar" class="text-warning small">Hover over any link to inspect true destination</span>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="card-footer p-3 border-top border-secondary border-opacity-25 d-flex flex-wrap justify-content-between align-items-center gap-2" style="background: rgba(10, 16, 22, 0.9);">
+          <div class="small font-monospace text-muted">Classify Message:</div>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-danger btn-sm font-monospace inbox-action-btn" data-action="report" {% if challenge.is_solved %}disabled{% endif %}>
+              Report Phishing
+            </button>
+            <button type="button" class="btn btn-outline-success btn-sm font-monospace inbox-action-btn" data-action="safe" {% if challenge.is_solved %}disabled{% endif %}>
+              Mark Safe
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm font-monospace inbox-action-btn" data-action="delete" {% if challenge.is_solved %}disabled{% endif %}>
+              Delete / Ignore
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Educational Post-Solve / Admin Explanation -->
+  {% if challenge.is_solved or is_admin() %}
+  <div class="card mb-3 border border-success bg-dark">
+    <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
+      Security Audit &amp; Analysis Report
+    </div>
+    <div class="card-body">
+      {% if challenge.explanation %}
+      <div class="mb-3 small font-monospace text-light">{{ challenge.explanation }}</div>
+      {% endif %}
+      <div class="list-group list-group-flush">
+        {% for em in challenge.emails_data %}
+        <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 p-2">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="font-monospace fw-bold text-light">{{ em.subject }}</span>
+            <span class="badge {% if em.correct_action == 'report' %}bg-danger{% elif em.correct_action == 'safe' %}bg-success{% else %}bg-secondary{% endif %} font-monospace text-uppercase">
+              Expected: {{ em.correct_action }}
+            </span>
+          </div>
+          {% if em.explanation %}
+          <div class="small text-muted font-monospace">{{ em.explanation }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Submit Bar -->
+  {% if not challenge.is_solved and not (challenge.max_attempts and challenge.attempts_used >= challenge.max_attempts) %}
+  <div class="d-grid mt-3">
+    <button id="challenge-submit" class="challenge-submit btn btn-primary py-2 fw-bold font-monospace" type="button" disabled>
+      Submit Inbox Assessment
+    </button>
+  </div>
+  {% elif challenge.max_attempts and challenge.attempts_used >= challenge.max_attempts and not challenge.is_solved %}
+  <div class="alert alert-danger border border-danger text-center py-2 font-monospace mb-0">
+    Maximum attempts exceeded for this challenge
+  </div>
+  {% else %}
+  <div class="alert alert-success border border-success text-center py-2 font-monospace mb-0">
+    Challenge Solved
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block submit %}
+<!-- Handled inside input block -->
+{% endblock %}

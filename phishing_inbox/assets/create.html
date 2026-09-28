@@ -1,0 +1,51 @@
+{% extends "admin/challenges/create.html" %}
+
+{% block type %}
+<input type="hidden" value="phishing_inbox" name="type" id="chaltype">
+{% endblock %}
+
+{% block value %}
+<div class="form-group mb-3">
+	<label for="value" class="form-label fw-bold">Reward Points</label>
+	<div class="form-text text-muted small mb-1">Points awarded upon correctly classifying the simulated inbox messages.</div>
+	<input type="number" class="form-control" name="value" placeholder="e.g. 150" value="150" required>
+</div>
+
+<div class="row g-3 mb-3">
+	<div class="col-md-4">
+		<label for="min_accuracy_percent" class="form-label fw-bold">Min Accuracy Required (%)</label>
+		<div class="form-text text-muted small mb-1">Percentage of emails player must categorize correctly (e.g. 100 for zero tolerance, or 80).</div>
+		<input type="number" class="form-control" name="min_accuracy_percent" value="100" min="1" max="100" required>
+	</div>
+	<div class="col-md-4">
+		<label for="action_options" class="form-label fw-bold">Allowed Actions (Comma-separated)</label>
+		<div class="form-text text-muted small mb-1">Available classification actions for each email.</div>
+		<input type="text" class="form-control" name="action_options" value="report,safe,delete">
+	</div>
+	<div class="col-md-4">
+		<label for="max_attempts" class="form-label fw-bold">Max Attempts (0 = Unlimited)</label>
+		<div class="form-text text-muted small mb-1">Limit failed submissions before locking.</div>
+		<input type="number" class="form-control" name="max_attempts" value="0" min="0">
+	</div>
+</div>
+
+<div class="form-check form-switch mb-3">
+	<input class="form-check-input" type="checkbox" name="show_auth_headers" id="show_auth_headers" value="true" checked>
+	<label class="form-check-label fw-bold" for="show_auth_headers">Show Technical Authentication Details (SPF / DKIM / DMARC)</label>
+	<div class="form-text text-muted small">Allows operatives to expand email details and inspect SPF, DKIM, and DMARC verification results.</div>
+</div>
+
+<div class="form-group mb-3">
+	<label for="explanation" class="form-label fw-bold">Educational Debrief / Master Explanation</label>
+	<div class="form-text text-muted small mb-1">Shown to operatives after solving or upon exhausting attempts.</div>
+	<textarea class="form-control" name="explanation" rows="3" placeholder="Always verify sender domains against official directories and never click unverified links."></textarea>
+</div>
+
+<div class="form-group mb-3">
+	<label for="emails_json" class="form-label fw-bold">Emails Configuration JSON</label>
+	<div class="form-text text-muted small mb-2">
+		Define the list of emails in the inbox. Leave blank to automatically populate with standard corporate phishing and legitimate samples.
+	</div>
+	<textarea class="form-control font-monospace" name="emails_json" rows="12" placeholder='Leave blank to use pre-configured high-fidelity samples'></textarea>
+</div>
+{% endblock %}
