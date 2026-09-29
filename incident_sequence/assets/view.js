@@ -43,6 +43,12 @@ CTFd.plugin.run((_CTFd) => {
   const isSolved = Boolean(config.is_solved);
   const storageKey = `ctfd_incident_seq_${challengeId}`;
 
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str || "";
+    return div.innerHTML;
+  }
+
   let timelineList = [];
   let distractorList = [];
 
@@ -117,7 +123,7 @@ CTFd.plugin.run((_CTFd) => {
         <div class="d-flex justify-content-between align-items-center gap-2">
           <div class="d-flex align-items-center gap-2 flex-grow-1">
             <span class="badge bg-success font-monospace">#${index + 1}</span>
-            <span class="font-monospace small text-light text-wrap">${card.text}</span>
+            <span class="font-monospace small text-light text-wrap">${escapeHtml(card.text)}</span>
           </div>
           <div class="d-flex align-items-center gap-1 flex-shrink-0">
             <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 font-monospace action-move-up" ${moveUpDisabled} title="Move Up">
@@ -208,7 +214,7 @@ CTFd.plugin.run((_CTFd) => {
             <div class="d-flex justify-content-between align-items-center gap-2">
               <div class="d-flex align-items-center gap-2 flex-grow-1">
                 <span class="badge bg-danger font-monospace">PROHIBITED</span>
-                <span class="font-monospace small text-light text-wrap">${card.text}</span>
+                <span class="font-monospace small text-light text-wrap">${escapeHtml(card.text)}</span>
               </div>
               ${!isSolved ? `
                 <button type="button" class="btn btn-sm btn-outline-success py-0 px-2 font-monospace action-to-timeline" title="Restore to Timeline" style="font-size: 0.75rem;">

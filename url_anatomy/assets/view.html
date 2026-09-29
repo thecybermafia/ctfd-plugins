@@ -3,7 +3,26 @@
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
 <input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
-<script type="application/json" id="url-anatomy-config-json">{{ challenge | tojson }}</script>
+<script type="application/json" id="url-anatomy-config-json">{
+  "is_solved": {% if solved_by_me %}true{% else %}false{% endif %},
+  "enable_qr_code": {{ (challenge.enable_qr_code | default(false)) | tojson }},
+  "allow_punycode_toggle": {{ (challenge.allow_punycode_toggle | default(true)) | tojson }},
+  "urls_data": [
+    {% for u in challenge.urls_data %}
+    {
+      "id": {{ u.id | tojson }},
+      "question": {{ u.question | tojson }},
+      "raw_url": {{ u.raw_url | tojson }},
+      "punycode_url": {{ (u.punycode_url or '') | tojson }},
+      "tokens": {{ u.tokens | tojson }}
+      {% if solved_by_me or is_admin() %},
+      "correct_token": {{ (u.correct_token or '') | tojson }},
+      "explanation": {{ (u.explanation or '') | tojson }}
+      {% endif %}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}</script>
 
 <div class="url-anatomy-container my-3" data-chal-id="{{ challenge.id }}">
   <!-- Top Telemetry Header -->
@@ -41,7 +60,7 @@
         <div class="d-flex flex-wrap align-items-center gap-1 p-2 rounded border border-secondary border-opacity-50 url-token-ribbon" data-url-id="{{ u.id }}" style="background: rgba(0, 0, 0, 0.5); min-height: 48px;">
           <!-- Tokens rendered dynamically or from Jinja -->
           {% for tok in u.tokens %}
-          <button type="button" class="btn btn-sm btn-outline-light font-monospace url-token-btn" data-url-id="{{ u.id }}" data-token-value="{{ tok.value }}" data-token-punycode="{{ tok.punycode or '' }}" data-token-type="{{ tok.type }}" {% if challenge.is_solved %}disabled{% endif %} style="border-radius: 4px; padding: 4px 8px; font-size: 0.85rem;">
+          <button type="button" class="btn btn-sm btn-outline-light font-monospace url-token-btn" data-url-id="{{ u.id }}" data-token-value="{{ tok.value }}" data-token-punycode="{{ tok.punycode or '' }}" data-token-type="{{ tok.type }}" {% if solved_by_me %}disabled{% endif %} style="border-radius: 4px; padding: 4px 8px; font-size: 0.85rem;">
             <span class="token-text">{{ tok.value }}</span>
             <span class="badge bg-dark border border-secondary text-muted ms-1" style="font-size: 0.6rem;">{{ tok.type }}</span>
           </button>
@@ -58,7 +77,7 @@
   </div>
 
   <!-- Educational Post-Solve / Admin Explanation -->
-  {% if challenge.is_solved or is_admin() %}
+  {% if solved_by_me or is_admin() %}
   <div class="card mb-3 border border-success bg-dark">
     <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
       URL Anatomy Debrief &amp; Attack Breakdown
@@ -85,7 +104,7 @@
   {% endif %}
 
   <!-- Submit Row -->
-  {% if not challenge.is_solved %}
+  {% if not solved_by_me %}
   <div class="d-grid mt-3">
     <button id="challenge-submit" class="challenge-submit btn btn-primary py-2 fw-bold font-monospace" type="button" disabled>
       Submit URL Dissection

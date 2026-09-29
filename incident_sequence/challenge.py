@@ -105,14 +105,12 @@ class IncidentSequenceChallengeType(BaseChallenge):
             for s in raw_steps:
                 all_cards.append({
                     "id": s.get("id"),
-                    "text": s.get("text", ""),
-                    "is_distractor": False
+                    "text": s.get("text", "")
                 })
             for d in raw_distractors:
                 all_cards.append({
                     "id": d.get("id"),
-                    "text": d.get("text", ""),
-                    "is_distractor": True
+                    "text": d.get("text", "")
                 })
             # Deterministic shuffle seeded by challenge id so order is consistent per challenge
             rnd = random.Random(c.id)

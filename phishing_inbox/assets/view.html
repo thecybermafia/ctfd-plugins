@@ -95,13 +95,13 @@
         <div class="card-footer p-3 border-top border-secondary border-opacity-25 d-flex flex-wrap justify-content-between align-items-center gap-2" style="background: rgba(10, 16, 22, 0.9);">
           <div class="small font-monospace text-muted">Classify Message:</div>
           <div class="btn-group" role="group">
-            <button type="button" class="btn btn-outline-danger btn-sm font-monospace inbox-action-btn" data-action="report" {% if challenge.is_solved %}disabled{% endif %}>
+            <button type="button" class="btn btn-outline-danger btn-sm font-monospace inbox-action-btn" data-action="report" {% if solved_by_me %}disabled{% endif %}>
               Report Phishing
             </button>
-            <button type="button" class="btn btn-outline-success btn-sm font-monospace inbox-action-btn" data-action="safe" {% if challenge.is_solved %}disabled{% endif %}>
+            <button type="button" class="btn btn-outline-success btn-sm font-monospace inbox-action-btn" data-action="safe" {% if solved_by_me %}disabled{% endif %}>
               Mark Safe
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm font-monospace inbox-action-btn" data-action="delete" {% if challenge.is_solved %}disabled{% endif %}>
+            <button type="button" class="btn btn-outline-secondary btn-sm font-monospace inbox-action-btn" data-action="delete" {% if solved_by_me %}disabled{% endif %}>
               Delete / Ignore
             </button>
           </div>
@@ -111,7 +111,7 @@
   </div>
 
   <!-- Educational Post-Solve / Admin Explanation -->
-  {% if challenge.is_solved or is_admin() %}
+  {% if solved_by_me or is_admin() %}
   <div class="card mb-3 border border-success bg-dark">
     <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
       Security Audit &amp; Analysis Report
@@ -140,13 +140,13 @@
   {% endif %}
 
   <!-- Submit Bar -->
-  {% if not challenge.is_solved and not (challenge.max_attempts and challenge.attempts_used >= challenge.max_attempts) %}
+  {% if not solved_by_me and not (challenge.max_attempts and challenge.attempts_used >= challenge.max_attempts) %}
   <div class="d-grid mt-3">
     <button id="challenge-submit" class="challenge-submit btn btn-primary py-2 fw-bold font-monospace" type="button" disabled>
       Submit Inbox Assessment
     </button>
   </div>
-  {% elif challenge.max_attempts and challenge.attempts_used >= challenge.max_attempts and not challenge.is_solved %}
+  {% elif challenge.max_attempts and challenge.attempts_used >= challenge.max_attempts and not solved_by_me %}
   <div class="alert alert-danger border border-danger text-center py-2 font-monospace mb-0">
     Maximum attempts exceeded for this challenge
   </div>

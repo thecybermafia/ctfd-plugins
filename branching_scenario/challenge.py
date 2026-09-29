@@ -193,11 +193,24 @@ class BranchingScenarioChallengeType(BaseChallenge):
         winning_set = set([w.strip().lower() for w in (c.winning_nodes or "win").split(",") if w.strip()])
         nodes = c.nodes_data
 
-        # If a path was submitted, verify the state transitions starting from start_node_id
-        if submitted_path and len(submitted_path) > 1 and nodes:
-            current_id = c.start_node_id or "start"
-            if submitted_path[0] != current_id:
-                return ChallengeResponse(status="incorrect", message="Path must begin at the designated starting scenario node.")
+        # Enforce that if scenario nodes are defined, a valid path from start_node_id must be traversed
+        if nodes:
+            start_id = c.start_node_id or "start"
+            if not submitted_path:
+                # If only submitted_node was provided without path, allow only if start_node is already a winning node
+                if submitted_node and submitted_node.lower() in winning_set and start_id.lower() in winning_set:
+                    submitted_path = [start_id]
+                else:
+                    return ChallengeResponse(
+                        status="incorrect",
+                        message="A verified decision path from the incident start is required to resolve the crisis."
+                    )
+
+            if submitted_path[0] != start_id:
+                return ChallengeResponse(
+                    status="incorrect",
+                    message="Path must begin at the designated starting scenario node."
+                )
 
             for i in range(len(submitted_path) - 1):
                 from_node = nodes.get(submitted_path[i])

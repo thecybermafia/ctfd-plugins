@@ -3,7 +3,14 @@
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
 <input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
-<script type="application/json" id="branching-scenario-config-json">{{ challenge | tojson }}</script>
+<script type="application/json" id="branching-scenario-config-json">{
+  "is_solved": {% if solved_by_me %}true{% else %}false{% endif %},
+  "start_node_id": {{ (challenge.start_node_id or 'start') | tojson }},
+  "winning_nodes": {{ (challenge.winning_nodes or 'win') | tojson }},
+  "allow_restart": {{ (challenge.allow_restart | default(true)) | tojson }},
+  "show_feedback": {{ (challenge.show_feedback | default(true)) | tojson }},
+  "nodes_data": {{ challenge.nodes_data | tojson }}
+}</script>
 
 <div class="branching-scenario-container my-3" data-chal-id="{{ challenge.id }}">
   <!-- Top Telemetry Header -->
@@ -69,7 +76,7 @@
   </div>
 
   <!-- Educational Post-Solve / Admin Explanation -->
-  {% if challenge.is_solved or is_admin() %}
+  {% if solved_by_me or is_admin() %}
   <div class="card mb-3 border border-success bg-dark">
     <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
       Incident Debrief &amp; Organizational Lessons
@@ -86,7 +93,7 @@
 
   <!-- Submit Row (Revealed when winning node is reached) -->
   <div class="d-grid mt-3">
-    <button id="challenge-submit" class="challenge-submit btn btn-success py-2 fw-bold font-monospace" type="button" {% if not challenge.is_solved %}style="display: none;"{% endif %}>
+    <button id="challenge-submit" class="challenge-submit btn btn-success py-2 fw-bold font-monospace" type="button" {% if not solved_by_me %}style="display: none;"{% endif %}>
       Verify Incident Resolution
     </button>
   </div>

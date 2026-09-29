@@ -164,35 +164,72 @@ CTFd.plugin.run((_CTFd) => {
       }
     }
 
-    // Body content & link inspector
+    // Body content & link inspector via sandboxed iframe
     if (bodyEl) {
-      bodyEl.innerHTML = em.body_html || "";
+      bodyEl.innerHTML = "";
+      const iframe = document.createElement("iframe");
+      iframe.setAttribute("sandbox", "allow-same-origin");
+      iframe.className = "w-100 border-0 rounded";
+      iframe.style.minHeight = "200px";
+      iframe.style.background = "transparent";
 
-      // Attach safe link inspection
-      const links = bodyEl.querySelectorAll("a, .inbox-safe-link, [data-real-url]");
-      links.forEach((link) => {
-        const destUrl = link.getAttribute("data-real-url") || link.getAttribute("href") || "#";
+      const safeHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; font-src 'self';">
+          <style>
+            body {
+              color: #e6edf3;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+              font-size: 13px;
+              line-height: 1.6;
+              margin: 0;
+              padding: 8px;
+              background: transparent;
+            }
+            p { margin: 0 0 10px 0; }
+            a, .inbox-safe-link, [data-real-url] {
+              color: #00e676;
+              text-decoration: underline;
+              cursor: pointer;
+            }
+          </style>
+        </head>
+        <body>
+          ${em.body_html || ""}
+        </body>
+        </html>
+      `;
 
-        link.addEventListener("click", (evt) => {
-          evt.preventDefault();
-          evt.stopPropagation();
-          if (urlStatusBar) {
-            urlStatusBar.textContent = destUrl;
+      iframe.srcdoc = safeHtml;
+      iframe.onload = () => {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          if (doc && doc.body) {
+            iframe.style.height = Math.max(180, doc.body.scrollHeight + 16) + "px";
           }
-        });
+          const links = doc ? doc.querySelectorAll("a, .inbox-safe-link, [data-real-url]") : [];
+          links.forEach((link) => {
+            const destUrl = link.getAttribute("data-real-url") || link.getAttribute("href") || "#";
+            link.addEventListener("click", (evt) => {
+              evt.preventDefault();
+              evt.stopPropagation();
+              if (urlStatusBar) urlStatusBar.textContent = destUrl;
+            });
+            link.addEventListener("mouseenter", () => {
+              if (urlStatusBar) urlStatusBar.textContent = destUrl;
+            });
+            link.addEventListener("mouseleave", () => {
+              if (urlStatusBar) urlStatusBar.textContent = "Hover over any link to inspect true destination";
+            });
+          });
+        } catch (e) {
+          console.warn("Sandboxed iframe inspection restriction:", e);
+        }
+      };
 
-        link.addEventListener("mouseenter", () => {
-          if (urlStatusBar) {
-            urlStatusBar.textContent = destUrl;
-          }
-        });
-
-        link.addEventListener("mouseleave", () => {
-          if (urlStatusBar) {
-            urlStatusBar.textContent = "Hover over any link to inspect true destination";
-          }
-        });
-      });
+      bodyEl.appendChild(iframe);
     }
 
     // Highlight action buttons for this email

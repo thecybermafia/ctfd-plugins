@@ -53,6 +53,12 @@ CTFd.plugin.run((_CTFd) => {
   const isSolved = Boolean(config.is_solved);
   const storageKey = `ctfd_scenario_state_${challengeId}`;
 
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str || "";
+    return div.innerHTML;
+  }
+
   let currentNodeId = startNodeId;
   let historyPath = [startNodeId];
   let lastConsequence = "";
@@ -155,7 +161,7 @@ CTFd.plugin.run((_CTFd) => {
 
     // Main narrative text
     if (textEl) {
-      textEl.innerHTML = node.text || "";
+      textEl.textContent = node.text || "";
     }
 
     const isWin = winningNodes.includes(nodeId.toLowerCase()) || node.is_win;
@@ -232,7 +238,7 @@ CTFd.plugin.run((_CTFd) => {
           btn.style.borderColor = "rgba(255, 255, 255, 0.2)";
           btn.innerHTML = `
             <span class="badge bg-secondary font-monospace" style="font-size: 0.7rem;">#${idx + 1}</span>
-            <span class="small text-light flex-grow-1">${opt.text}</span>
+            <span class="small text-light flex-grow-1">${escapeHtml(opt.text)}</span>
             <span class="text-muted small">&rarr;</span>
           `;
 

@@ -11,7 +11,6 @@ class PhishingInboxChallenge(Challenges):
     action_options = db.Column(db.String(128), default="report,safe,delete")
     min_accuracy_percent = db.Column(db.Integer, default=100)
     show_auth_headers = db.Column(db.Boolean, default=True)
-    max_attempts = db.Column(db.Integer, default=0)
     explanation = db.Column(db.Text, default="")
 
     def __init__(self, *args, **kwargs):
@@ -21,7 +20,6 @@ class PhishingInboxChallenge(Challenges):
         self.show_auth_headers = kwargs.pop("show_auth_headers", True)
         if isinstance(self.show_auth_headers, str):
             self.show_auth_headers = self.show_auth_headers.lower() in ("true", "1", "yes", "on")
-        self.max_attempts = int(kwargs.pop("max_attempts", 0) or 0)
         self.explanation = kwargs.pop("explanation", "")
         kwargs.pop("emails_text", None)
         super(PhishingInboxChallenge, self).__init__(**kwargs)

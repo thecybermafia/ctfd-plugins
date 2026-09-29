@@ -3,7 +3,7 @@
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
 <input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
-<script type="application/json" id="hotspot-config-json">{{ challenge | tojson }}</script>
+<script type="application/json" id="hotspot-config-json">{"image_url": {{ (challenge.image_url or '') | tojson }}, "max_clicks": {{ challenge.max_clicks | default(5) }}, "tolerance_radius": {{ challenge.tolerance_radius | default(6.0) }}, "hotspots_data": {% if solved_by_me or is_admin() %}{{ challenge.hotspots_data | tojson }}{% else %}[]{% endif %}, "is_solved": {% if solved_by_me %}true{% else %}false{% endif %}}</script>
 
 <div class="red-flag-hotspot-container my-3" data-chal-id="{{ challenge.id }}">
   <!-- Top Telemetry Header -->
@@ -14,7 +14,7 @@
     </div>
     <div class="d-flex align-items-center gap-2">
       <span id="hotspot-target-badge" class="badge bg-dark border border-secondary text-light font-monospace">
-        Targets: {{ challenge.hotspots_count }}
+        Targets: {{ challenge.hotspots_data | length }}
       </span>
       <span id="hotspot-markers-badge" class="badge bg-dark border border-secondary text-info font-monospace">
         Markers: <span id="hotspot-markers-count">0</span> / {{ challenge.max_clicks }}
@@ -27,7 +27,7 @@
     <div class="card-header d-flex justify-content-between align-items-center p-2 border-bottom border-secondary border-opacity-25">
       <span class="small font-monospace text-muted">Evidence Image Canvas</span>
       <div class="d-flex gap-2">
-        <button type="button" id="hotspot-clear-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2" {% if challenge.is_solved %}disabled{% endif %}>
+        <button type="button" id="hotspot-clear-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2" {% if solved_by_me %}disabled{% endif %}>
           Clear Pins
         </button>
       </div>
@@ -58,7 +58,7 @@
   </div>
 
   <!-- Educational Debrief Section -->
-  {% if challenge.is_solved or is_admin() %}
+  {% if solved_by_me or is_admin() %}
   <div class="card mb-3 border border-success bg-dark">
     <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
       Red Flag Analysis &amp; Findings
@@ -85,7 +85,7 @@
   {% endif %}
 
   <!-- Submit Row -->
-  {% if not challenge.is_solved %}
+  {% if not solved_by_me %}
   <div class="d-grid mt-3">
     <button id="challenge-submit" class="challenge-submit btn btn-primary py-2 fw-bold font-monospace" type="button" disabled>
       Submit Identified Red Flags
