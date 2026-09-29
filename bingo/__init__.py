@@ -11,6 +11,20 @@ def load(app):
         BingoCellSolve.__table__.create(bind=db.engine, checkfirst=True)
         BingoLineAward.__table__.create(bind=db.engine, checkfirst=True)
 
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            existing = {c["name"] for c in inspector.get_columns("bingo_challenge")}
+            with db.engine.connect() as conn:
+                if "shuffle_cards" not in existing:
+                    conn.execute(text("ALTER TABLE bingo_challenge ADD COLUMN shuffle_cards TINYINT(1) DEFAULT 0"))
+                    try:
+                        conn.commit()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
     app.register_blueprint(bingo_bp)
     CHALLENGE_CLASSES["bingo"] = BingoChallengeType
 

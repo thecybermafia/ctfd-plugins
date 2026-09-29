@@ -17,6 +17,22 @@ def load(app):
         ImageUploadChallenge.__table__.create(bind=db.engine, checkfirst=True)
         ImageUploadSubmission.__table__.create(bind=db.engine, checkfirst=True)
 
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            existing = {c["name"] for c in inspector.get_columns("image_upload_challenge")}
+            with db.engine.connect() as conn:
+                if "allowed_extensions" not in existing:
+                    conn.execute(text("ALTER TABLE image_upload_challenge ADD COLUMN allowed_extensions VARCHAR(256) DEFAULT 'png,jpg,jpeg,webp,gif'"))
+                if "rubric_json" not in existing:
+                    conn.execute(text("ALTER TABLE image_upload_challenge ADD COLUMN rubric_json TEXT NULL"))
+                try:
+                    conn.commit()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
     app.register_blueprint(image_upload_bp)
     CHALLENGE_CLASSES["image_upload"] = ImageUploadChallengeType
 
