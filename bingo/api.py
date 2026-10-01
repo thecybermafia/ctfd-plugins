@@ -1,5 +1,6 @@
 import hmac
 import json
+import re
 from datetime import datetime
 from flask import Blueprint, jsonify, request
 from CTFd.cache import clear_standings
@@ -10,6 +11,34 @@ from CTFd.utils.user import get_current_team, get_current_user, is_admin
 from CTFd.plugins.bingo.models import BingoCellSolve, BingoChallenge, BingoLineAward
 
 bingo_bp = Blueprint("bingo", __name__, template_folder="templates", static_folder="assets")
+
+BINGO_ALIASES = {
+    0: ["phishing", "fake login portal", "fake login", "credential harvesting", "phish", "login phishing"],
+    1: ["mfa", "multi factor authentication", "multifactor authentication", "two factor authentication", "2fa", "layered identity assurance", "multi-factor"],
+    2: ["ransomware", "data lock extortion", "extortionware", "crypto ransomware", "data extortion"],
+    3: ["shoulder surfing", "screen peeking", "shoulder surf", "visual hacking", "peeking"],
+    4: ["tailgating", "piggybacking", "door piggybacking", "tailgating attack", "badge piggybacking"],
+    5: ["smishing", "sms phishing", "malicious sms link", "malicious sms", "text phishing", "sms fraud"],
+    6: ["vishing", "voice phishing", "voice fraud call", "voice call fraud", "voice fraud", "phone phishing", "voice call phishing", "phone fraud", "voice deception"],
+    7: ["social engineering", "psychological deception", "human hacking", "social engineering attack"],
+    8: ["clean desk", "clean desk policy", "unattended workspace", "clear desk", "clear desk policy"],
+    9: ["usb drop", "usb baiting", "baiting", "dropped flash drive", "usb drop attack", "flash drive drop", "badusb"],
+    10: ["firewall", "packet filter", "network packet filter", "network firewall"],
+    11: ["vpn", "virtual private network", "encrypted network tunnel", "virtual private net"],
+    12: ["zero day", "zero-day", "0day", "0-day", "free pivot", "zero day exploit", "zero day vulnerability"],
+    13: ["keylogger", "keystroke surveillance", "key logging", "keystroke logger", "key logger"],
+    14: ["brute force", "bruteforce", "exhaustive password trial", "brute force attack", "password brute force"],
+    15: ["watering hole", "watering hole attack", "strategic web compromise", "water hole attack"],
+    16: ["spear phishing", "spearphishing", "customized email bait", "spear phish"],
+    17: ["whaling", "whaling attack", "executive leadership hook", "whale phishing", "ceo fraud", "executive phishing"],
+    18: ["trojan", "trojan horse", "disguised malicious tool", "trojan malware"],
+    19: ["spyware", "info stealer", "infostealer", "silent information stealer", "spy ware"],
+    20: ["patching", "patch management", "software patching", "vulnerability remediation", "patch updates", "security patch"],
+    21: ["data backup", "backup", "backups", "data backups", "3-2-1 resilience rule", "3-2-1 backup"],
+    22: ["incident response", "incident response plan", "incident response procedure", "crisis containment cycle", "ir", "incident response cycle"],
+    23: ["encryption", "cryptography", "plaintext scrambling", "data encryption"],
+    24: ["least privilege", "principle of least privilege", "polp", "minimum access rights", "least privilege access"],
+}
 
 def get_participant_filter(team, user, challenge_id):
     if team:
@@ -79,30 +108,55 @@ def attempt_bingo_cell(challenge_id):
     if not target_cell:
         return jsonify({"success": False, "message": "Cell definition not found"}), 404
 
-    expected_flag = (target_cell.get("flag") or "").strip()
-
     def _normalize(val):
         val = (val or "").strip().lower()
         if val.startswith("flag{") and val.endswith("}"):
             val = val[5:-1].strip()
-        val = val.replace("_", " ").replace("-", " ")
+        val = re.sub(r'[^a-z0-9\s]', ' ', val)
         return " ".join(val.split())
 
-    sub_raw = submission_flag.strip().lower()
-    exp_raw = expected_flag.strip().lower()
     sub_norm = _normalize(submission_flag)
-    exp_norm = _normalize(expected_flag)
+    sub_raw = submission_flag.strip().lower()
+    sub_words = set(sub_norm.split())
+
+    candidates = set()
+    if target_cell.get("flag"):
+        candidates.add(str(target_cell.get("flag")))
+    if target_cell.get("title"):
+        candidates.add(str(target_cell.get("title")))
+
+    raw_answers = target_cell.get("answers")
+    if isinstance(raw_answers, list):
+        for a in raw_answers:
+            if a:
+                candidates.add(str(a))
+    elif isinstance(raw_answers, str) and raw_answers.strip():
+        for a in re.split(r'[,;|\n]', raw_answers):
+            if a.strip():
+                candidates.add(a.strip())
+
+    if cell_index in BINGO_ALIASES:
+        for a in BINGO_ALIASES[cell_index]:
+            candidates.add(a)
 
     is_match = False
-    if expected_flag:
-        if hmac.compare_digest(sub_raw.encode("utf-8"), exp_raw.encode("utf-8")):
+    for cand in candidates:
+        cand_raw = cand.strip().lower()
+        cand_norm = _normalize(cand)
+        cand_words = set(cand_norm.split())
+
+        if hmac.compare_digest(sub_raw.encode("utf-8"), cand_raw.encode("utf-8")):
             is_match = True
-        elif hmac.compare_digest(sub_norm.encode("utf-8"), exp_norm.encode("utf-8")):
+            break
+        if sub_norm == cand_norm:
             is_match = True
-        elif hmac.compare_digest(f"flag{{{sub_norm.replace(' ', '_')}}}".encode("utf-8"), exp_raw.encode("utf-8")):
+            break
+        if sub_norm == f"flag {cand_norm}" or f"flag{{{cand_norm.replace(' ', '_')}}}" == sub_raw:
             is_match = True
-        elif hmac.compare_digest(sub_norm.encode("utf-8"), _normalize(exp_raw).encode("utf-8")):
+            break
+        if sub_words and cand_words and sub_words == cand_words:
             is_match = True
+            break
 
     if not is_match:
         return jsonify({"success": False, "status": "incorrect", "message": "Incorrect flag for this tile"}), 200

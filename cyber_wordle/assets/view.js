@@ -27,18 +27,23 @@ function initWordle() {
   let currentWord = "";
   const keyStatus = {}; // letter -> 'correct' | 'present' | 'absent'
 
-  // Build grid HTML
+  // Build grid HTML: ONLY render completed rows and the active row.
+  // Rows after the active row are strictly omitted from the DOM to prevent inspection/tampering.
   const grid = $("#wordle-grid");
   grid.empty();
 
-  for (let r = 0; r < maxAttempts; r++) {
+  const rowsToRender = (isSolved || currentAttempt >= maxAttempts)
+    ? Math.min(history.length, maxAttempts)
+    : Math.min(history.length + 1, maxAttempts);
+
+  for (let r = 0; r < rowsToRender; r++) {
     const isCompleted = r < history.length;
     const isActive = (r === currentAttempt && !isSolved && currentAttempt < maxAttempts);
     const guessData = history[r];
 
     const rowEl = $(
       '<div class="d-flex justify-content-center gap-1 wordle-row ' +
-      (isActive ? 'wordle-row-active' : (isCompleted ? 'wordle-row-completed' : 'wordle-row-future')) +
+      (isActive ? 'wordle-row-active' : 'wordle-row-completed') +
       '"' + (isActive ? ' data-row="' + r + '"' : '') + '></div>'
     );
 
@@ -64,10 +69,6 @@ function initWordle() {
           textStyle = "color: #9ca3af;";
           if (!keyStatus[letter]) keyStatus[letter] = "absent";
         }
-      } else if (!isActive) {
-        // Future / locked attempts: dimmed placeholder
-        bgStyle = "background: rgba(15, 23, 42, 0.35);";
-        borderStyle = "border: 1px dashed rgba(255,255,255,0.12); opacity: 0.45;";
       }
 
       const colAttr = isActive ? ' data-col="' + c + '"' : '';
