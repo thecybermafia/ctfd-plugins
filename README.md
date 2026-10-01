@@ -35,7 +35,9 @@ A production-ready collection of game-changing challenge types and operational i
 Every plugin in this suite has undergone a comprehensive defensive security audit and has been tested against real-world adversarial attacks:
 
 1. **Anti-Cheat & Flag Leakage Prevention**:
-   - **Bingo**: Tile answers and flags are strictly guarded. Competitors only receive sanitized board titles and descriptions; secret tile flags are never exposed in API payloads or DOM.
+   - **Bingo**: Tile answers and flags are strictly guarded. Competitors only receive sanitized board titles and descriptions; secret tile flags are never exposed in API payloads or DOM. In addition, all 25 tiles support robust keyword and alias matching (case-insensitive, whitespace-trimmed).
+   - **Cyber Wordle**: Future guess rows are held strictly in memory and are never rendered into the client DOM until reached, completely blocking DevTools DOM-inspection or bypass attempts.
+   - **Quiz Challenges**: Serializes both list-of-strings and dictionary option configurations cleanly, preventing 500 errors on legacy challenge formats.
    - **Crossword**: Clue answers are completely stripped from competitor responses. Only clue hints and letter lengths are sent to the client.
 2. **Timing Attack Resistance**:
    - String and flag verification uses constant-time comparisons via `hmac.compare_digest` to prevent side-channel timing attacks.
@@ -63,6 +65,8 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
 8. **CTF Lifecycle Enforcement**:
    - Solves and submissions are blocked if the competition is frozen, paused, or has not started yet (unless submitted by an admin).
    - Hidden challenges cannot be queried or solved by non-admin participants.
+9. **Global JavaScript Namespace Isolation**:
+   - Client scripts across all challenge types employ scoped variables and challenge-specific retry counters (`seqRetryCount`, `scenarioRetryCount`, `bingoRetryCount`), eliminating global variable redeclaration errors during rapid modal transitions.
 
 ---
 
@@ -90,16 +94,28 @@ The archive must contain **exactly one top-level directory** matching the plugin
 - Uploading the multi-plugin bundle triggers: *"Zip is missing an __init__.py file"*
 - Uploading multiple loose directories triggers: *"Zip contains multiple top-level directories"*
 
-#### Packaging a Plugin ZIP
-From the repository root, package each plugin with its directory as the single top-level root:
+#### Automated Packaging (Recommended)
+Run the automated packaging utility to compile and validate all 15 plugins into `dist/plugins/`:
 ```bash
-# Example: Packaging the bingo plugin
+python3 scripts/build_cloud_zips.py
+```
+Pre-packaged ZIPs will be generated in `dist/plugins/`:
+- `dist/plugins/bingo.zip`
+- `dist/plugins/crossword.zip`
+- `dist/plugins/cyber_wordle.zip`
+- `dist/plugins/phishing_inbox.zip`
+- `dist/plugins/quiz_challenges.zip`
+- *(and all other challenge/utility plugins)*
+
+#### Manual Packaging Command
+From the repository root, package any single plugin directory:
+```bash
 zip -r bingo.zip bingo -x "*.DS_Store*" "*__pycache__*"
 ```
 
 #### Uploading to CTFd Cloud
 1. Navigate to **Instance Management > Plugins > Upload Plugin**.
-2. Select your plugin ZIP (e.g. `bingo.zip`, `crossword.zip`, etc.).
+2. Select your plugin ZIP (e.g. `dist/plugins/bingo.zip`, `dist/plugins/crossword.zip`, etc.).
 3. Upload each plugin you need individually.
 
 
