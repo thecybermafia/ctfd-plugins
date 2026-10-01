@@ -68,8 +68,8 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
 
 ## 🚀 Installation Guide
 
-### Option 1: Standard CTFd Installation
-
+### Option 1: Standard / Self-Hosted CTFd Installation
+ 
 1. Copy the desired plugin folder(s) directly into your CTFd `CTFd/plugins/` directory:
    ```bash
    # Copy all plugins
@@ -83,11 +83,23 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
    sudo systemctl restart ctfd
    ```
 
-3. Navigate to **Admin Panel > Challenges > New Challenge (+)**. You will see the new challenge types available in the dropdown:
-   - `bingo`
-   - `crossword`
-   - `image_upload`
-   - `textarea`
+### Option 2: CTFd Enterprise Cloud / Hosted CTFd Installation
+
+CTFd Cloud does **not** allow uploading the whole plugins repo as one ZIP (which triggers *"Zip is missing an __init__.py file"*). CTFd Cloud requires each plugin to be uploaded **individually as its own separate ZIP file** with `__init__.py` sitting at the root of the archive.
+
+#### Creating Plugin ZIPs
+To create a cloud-ready ZIP for any plugin, zip only the **contents** of that specific plugin folder:
+```bash
+# Example: Packaging the bingo plugin
+cd bingo
+zip -r ../bingo.zip . -x "*.DS_Store*" "*__pycache__*"
+```
+
+#### Uploading to CTFd Cloud
+1. Navigate to **Instance Management > Plugins > Upload Plugin**.
+2. Select your plugin ZIP (e.g. `bingo.zip`, `crossword.zip`, etc.).
+3. Upload each plugin you need individually.
+
 
 ---
 
