@@ -33,7 +33,38 @@ class QuizChallenge(Challenges):
     @property
     def options_data(self):
         try:
-            return json.loads(self.options_json or "[]")
+            raw = json.loads(self.options_json or "[]")
+            if isinstance(raw, dict):
+                raw = list(raw.values())
+            if not isinstance(raw, list):
+                raw = [str(self.options_json)]
+
+            normalized = []
+            for idx, item in enumerate(raw):
+                if isinstance(item, dict):
+                    opt_id = str(item.get("id") or f"opt_{idx}")
+                    opt_text = str(item.get("text", "")).strip()
+                    is_correct = bool(item.get("correct", False))
+                    normalized.append({
+                        "id": opt_id,
+                        "text": opt_text,
+                        "correct": is_correct
+                    })
+                elif isinstance(item, (str, int, float, bool)):
+                    clean = str(item).strip()
+                    is_correct = clean.startswith("*") or clean.lower().startswith("[x]")
+                    if clean.startswith("*"):
+                        clean = clean.lstrip("*").strip()
+                    elif clean.lower().startswith("[x]"):
+                        clean = clean[3:].strip()
+                    elif clean.startswith("[ ]"):
+                        clean = clean[3:].strip()
+                    normalized.append({
+                        "id": f"opt_{idx}",
+                        "text": clean,
+                        "correct": is_correct
+                    })
+            return normalized
         except Exception:
             return []
 

@@ -42,11 +42,20 @@ def parse_options_text(text):
 def options_to_text(options_json):
     """Converts options JSON back to editable text for admin update form."""
     try:
-        opts = json.loads(options_json or "[]")
+        if not options_json:
+            return ""
+        raw = json.loads(options_json)
+        if isinstance(raw, dict):
+            raw = list(raw.values())
+        if not isinstance(raw, list):
+            return str(options_json)
         lines = []
-        for o in opts:
-            prefix = "* " if o.get("correct") else ""
-            lines.append(f"{prefix}{o.get('text', '')}")
+        for idx, o in enumerate(raw):
+            if isinstance(o, dict):
+                prefix = "* " if o.get("correct") else ""
+                lines.append(f"{prefix}{o.get('text', '')}")
+            elif isinstance(o, (str, int, float, bool)):
+                lines.append(str(o).strip())
         return "\n".join(lines)
     except Exception:
         return ""
@@ -216,17 +225,23 @@ class QuizChallengeType(BaseChallenge):
         else:
             submitted_ids = {submission}
 
-        # Determine correct option IDs
-        correct_ids = {opt["id"] for opt in c.options_data if opt.get("correct")}
+        # Determine correct option IDs and correct option texts (case-insensitive)
+        correct_ids = set()
+        correct_texts = set()
+        for opt in c.options_data:
+            if opt.get("correct"):
+                correct_ids.add(opt["id"])
+                correct_texts.add(opt.get("text", "").strip().lower())
 
-        if not correct_ids:
+        if not correct_ids and not correct_texts:
             return ChallengeResponse(
                 status="incorrect",
                 message="No correct answers configured by admin."
             )
 
-        # Verify answer
-        if submitted_ids == correct_ids:
+        # Allow matching by ID (from UI checkboxes/radios) OR by text
+        sub_texts = {x.lower() for x in submitted_ids}
+        if submitted_ids == correct_ids or (correct_texts and sub_texts == correct_texts):
             msg = "Correct answer!"
             if c.explanation:
                 msg = f"Correct! {c.explanation}"
