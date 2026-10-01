@@ -67,9 +67,13 @@ def admin_sso():
         set_config("sso_provider", provider)
         set_config("sso_user_settings", user_settings)
 
-        # Automatic sync: If All Users is set, registration visibility MUST be private
-        if user_settings == "all_users":
+        # Automatic sync: If All Users is set AND SSO is enabled, registration visibility MUST be private
+        if provider != "disabled" and user_settings == "all_users":
             reg_visibility = "private"
+        elif provider == "disabled":
+            # If SSO is disabled, allow public registration unless explicitly set to private
+            if request.form.get("registration_visibility") == "public":
+                reg_visibility = "public"
         set_config("registration_visibility", reg_visibility)
 
         # ----------------------------------------------------
@@ -253,6 +257,44 @@ def admin_sso():
         okta_auth_url=get_config("sso_okta_auth_url", ""),
         okta_token_url=get_config("sso_okta_token_url", ""),
     )
+
+
+@sso_bp.route("/admin/sso/disable", methods=["POST"])
+@admins_only
+def admin_sso_disable():
+    set_config("sso_provider", "disabled")
+    if get_config("sso_user_settings") == "all_users":
+        set_config("registration_visibility", "public")
+    flash("Single Sign-On has been completely disabled. Local authentication is now active.", "success")
+    return redirect(url_for("sso.admin_sso"))
+
+
+@sso_bp.route("/api/v1/sso/status", methods=["GET", "POST"])
+@admins_only
+def api_sso_status():
+    if request.method == "POST":
+        data = request.get_json() or request.form or {}
+        action = data.get("action", "")
+        if action == "disable" or data.get("enabled") in (False, "false", "disabled", 0):
+            set_config("sso_provider", "disabled")
+            if get_config("sso_user_settings") == "all_users":
+                set_config("registration_visibility", "public")
+            return {"success": True, "sso_provider": "disabled", "status": "disabled"}
+        elif action == "enable" or data.get("enabled") in (True, "true", "enabled", 1):
+            prov = data.get("provider") or get_config("sso_provider", "saml")
+            if prov == "disabled":
+                prov = "saml"
+            set_config("sso_provider", prov)
+            return {"success": True, "sso_provider": prov, "status": "enabled"}
+    
+    provider = get_config("sso_provider", "disabled")
+    return {
+        "success": True,
+        "sso_provider": provider,
+        "is_enabled": bool(provider and provider != "disabled"),
+        "user_settings": get_config("sso_user_settings", "all_users"),
+        "registration_visibility": get_config("registration_visibility", "public"),
+    }
 
 
 @sso_bp.route("/sso/login", methods=["GET"])

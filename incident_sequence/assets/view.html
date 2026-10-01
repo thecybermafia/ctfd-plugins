@@ -11,14 +11,14 @@
   "cards_data": [
     {% for s in challenge.steps_data %}
     {
-      "id": {{ s.id | tojson }},
-      "text": {{ s.text | tojson }}
+      "id": {{ (s.id | default("step_" ~ loop.index)) | tojson }},
+      "text": {{ (s.text | default(s.title | default(s.description | default("Step " ~ loop.index)))) | tojson }}
     },
     {% endfor %}
     {% for d in challenge.distractors_data %}
     {
-      "id": {{ d.id | tojson }},
-      "text": {{ d.text | tojson }}
+      "id": {{ (d.id | default("dist_" ~ loop.index)) | tojson }},
+      "text": {{ (d.text | default(d.title | default(d.description | default("Distractor " ~ loop.index)))) | tojson }}
     }{% if not loop.last %},{% endif %}
     {% endfor %}
   ]
@@ -26,7 +26,7 @@
 
 <div class="incident-sequence-container my-3" data-chal-id="{{ challenge.id }}">
   <!-- Top Telemetry Header -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border border-secondary border-opacity-25" style="background: rgba(10, 16, 20, 0.8);">
+  <div class="tactical-telemetry-header d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border">
     <div class="d-flex align-items-center gap-2">
       <span class="badge bg-primary font-monospace">INCIDENT PLAYBOOK SEQUENCER</span>
       <span class="small font-monospace text-muted">Arrange valid countermeasures in chronological order</span>
@@ -46,10 +46,10 @@
   <div class="row g-3 mb-3">
     <!-- Main Incident Timeline Column -->
     <div class="{% if challenge.allow_distractor_bin %}col-lg-7{% else %}col-12{% endif %}">
-      <div class="card h-100 border border-secondary border-opacity-25" style="background: rgba(13, 20, 26, 0.95);">
-        <div class="card-header p-2 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+      <div class="card h-100 tactical-card">
+        <div class="card-header tactical-card-header p-2 border-bottom d-flex justify-content-between align-items-center">
           <span class="fw-bold font-monospace text-success small">Incident Response Timeline (1 to N)</span>
-          <span class="badge bg-dark border border-secondary font-monospace text-muted small">Drop Target</span>
+          <span class="badge bg-secondary font-monospace text-dark small">Drop Target</span>
         </div>
         <div class="card-body p-2" id="timeline-card-list" style="min-height: 280px; max-height: 480px; overflow-y: auto;">
           <!-- Timeline cards injected / managed dynamically -->
@@ -60,7 +60,7 @@
     <!-- Distractor / Prohibited Actions Column -->
     {% if challenge.allow_distractor_bin %}
     <div class="col-lg-5">
-      <div class="card h-100 border border-danger border-opacity-25" style="background: rgba(26, 13, 13, 0.95);">
+      <div class="card h-100 tactical-card tactical-distractor-card border-danger border-opacity-50">
         <div class="card-header p-2 border-bottom border-danger border-opacity-25 d-flex justify-content-between align-items-center">
           <span class="fw-bold font-monospace text-danger small">Prohibited / Distractor Bin</span>
           <span class="badge bg-danger bg-opacity-25 text-danger font-monospace small">Reject Here</span>
@@ -75,22 +75,22 @@
 
   <!-- Educational Post-Solve / Admin Explanation -->
   {% if solved_by_me or is_admin() %}
-  <div class="card mb-3 border border-success bg-dark">
+  <div class="card mb-3 tactical-card border-success">
     <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
       Standard Operating Procedure (SOP) Debrief
     </div>
     <div class="card-body">
       {% if challenge.explanation %}
-      <div class="mb-3 small font-monospace text-light">{{ challenge.explanation }}</div>
+      <div class="mb-3 small font-monospace">{{ challenge.explanation }}</div>
       {% endif %}
       <div class="mb-2 font-monospace fw-bold text-success small">Verified Playbook Steps:</div>
       <div class="list-group list-group-flush mb-3">
         {% for s in challenge.steps_data %}
-        <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 p-2">
+        <div class="list-group-item bg-transparent border-secondary border-opacity-25 p-2">
           <div class="d-flex align-items-start gap-2">
-            <span class="badge bg-success font-monospace mt-1">#{{ loop.index }}</span>
+            <span class="badge bg-success text-dark font-monospace mt-1">#{{ loop.index }}</span>
             <div>
-              <div class="fw-bold font-monospace text-light small">{{ s.text }}</div>
+              <div class="fw-bold font-monospace small">{{ s.text }}</div>
               {% if s.explanation %}
               <div class="text-muted font-monospace small mt-1">{{ s.explanation }}</div>
               {% endif %}
@@ -104,7 +104,7 @@
       <div class="mb-2 font-monospace fw-bold text-danger small">Prohibited Countermeasures:</div>
       <div class="list-group list-group-flush">
         {% for d in challenge.distractors_data %}
-        <div class="list-group-item bg-transparent text-light border-danger border-opacity-25 p-2">
+        <div class="list-group-item bg-transparent border-danger border-opacity-25 p-2">
           <div class="fw-bold font-monospace text-danger small">{{ d.text }}</div>
           {% if d.explanation %}
           <div class="text-muted font-monospace small mt-1">{{ d.explanation }}</div>

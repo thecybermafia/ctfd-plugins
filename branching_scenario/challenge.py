@@ -1,6 +1,7 @@
 import json
-from CTFd.models import Fails, Solves, db
+from CTFd.models import Fails, Flags, Solves, db
 from CTFd.plugins.challenges import BaseChallenge, ChallengeResponse
+from CTFd.plugins.flags import get_flag_class
 from CTFd.plugins.branching_scenario.models import BranchingScenarioChallenge
 from CTFd.utils.user import get_current_user, get_current_team, is_admin
 
@@ -165,6 +166,16 @@ class BranchingScenarioChallengeType(BaseChallenge):
         c = BranchingScenarioChallenge.query.filter_by(id=challenge.id).first()
         if not c:
             return ChallengeResponse(status="incorrect", message="Challenge not found.")
+
+        # Check standard Flags
+        flags = Flags.query.filter_by(challenge_id=challenge.id).all()
+        for flag in flags:
+            try:
+                flag_class = get_flag_class(flag.type)
+                if flag_class.compare(flag, submission):
+                    return ChallengeResponse(status="correct", message="Scenario Completed Successfully via Flag!")
+            except Exception:
+                pass
 
         # Submission expected:
         # JSON: {"node_id": "win", "path": ["start", "investigate_call", "win"]}

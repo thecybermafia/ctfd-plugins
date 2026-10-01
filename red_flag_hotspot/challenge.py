@@ -1,7 +1,8 @@
 import json
 import math
-from CTFd.models import Fails, Solves, db
+from CTFd.models import Fails, Flags, Solves, db
 from CTFd.plugins.challenges import BaseChallenge, ChallengeResponse
+from CTFd.plugins.flags import get_flag_class
 from CTFd.plugins.red_flag_hotspot.models import HotspotChallenge
 from CTFd.utils.user import get_current_user, get_current_team, is_admin
 
@@ -153,6 +154,16 @@ class RedFlagHotspotChallengeType(BaseChallenge):
         c = HotspotChallenge.query.filter_by(id=challenge.id).first()
         if not c:
             return ChallengeResponse(status="incorrect", message="Challenge not found.")
+
+        # Check standard Flags
+        flags = Flags.query.filter_by(challenge_id=challenge.id).all()
+        for flag in flags:
+            try:
+                flag_class = get_flag_class(flag.type)
+                if flag_class.compare(flag, submission):
+                    return ChallengeResponse(status="correct", message="Spot-the-Red-Flag Success via Flag!")
+            except Exception:
+                pass
 
         # Check attempt limits
         if c.max_clicks and c.max_clicks > 0 and user:

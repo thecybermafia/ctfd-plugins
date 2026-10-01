@@ -14,13 +14,13 @@
 
 <div class="branching-scenario-container my-3" data-chal-id="{{ challenge.id }}">
   <!-- Top Telemetry Header -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border border-secondary border-opacity-25" style="background: rgba(10, 16, 20, 0.8);">
+  <div class="tactical-telemetry-header d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border">
     <div class="d-flex align-items-center gap-2">
       <span class="badge bg-primary font-monospace">CYBER INCIDENT SIMULATOR</span>
       <span class="small font-monospace text-muted">Navigate operational decisions in real time</span>
     </div>
     <div class="d-flex align-items-center gap-2">
-      <span id="scenario-status-badge" class="badge bg-info font-monospace">ACTIVE</span>
+      <span id="scenario-status-badge" class="badge bg-info text-dark font-monospace">ACTIVE</span>
       {% if challenge.allow_restart %}
       <button type="button" id="scenario-restart-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2" style="font-size: 0.75rem;">
         Restart
@@ -30,10 +30,10 @@
   </div>
 
   <!-- Narrative Dialogue Terminal Card -->
-  <div class="card border border-secondary border-opacity-25 mb-3" style="background: rgba(13, 20, 26, 0.95);">
-    <div class="card-header p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
-      <div class="h5 mb-0 font-monospace text-light" id="scenario-node-title">Initializing Incident...</div>
-      <span class="badge bg-dark border border-secondary text-muted font-monospace small" id="scenario-node-badge">STEP 1</span>
+  <div class="card tactical-card mb-3">
+    <div class="card-header tactical-card-header p-3 border-bottom d-flex justify-content-between align-items-center">
+      <div class="h5 mb-0 font-monospace fw-bold" id="scenario-node-title">Initializing Incident...</div>
+      <span class="badge bg-secondary font-monospace text-dark small" id="scenario-node-badge">STEP 1</span>
     </div>
 
     <div class="card-body p-3">
@@ -44,17 +44,17 @@
       </div>
 
       <!-- Optional Media Container (Image or Audio with accessible transcript) -->
-      <div id="scenario-media-container" class="mb-3 p-2 rounded border border-secondary border-opacity-25" style="display: none; background: rgba(0, 0, 0, 0.4);">
+      <div id="scenario-media-container" class="mb-3 p-2 rounded border border-secondary border-opacity-25 tactical-headers-box" style="display: none;">
         <!-- Injected dynamically: image or audio -->
         <div id="scenario-media-element"></div>
         <details id="scenario-transcript-box" class="mt-2 text-muted font-monospace small" style="display: none;">
           <summary class="cursor-pointer text-info">View Accessibility Transcript</summary>
-          <div class="mt-1 p-2 bg-dark rounded border border-secondary border-opacity-25" id="scenario-transcript-text"></div>
+          <div class="mt-1 p-2 rounded border border-secondary border-opacity-25" id="scenario-transcript-text"></div>
         </details>
       </div>
 
       <!-- Narrative Text -->
-      <div class="font-monospace text-light mb-4 lh-base" id="scenario-node-text" style="font-size: 0.95rem;">
+      <div class="font-monospace mb-4 lh-base" id="scenario-node-text" style="font-size: 0.95rem;">
         Loading narrative scenario...
       </div>
 
@@ -69,7 +69,7 @@
       <!-- Outcome Card (Shown when an ending is reached) -->
       <div id="scenario-outcome-card" class="p-3 rounded border text-center font-monospace mt-3" style="display: none;">
         <div class="h5 fw-bold mb-2" id="scenario-outcome-title">Outcome</div>
-        <div class="small mb-3 text-light" id="scenario-outcome-desc">Outcome description</div>
+        <div class="small mb-3" id="scenario-outcome-desc">Outcome description</div>
         <div id="scenario-outcome-actions"></div>
       </div>
     </div>
@@ -77,7 +77,7 @@
 
   <!-- Educational Post-Solve / Admin Explanation -->
   {% if solved_by_me or is_admin() %}
-  <div class="card mb-3 border border-success bg-dark">
+  <div class="card mb-3 tactical-card border-success">
     <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
       Incident Debrief &amp; Organizational Lessons
     </div>

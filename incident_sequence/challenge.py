@@ -1,7 +1,8 @@
 import json
 import random
-from CTFd.models import Fails, Solves, db
+from CTFd.models import Fails, Flags, Solves, db
 from CTFd.plugins.challenges import BaseChallenge, ChallengeResponse
+from CTFd.plugins.flags import get_flag_class
 from CTFd.plugins.incident_sequence.models import IncidentSequenceChallenge
 from CTFd.utils.user import get_current_user, get_current_team, is_admin
 
@@ -186,6 +187,16 @@ class IncidentSequenceChallengeType(BaseChallenge):
         c = IncidentSequenceChallenge.query.filter_by(id=challenge.id).first()
         if not c:
             return ChallengeResponse(status="incorrect", message="Challenge not found.")
+
+        # Check standard Flags
+        flags = Flags.query.filter_by(challenge_id=challenge.id).all()
+        for flag in flags:
+            try:
+                flag_class = get_flag_class(flag.type)
+                if flag_class.compare(flag, submission):
+                    return ChallengeResponse(status="correct", message="Incident Response Playbook Sequence Verified via Flag!")
+            except Exception:
+                pass
 
         # Submission expected: {"sequence": ["step_1", "step_2", ...], "distractors": ["dist_1", ...]}
         # Or array of step IDs: ["step_1", "step_2", ...]
