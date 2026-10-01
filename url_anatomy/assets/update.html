@@ -31,10 +31,34 @@
 </div>
 
 <div class="form-group mb-3">
-	<label for="urls_json" class="form-label fw-bold">URLs &amp; Tokens Configuration JSON</label>
-	<div class="form-text text-muted small mb-2">
-		List of URLs, token breakdowns, and targeted questions.
+	<div class="d-flex justify-content-between align-items-center mb-1">
+		<label for="urls_text" class="form-label fw-bold mb-0">Quick URLs &amp; Questions (Simple Format)</label>
+		<button type="button" class="btn btn-sm btn-outline-info font-monospace py-0 px-2" id="load-sample-urls-btn">
+			Load Sample Deceptive URLs
+		</button>
 	</div>
-	<textarea class="form-control font-monospace" name="urls_json" rows="12">{{ challenge.urls_json or '' }}</textarea>
+	<div class="form-text text-muted small mb-2">
+		One URL per line: <code>URL | Question | Target Segment | Explanation</code>.<br>
+		Tokens are automatically parsed by the system if editing here!
+	</div>
+	<textarea class="form-control font-monospace" name="urls_text" id="urls_text" rows="6">{{ challenge.urls_text or '' }}</textarea>
 </div>
+
+<details class="mb-3">
+	<summary class="cursor-pointer text-muted small font-monospace">Advanced: Edit Raw JSON Directly</summary>
+	<div class="mt-2">
+		<div class="form-text text-muted small mb-1">List of URLs, token breakdowns, and targeted questions.</div>
+		<textarea class="form-control font-monospace" name="urls_json" id="urls_json" rows="10">{{ challenge.urls_json or '' }}</textarea>
+	</div>
+</details>
+
+<script>
+document.getElementById('load-sample-urls-btn')?.addEventListener('click', function() {
+	const sample = `https://sso.microsoftonline.com.auth-adfs-portal.cc:8443/login?redirect=office | Click on the actual registrable domain that will receive credentials: | auth-adfs-portal.cc | Subdomains can mimic legitimate brands (sso.microsoftonline.com), but the actual registrable domain before the port is 'auth-adfs-portal.cc'.
+https://pаypal.com/signin | Inspect this lookalike domain and identify the homoglyph spoofing PayPal: | pаypal.com | The Cyrillic character 'а' substitutes the Latin 'a', resulting in an IDN homograph attack resolving to xn--pypal-4ve.com.
+https://portal.company.internal/oauth/callback?client_id=128&return_url=https://attacker-c2.net/payload | Click on the open redirection parameter forwarding the victim to an external server: | &return_url=https://attacker-c2.net/payload | An unvalidated return_url parameter allows attackers to hijack post-authentication redirect to malicious infrastructure.`;
+	const el = document.getElementById('urls_text');
+	if (el) el.value = sample;
+});
+</script>
 {% endblock %}

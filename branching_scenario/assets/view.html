@@ -2,7 +2,7 @@
 
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
-<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="" x-model="submission">
 <script type="application/json" id="branching-scenario-config-json">{
   "is_solved": {% if solved_by_me %}true{% else %}false{% endif %},
   "start_node_id": {{ (challenge.start_node_id or 'start') | tojson }},
@@ -16,7 +16,7 @@
   <!-- Top Telemetry Header -->
   <div class="tactical-telemetry-header d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border">
     <div class="d-flex align-items-center gap-2">
-      <span class="badge bg-primary font-monospace">CYBER INCIDENT SIMULATOR</span>
+      <span class="badge bg-success text-dark font-monospace">CYBER INCIDENT SIMULATOR</span>
       <span class="small font-monospace text-muted">Navigate operational decisions in real time</span>
     </div>
     <div class="d-flex align-items-center gap-2">
@@ -76,7 +76,7 @@
   </div>
 
   <!-- Educational Post-Solve / Admin Explanation -->
-  {% if solved_by_me or is_admin() %}
+  {% if solved_by_me %}
   <div class="card mb-3 tactical-card border-success">
     <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
       Incident Debrief &amp; Organizational Lessons

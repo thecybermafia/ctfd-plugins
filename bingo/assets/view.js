@@ -2,23 +2,25 @@ CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
 CTFd._internal.challenge.render = null;
-CTFd._internal.challenge.postRender = function() {};
-CTFd._internal.challenge.submit = function() {
-  return Promise.resolve();
-};
 
-CTFd.plugin.run((_CTFd) => {
+function initBingo() {
   const chalIdEl = document.getElementById("challenge-id");
-  if (!chalIdEl) return;
+  const boardGrid = document.getElementById("bingo-board-grid");
+  const headerRow = document.getElementById("bingo-header-row");
+  const cellsDataEl = document.getElementById("bingo-cells-data");
+
+  if (!chalIdEl || !boardGrid || !cellsDataEl) return false;
   const challengeId = chalIdEl.value;
 
+  if (window.WorldChallengeResizer && typeof window.WorldChallengeResizer.init === "function") {
+    window.WorldChallengeResizer.init();
+  }
+
   const sizeEl = document.getElementById("bingo-size");
-  const cellsDataEl = document.getElementById("bingo-cells-data");
-  const boardGrid = document.getElementById("bingo-board-grid");
   const tilesRatio = document.getElementById("bingo-tiles-ratio");
   const linesCount = document.getElementById("bingo-lines-count");
 
-  const promptBox = document.getElementById("bingo-tile-prompt-box");
+  const promptBadge = document.getElementById("bingo-prompt-badge");
   const promptTitle = document.getElementById("bingo-prompt-title");
   const promptPts = document.getElementById("bingo-prompt-pts");
   const promptDesc = document.getElementById("bingo-prompt-desc");
@@ -27,42 +29,73 @@ CTFd.plugin.run((_CTFd) => {
   const submitBtn = document.getElementById("bingo-prompt-submit-btn");
   const solvedMsg = document.getElementById("bingo-prompt-solved-msg");
 
-  if (!boardGrid || !cellsDataEl) return;
+  const rowsCountEl = document.getElementById("hud-rows-count");
+  const colsCountEl = document.getElementById("hud-cols-count");
+  const diagsCountEl = document.getElementById("hud-diags-count");
 
-  const N = parseInt(sizeEl ? sizeEl.value : 5) || 5;
+  const N = parseInt(sizeEl ? sizeEl.value : 5, 10) || 5;
+  const letters = ["B", "I", "N", "G", "O", "S", "E", "C"];
+
   let cells = [];
   try {
-    cells = JSON.parse(cellsDataEl.value || "[]");
+    cells = JSON.parse(cellsDataEl.value || cellsDataEl.textContent || "[]");
   } catch (e) {
     console.error("Failed to parse bingo cells:", e);
   }
 
-  // Ensure 25 cells exist
+  // Ensure total cells exist
   const totalCells = N * N;
   while (cells.length < totalCells) {
     const idx = cells.length;
-    cells.push({ index: idx, title: `Tile #${idx + 1}`, desc: "No description provided", points: 10 });
+    cells.push({ index: idx, title: `Sector #${idx + 1}`, desc: "Authenticate objective flag to neutralize this sector.", points: 10 });
   }
 
   boardGrid.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
-  boardGrid.style.maxWidth = `${N * 125}px`;
+
+  // Build classic B-I-N-G-O tactical channel modules
+  if (headerRow) {
+    headerRow.innerHTML = "";
+    headerRow.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+    for (let c = 0; c < N; c++) {
+      const colLetter = letters[c % letters.length];
+      const colEl = document.createElement("div");
+      colEl.className = `hud-channel-box hud-chan-${c % 5}`;
+      colEl.dataset.col = c;
+      colEl.innerHTML = `
+        <span class="hud-channel-letter">${colLetter}</span>
+        <span class="hud-channel-sub">CHAN ${c + 1}</span>
+      `;
+      headerRow.appendChild(colEl);
+    }
+  }
 
   let solvedCellsSet = new Set();
   let selectedCellIndex = null;
   const tileElements = {};
 
-  // Build grid
+  // Build tactical grid tiles
   boardGrid.innerHTML = "";
   cells.forEach((cell, i) => {
+    const r = Math.floor(i / N);
+    const c = i % N;
+    const colLetter = letters[c % letters.length];
+    const callout = `${colLetter}-${i + 1}`;
+    const isCenter = (N % 2 === 1) && (i === Math.floor(totalCells / 2));
+
     const tile = document.createElement("div");
-    tile.className = "bingo-tile";
+    tile.className = `hud-tile ${isCenter ? 'center-pivot' : ''}`;
     tile.dataset.index = i;
+    tile.dataset.col = c;
+    tile.dataset.row = r;
 
     tile.innerHTML = `
-      <div class="tile-title">${cell.title}</div>
-      <div class="tile-footer">
-        <span class="text-muted">#${i + 1}</span>
-        <span class="badge ${cell.points > 0 ? 'bg-secondary' : 'bg-dark'}">${cell.points}P</span>
+      <div class="hud-tile-header">
+        <span class="fw-bold">[ ${callout} ]</span>
+        <span class="badge ${cell.points > 0 ? 'bg-secondary' : 'bg-dark'} font-monospace" style="font-size: 0.58rem;">+${cell.points}P</span>
+      </div>
+      <div class="hud-tile-title" title="${cell.title}">
+        ${isCenter ? '<div class="text-warning font-monospace fw-bold mb-0.5" style="font-size: 0.58rem;"><i class="fas fa-crosshairs"></i> FREE PIVOT</div>' : ''}
+        <span>${cell.title}</span>
       </div>
     `;
 
@@ -79,25 +112,47 @@ CTFd.plugin.run((_CTFd) => {
     const cell = cells[index];
     if (!cell) return;
 
-    document.querySelectorAll(".bingo-tile.selected").forEach(el => el.classList.remove("selected"));
+    const r = Math.floor(index / N);
+    const c = index % N;
+    const colLetter = letters[c % letters.length];
+    const callout = `${colLetter}-${index + 1}`;
+
+    document.querySelectorAll(".hud-tile.selected").forEach(el => el.classList.remove("selected"));
     if (tileElements[index]) {
       tileElements[index].classList.add("selected");
     }
 
-    promptBox.classList.remove("d-none");
-    promptTitle.textContent = `#${index + 1}: ${cell.title}`;
-    promptPts.textContent = `${cell.points} PTS`;
-    promptDesc.textContent = cell.desc || "Complete this objective and submit the flag below.";
+    if (promptBadge) {
+      promptBadge.textContent = `SECTOR ${callout}`;
+      promptBadge.className = `badge font-monospace hud-chan-${c % 5}`;
+    }
+    if (promptTitle) {
+      promptTitle.textContent = cell.title;
+    }
+    if (promptPts) {
+      promptPts.textContent = `+${cell.points} PTS`;
+    }
+    if (promptDesc) {
+      promptDesc.textContent = cell.desc || "Review the objective scenario and authenticate the flag below.";
+    }
 
     const isSolved = solvedCellsSet.has(index);
     if (isSolved) {
-      promptForm.classList.add("d-none");
-      solvedMsg.classList.remove("d-none");
+      if (promptForm) promptForm.classList.add("d-none");
+      if (solvedMsg) {
+        solvedMsg.classList.remove("d-none");
+        solvedMsg.classList.add("d-flex");
+      }
     } else {
-      promptForm.classList.remove("d-none");
-      solvedMsg.classList.add("d-none");
-      flagInput.value = "";
-      flagInput.focus();
+      if (promptForm) promptForm.classList.remove("d-none");
+      if (solvedMsg) {
+        solvedMsg.classList.add("d-none");
+        solvedMsg.classList.remove("d-flex");
+      }
+      if (flagInput) {
+        flagInput.value = "";
+        flagInput.focus();
+      }
     }
   }
 
@@ -107,31 +162,77 @@ CTFd.plugin.run((_CTFd) => {
       .then(res => {
         if (!res.success || !res.data) return;
         solvedCellsSet = new Set(res.data.solved_cells || []);
-        
-        // Update tiles
-        cells.forEach((_, i) => {
-          if (tileElements[i]) {
-            if (solvedCellsSet.has(i)) {
-              tileElements[i].classList.add("solved");
-              const footer = tileElements[i].querySelector(".tile-footer");
-              if (footer && !footer.querySelector(".fa-check")) {
-                footer.innerHTML = `<span class="text-warning"><i class="fas fa-check"></i></span> <span class="badge bg-warning text-dark">DONE</span>`;
-              }
-            } else {
-              tileElements[i].classList.remove("solved");
-            }
+        const completedLines = res.data.completed_lines || [];
+
+        let numRows = 0;
+        let numCols = 0;
+        let numDiags = 0;
+
+        // Track winning line cells
+        const winningLineCells = new Set();
+        completedLines.forEach(lineId => {
+          if (lineId.startsWith("row_")) {
+            numRows++;
+            const r = parseInt(lineId.replace("row_", ""), 10);
+            for (let c = 0; c < N; c++) winningLineCells.add(r * N + c);
+          } else if (lineId.startsWith("col_")) {
+            numCols++;
+            const c = parseInt(lineId.replace("col_", ""), 10);
+            for (let r = 0; r < N; r++) winningLineCells.add(r * N + c);
+            const colHeader = document.querySelector(`.hud-channel-box[data-col="${c}"]`);
+            if (colHeader) colHeader.classList.add("col-completed");
+          } else if (lineId === "diag_main") {
+            numDiags++;
+            for (let i = 0; i < N; i++) winningLineCells.add(i * N + i);
+          } else if (lineId === "diag_anti") {
+            numDiags++;
+            for (let i = 0; i < N; i++) winningLineCells.add(i * N + (N - 1 - i));
           }
         });
 
-        // Update stats
+        // Update each tile
+        cells.forEach((_, i) => {
+          const tile = tileElements[i];
+          if (!tile) return;
+
+          if (solvedCellsSet.has(i)) {
+            tile.classList.add("solved");
+            if (!tile.querySelector(".hud-lock-seal")) {
+              const stamp = document.createElement("div");
+              stamp.className = "hud-lock-seal";
+              stamp.innerHTML = `
+                <div class="hud-lock-check"><i class="fas fa-shield-alt"></i></div>
+                <div class="hud-lock-text">SECURED</div>
+              `;
+              tile.appendChild(stamp);
+            }
+          } else {
+            tile.classList.remove("solved");
+            const existingStamp = tile.querySelector(".hud-lock-seal");
+            if (existingStamp) existingStamp.remove();
+          }
+
+          if (winningLineCells.has(i)) {
+            tile.classList.add("hud-vector-locked");
+          } else {
+            tile.classList.remove("hud-vector-locked");
+          }
+        });
+
+        // Update HUD stats
         if (tilesRatio) {
           tilesRatio.textContent = `${solvedCellsSet.size} / ${totalCells}`;
         }
         if (linesCount) {
-          linesCount.textContent = (res.data.completed_lines || []).length;
+          linesCount.textContent = completedLines.length;
         }
 
-        // Refresh active prompt if selected
+        // Telemetry breakdown
+        if (rowsCountEl) rowsCountEl.textContent = `${numRows} / ${N}`;
+        if (colsCountEl) colsCountEl.textContent = `${numCols} / ${N}`;
+        if (diagsCountEl) diagsCountEl.textContent = `${numDiags} / 2`;
+
+        // Refresh active prompt
         if (selectedCellIndex !== null) {
           selectTile(selectedCellIndex);
         }
@@ -139,19 +240,19 @@ CTFd.plugin.run((_CTFd) => {
       .catch(e => console.log("Bingo state error:", e));
   }
 
-  fetchState();
-
-  if (submitBtn) {
+  // Hook submit button
+  if (submitBtn && !submitBtn.dataset.bound) {
+    submitBtn.dataset.bound = "true";
     submitBtn.addEventListener("click", () => {
       if (selectedCellIndex === null) return;
-      const flag = flagInput.value.trim();
+      const flag = flagInput ? flagInput.value.trim() : "";
       if (!flag) {
-        alert("Please enter a flag for this tile.");
+        alert("Please enter a flag or keyword to authenticate this sector.");
         return;
       }
 
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> AUTHENTICATING...';
 
       const csrfToken = (window.init && window.init.csrfNonce) || (window.CTFd && window.CTFd.config && window.CTFd.config.csrfNonce) || "";
 
@@ -169,22 +270,64 @@ CTFd.plugin.run((_CTFd) => {
         .then(r => r.json())
         .then(res => {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-check"></i> Submit Tile';
+          submitBtn.innerHTML = '<i class="fas fa-bolt me-1"></i> AUTHENTICATE &amp; DAUB';
 
           if (res.success && res.status === "correct") {
-            alert(res.message);
             fetchState();
-            // Trigger score/challenge refresh event
             window.dispatchEvent(new CustomEvent("load-challenges"));
           } else {
-            alert(res.message || "Incorrect flag for this tile.");
+            alert(res.message || "Incorrect flag or answer for this sector.");
           }
         })
         .catch(err => {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-check"></i> Submit Tile';
+          submitBtn.innerHTML = '<i class="fas fa-bolt me-1"></i> AUTHENTICATE &amp; DAUB';
           alert("Error: " + err);
         });
     });
   }
-});
+
+  if (flagInput && !flagInput.dataset.bound) {
+    flagInput.dataset.bound = "true";
+    flagInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (submitBtn) submitBtn.click();
+      }
+    });
+  }
+
+  // Prime sector 0 on load so the console is immediately active
+  selectTile(0);
+  fetchState();
+  return true;
+}
+
+CTFd._internal.challenge.postRender = initBingo;
+window.addEventListener("ctfd:challenge-rendered", initBingo);
+
+let bingoRetryCount = 0;
+const bingoTimer = setInterval(function() {
+  bingoRetryCount++;
+  if (initBingo() || bingoRetryCount > 20) {
+    clearInterval(bingoTimer);
+  }
+}, 50);
+
+CTFd._internal.challenge.submit = function(preview) {
+  const challenge_id = parseInt(document.getElementById("challenge-id").value, 10);
+  const submission = document.getElementById("challenge-input") ? document.getElementById("challenge-input").value : "";
+
+  const body = {
+    challenge_id: challenge_id,
+    submission: submission
+  };
+  const params = {};
+  if (preview) {
+    params["preview"] = true;
+  }
+
+  return CTFd.api.post_challenge_attempt(params, body).then(function(response) {
+    return response;
+  });
+};

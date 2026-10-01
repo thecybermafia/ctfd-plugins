@@ -1,30 +1,24 @@
 {% extends "admin/challenges/update.html" %}
 
 {% block value %}
-<div class="form-group mb-3">
-	<label for="value" class="form-label fw-bold">Points</label>
-	<div class="form-text text-muted small mb-1">Default maximum points awarded upon manual review and approval.</div>
-	<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
-</div>
+	<div class="form-group">
+		<label for="value">Points<br>
+			<small class="form-text text-muted">Points awarded upon approval</small>
+		</label>
+		<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
+	</div>
 
-<div class="row g-3 mb-3">
-	<div class="col-md-6">
-		<label for="max_file_size_mb" class="form-label fw-bold">Max File Size (MB)</label>
-		<div class="form-text text-muted small mb-1">Maximum allowed submission file size in megabytes.</div>
+	<div class="form-group">
+		<label for="max_file_size_mb">Max File Size (MB)<br>
+			<small class="form-text text-muted">Maximum allowed file size in megabytes</small>
+		</label>
 		<input type="number" class="form-control" name="max_file_size_mb" value="{{ challenge.max_file_size_mb }}" min="1" max="100">
 	</div>
-	<div class="col-md-6">
-		<label for="allowed_extensions" class="form-label fw-bold">Allowed File Extensions</label>
-		<div class="form-text text-muted small mb-1">Comma-separated file extensions.</div>
-		<input type="text" class="form-control font-monospace" name="allowed_extensions" value="{{ challenge.allowed_extensions }}">
-	</div>
-</div>
 
-<div class="form-group mb-3">
-	<label for="rubric_text" class="form-label fw-bold">Optional Scoring Rubric (One per line: <code>Criteria | Max Points</code>)</label>
-	<div class="form-text text-muted small mb-2">
-		Define specific grading criteria for reviewers.
+	<div class="form-group">
+		<label for="allowed_extensions">Allowed Extensions<br>
+			<small class="form-text text-muted">Comma-separated allowed file extensions</small>
+		</label>
+		<input type="text" class="form-control" name="allowed_extensions" value="{{ challenge.allowed_extensions }}">
 	</div>
-	<textarea class="form-control font-monospace" name="rubric_text" rows="4">{{ challenge.rubric_text or '' }}</textarea>
-</div>
 {% endblock %}

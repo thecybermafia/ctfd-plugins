@@ -14,12 +14,19 @@ A production-ready collection of game-changing challenge types and operational i
 | :--- | :--- | :--- |
 | [**`referrals`**](./referrals) | Community & Growth | Gamified player recruitment system with proof-of-play milestone qualification, anti-cheat IP/subnet quarantine, teammate collusion shields, and super-configurable admin controls. |
 | [**`plugin_manager`**](./plugin_manager) | Administration | Dynamic plugin enable/disable manager with nested admin dropdown menu organization and core plugin protections. |
-| [**`bingo`**](./bingo) | Challenge Type | Interactive 3×3, 4×4, or 5×5 Cyber Bingo board with instant tile validation, row/col/diagonal line bonuses, and blackout prizes. |
-| [**`crossword`**](./crossword) | Challenge Type | Cyber Crossword puzzle challenge with simple `Clue \| Answer` setup and master solution keyword verification. |
+| [**`bingo`**](./bingo) | Challenge Type | Tactical 5x5 Defense Matrix Cockpit HUD with neon channel indicators (B-I-N-G-O), side-by-side Target Interrogation console, keyword/flag daubing, real-time vector completion telemetry, and blackout prizes. |
+| [**`phishing_inbox`**](./phishing_inbox) | Challenge Type | Split-pane webmail triage terminal with sandboxed iframe CSP email preview, forensic headers (SPF, DKIM, DMARC), safe link inspection, and triage workflows. |
+| [**`cyber_wordle`**](./cyber_wordle) | Challenge Type | Tactical 5-letter cybersecurity terminology decryptor with letter flip animations, letter frequency validation, physical and virtual on-screen keyboards. |
+| [**`quiz_challenges`**](./quiz_challenges) | Challenge Type | Single-choice radio and multi-select checkbox tactical assessments, deterministic choice shuffling, and post-solve educational explanations. |
+| [**`red_flag_hotspot`**](./red_flag_hotspot) | Challenge Type | Visual recon inspection with Euclidean distance thresholds and letterbox-safe coordinate tracking. |
+| [**`url_anatomy`**](./url_anatomy) | Challenge Type | RFC 3986 token dissector with live Punycode/Unicode toggle for IDN homoglyph analysis. |
+| [**`incident_sequence`**](./incident_sequence) | Challenge Type | Containment/eradication timeline sequencer with prohibited countermeasure isolation and deterministic distractor shuffling. |
+| [**`branching_scenario`**](./branching_scenario) | Challenge Type | Dialogue-driven crisis decision simulator with server-side graph traversal verification. |
+| [**`crossword`**](./crossword) | Challenge Type | Cyber Crossword puzzle challenge with simple `Clue \| Answer` setup, master solution keyword verification, and HMAC comparison. |
 | [**`image_upload`**](./image_upload) | Challenge Type | Secure manual review challenge for OSINT, physical hacking, hardware badges, and telemetry proof with admin scoring console. |
 | [**`textarea`**](./textarea) | Challenge Type | Monospace long-form text submission and manual evaluation challenge with character counter, DoS clamping, and admin review console. |
 | [**`sso`**](./sso) | Authentication | Enterprise Single Sign-On supporting SAML 2.0, Discord, GitHub, Google, Azure, and Okta with policy enforcement and private registration sync. |
-| [**`chat_notifications`**](./chat_notifications) | Webhooks & Broadcasts | Real-time notifications and webhooks for Discord, Slack, Teams, Google Chat, Telegram, and Generic Webhooks with independent dual-channel routing. |
+| [**`chat_notifications`**](./chat_notifications) | Webhooks & Broadcasts | Real-time notifications and webhooks for Discord, Slack, Teams, Google Chat, Telegram, and Generic Webhooks with independent dual-channel routing and HMAC SHA-256 signatures. |
 
 ---
 

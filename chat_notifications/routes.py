@@ -18,26 +18,13 @@ chat_notifications_bp = Blueprint(
 @chat_notifications_bp.route("/admin/chat_notifications", methods=["GET"])
 @admins_only
 def admin_settings():
+    from CTFd.plugins.chat_notifications.notifier import detect_platform
+
     configs = {
         # Webhook HMAC Shared Secret
         "shared_secret": get_shared_secret(),
 
-        # Participant Channel
-        "platform": get_config("chat_notifications_platform", "auto"),
-        "webhook_url": (
-            get_config("chat_notifications_webhook_url") or
-            get_config("gchat_participant_webhook_url") or
-            get_config("gchat_webhook_url", "")
-        ),
-        "enabled": (
-            get_config("chat_notifications_enabled") or
-            get_config("gchat_enabled", "true")
-        ) == "true",
-        "prefix": (
-            get_config("chat_notifications_prefix") or
-            get_config("gchat_prefix", "[CTFd]")
-        ),
-        "telegram_chat_id": get_config("chat_notifications_telegram_chat_id", ""),
+        # Event flags (Participant)
         "notify_announcements": (
             get_config("chat_notifications_notify_announcements") or
             get_config("gchat_notify_announcements", "true")
@@ -59,21 +46,7 @@ def admin_settings():
             get_config("gchat_notify_registrations", "false")
         ) == "true",
 
-        # Admin Operations Channel
-        "admin_platform": get_config("chat_notifications_admin_platform", "auto"),
-        "admin_webhook_url": (
-            get_config("chat_notifications_admin_webhook_url") or
-            get_config("gchat_admin_webhook_url", "")
-        ),
-        "admin_enabled": (
-            get_config("chat_notifications_admin_enabled") or
-            get_config("gchat_admin_enabled", "true")
-        ) == "true",
-        "admin_prefix": (
-            get_config("chat_notifications_admin_prefix") or
-            get_config("gchat_admin_prefix", "[CTFd-Admin]")
-        ),
-        "admin_telegram_chat_id": get_config("chat_notifications_admin_telegram_chat_id", ""),
+        # Event flags (Admin)
         "admin_notify_registrations": (
             get_config("chat_notifications_admin_notify_registrations") or
             get_config("gchat_admin_notify_registrations", "true")
@@ -91,6 +64,46 @@ def admin_settings():
             get_config("gchat_mirror_participant_events", "false")
         ) == "true",
     }
+
+    platforms = ["discord", "slack", "teams", "google_chat", "telegram", "custom"]
+    for p in platforms:
+        p_url = (get_config(f"webhook_{p}_participant_url") or "").strip()
+        p_enabled = (get_config(f"webhook_{p}_participant_enabled") or "false") == "true"
+        p_prefix = get_config(f"webhook_{p}_participant_prefix") or "[CTFd]"
+
+        a_url = (get_config(f"webhook_{p}_admin_url") or "").strip()
+        a_enabled = (get_config(f"webhook_{p}_admin_enabled") or "false") == "true"
+        a_prefix = get_config(f"webhook_{p}_admin_prefix") or "[CTFd-Admin]"
+
+        # Fallback to legacy config if per-platform config is empty
+        if not p_url:
+            leg_url = (get_config("chat_notifications_webhook_url") or get_config("gchat_participant_webhook_url") or get_config("gchat_webhook_url", "")).strip()
+            leg_plat = get_config("chat_notifications_platform", "auto")
+            resolved = leg_plat if leg_plat and leg_plat != "auto" else detect_platform(leg_url)
+            if (p == "custom" and resolved == "generic") or p == resolved:
+                p_url = leg_url
+                p_enabled = (get_config("chat_notifications_enabled") or get_config("gchat_enabled", "true")) == "true"
+                p_prefix = get_config("chat_notifications_prefix") or get_config("gchat_prefix", "[CTFd]")
+
+        if not a_url:
+            leg_a_url = (get_config("chat_notifications_admin_webhook_url") or get_config("gchat_admin_webhook_url", "")).strip()
+            leg_a_plat = get_config("chat_notifications_admin_platform", "auto")
+            resolved_a = leg_a_plat if leg_a_plat and leg_a_plat != "auto" else detect_platform(leg_a_url)
+            if (p == "custom" and resolved_a == "generic") or p == resolved_a:
+                a_url = leg_a_url
+                a_enabled = (get_config("chat_notifications_admin_enabled") or get_config("gchat_admin_enabled", "true")) == "true"
+                a_prefix = get_config("chat_notifications_admin_prefix") or get_config("gchat_admin_prefix", "[CTFd-Admin]")
+
+        configs[f"{p}_participant_url"] = p_url
+        configs[f"{p}_participant_enabled"] = p_enabled
+        configs[f"{p}_participant_prefix"] = p_prefix
+        configs[f"{p}_admin_url"] = a_url
+        configs[f"{p}_admin_enabled"] = a_enabled
+        configs[f"{p}_admin_prefix"] = a_prefix
+
+    configs["telegram_participant_chat_id"] = get_config("webhook_telegram_participant_chat_id") or get_config("chat_notifications_telegram_chat_id", "")
+    configs["telegram_admin_chat_id"] = get_config("webhook_telegram_admin_chat_id") or get_config("chat_notifications_admin_telegram_chat_id", "")
+
     return render_template("admin/chat_notifications.html", configs=configs)
 
 # Backward Compatibility Alias Redirect
@@ -104,33 +117,67 @@ def legacy_admin_redirect():
 @admins_only
 def save_settings():
     data = request.get_json() or request.form
+    platforms = ["discord", "slack", "teams", "google_chat", "telegram", "custom"]
 
-    # 1. Participant Channel Configurations
-    part_url = (data.get("webhook_url") or "").strip()
-    part_platform = (data.get("platform") or "auto").strip()
-    part_prefix = (data.get("prefix") or "[CTFd]").strip()
-    part_tg = (data.get("telegram_chat_id") or "").strip()
+    first_part_url = ""
+    first_part_enabled = "false"
+    first_admin_url = ""
+    first_admin_enabled = "false"
 
-    set_config("chat_notifications_platform", part_platform)
-    set_config("chat_notifications_webhook_url", part_url)
-    set_config("chat_notifications_prefix", part_prefix)
-    set_config("chat_notifications_telegram_chat_id", part_tg)
+    for p in platforms:
+        p_url = (data.get(f"{p}_participant_url") or "").strip()
+        p_enabled = "true" if data.get(f"{p}_participant_enabled") in (True, "true", "on", 1) else "false"
+        p_prefix = (data.get(f"{p}_participant_prefix") or "[CTFd]").strip()
 
-    # Legacy key sync
-    set_config("gchat_webhook_url", part_url)
-    set_config("gchat_participant_webhook_url", part_url)
-    set_config("gchat_prefix", part_prefix)
+        a_url = (data.get(f"{p}_admin_url") or "").strip()
+        a_enabled = "true" if data.get(f"{p}_admin_enabled") in (True, "true", "on", 1) else "false"
+        a_prefix = (data.get(f"{p}_admin_prefix") or "[CTFd-Admin]").strip()
+
+        set_config(f"webhook_{p}_participant_url", p_url)
+        set_config(f"webhook_{p}_participant_enabled", p_enabled)
+        set_config(f"webhook_{p}_participant_prefix", p_prefix)
+
+        set_config(f"webhook_{p}_admin_url", a_url)
+        set_config(f"webhook_{p}_admin_enabled", a_enabled)
+        set_config(f"webhook_{p}_admin_prefix", a_prefix)
+
+        if p_url and p_enabled == "true" and not first_part_url:
+            first_part_url = p_url
+            first_part_enabled = "true"
+
+        if a_url and a_enabled == "true" and not first_admin_url:
+            first_admin_url = a_url
+            first_admin_enabled = "true"
+
+    # Telegram specific chat IDs
+    tg_p_chat_id = (data.get("telegram_participant_chat_id") or "").strip()
+    tg_a_chat_id = (data.get("telegram_admin_chat_id") or "").strip()
+    set_config("webhook_telegram_participant_chat_id", tg_p_chat_id)
+    set_config("webhook_telegram_admin_chat_id", tg_a_chat_id)
+    set_config("chat_notifications_telegram_chat_id", tg_p_chat_id)
+    set_config("chat_notifications_admin_telegram_chat_id", tg_a_chat_id)
+
+    # Sync legacy keys for backward compatibility
+    if first_part_url:
+        set_config("chat_notifications_webhook_url", first_part_url)
+        set_config("gchat_webhook_url", first_part_url)
+        set_config("gchat_participant_webhook_url", first_part_url)
+        set_config("chat_notifications_enabled", first_part_enabled)
+        set_config("gchat_enabled", first_part_enabled)
+
+    if first_admin_url:
+        set_config("chat_notifications_admin_webhook_url", first_admin_url)
+        set_config("gchat_admin_webhook_url", first_admin_url)
+        set_config("chat_notifications_admin_enabled", first_admin_enabled)
+        set_config("gchat_admin_enabled", first_admin_enabled)
 
     # Participant event flags
-    p_enabled = "true" if data.get("enabled") in (True, "true", "on", 1) else "false"
     p_ann = "true" if data.get("notify_announcements") in (True, "true", "on", 1) else "false"
     p_chal = "true" if data.get("notify_new_challenges") in (True, "true", "on", 1) else "false"
     p_fb = "true" if data.get("notify_first_blood") in (True, "true", "on", 1) else "false"
     p_solves = "true" if data.get("notify_all_solves") in (True, "true", "on", 1) else "false"
     p_reg = "true" if data.get("notify_registrations") in (True, "true", "on", 1) else "false"
 
-    set_config("chat_notifications_enabled", p_enabled)
-    set_config("gchat_enabled", p_enabled)
     set_config("chat_notifications_notify_announcements", p_ann)
     set_config("gchat_notify_announcements", p_ann)
     set_config("chat_notifications_notify_new_challenges", p_chal)
@@ -142,30 +189,12 @@ def save_settings():
     set_config("chat_notifications_notify_registrations", p_reg)
     set_config("gchat_notify_registrations", p_reg)
 
-    # 2. Admin Operations Channel Configurations
-    admin_url = (data.get("admin_webhook_url") or "").strip()
-    admin_platform = (data.get("admin_platform") or "auto").strip()
-    admin_prefix = (data.get("admin_prefix") or "[CTFd-Admin]").strip()
-    admin_tg = (data.get("admin_telegram_chat_id") or "").strip()
-
-    set_config("chat_notifications_admin_platform", admin_platform)
-    set_config("chat_notifications_admin_webhook_url", admin_url)
-    set_config("chat_notifications_admin_prefix", admin_prefix)
-    set_config("chat_notifications_admin_telegram_chat_id", admin_tg)
-
-    # Legacy key sync
-    set_config("gchat_admin_webhook_url", admin_url)
-    set_config("gchat_admin_prefix", admin_prefix)
-
     # Admin event flags
-    a_enabled = "true" if data.get("admin_enabled") in (True, "true", "on", 1) else "false"
     a_reg = "true" if data.get("admin_notify_registrations") in (True, "true", "on", 1) else "false"
     a_sub = "true" if data.get("admin_notify_submissions") in (True, "true", "on", 1) else "false"
     a_ref = "true" if data.get("admin_notify_referrals") in (True, "true", "on", 1) else "false"
     a_mirror = "true" if data.get("mirror_participant_events") in (True, "true", "on", 1) else "false"
 
-    set_config("chat_notifications_admin_enabled", a_enabled)
-    set_config("gchat_admin_enabled", a_enabled)
     set_config("chat_notifications_admin_notify_registrations", a_reg)
     set_config("gchat_admin_notify_registrations", a_reg)
     set_config("chat_notifications_admin_notify_submissions", a_sub)
@@ -173,13 +202,14 @@ def save_settings():
     set_config("chat_notifications_admin_notify_referrals", a_ref)
     set_config("gchat_admin_notify_referrals", a_ref)
     set_config("chat_notifications_mirror_participant_events", a_mirror)
-    # Shared Secret (if provided)
+
+    # Shared Secret
     custom_secret = (data.get("shared_secret") or "").strip()
     if custom_secret:
         set_config("chat_notifications_shared_secret", custom_secret)
         set_config("webhooks_shared_secret", custom_secret)
 
-    return jsonify({"success": True, "message": "Chat notification configurations saved successfully!"})
+    return jsonify({"success": True, "message": "All webhook configurations saved successfully!"})
 
 @chat_notifications_bp.route("/admin/chat_notifications/secret/regenerate", methods=["POST"])
 @admins_only

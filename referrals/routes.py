@@ -88,28 +88,6 @@ def referrals_dashboard():
     # Check if current user was recruited by someone
     my_referral = Referrals.query.filter_by(referee_id=user.id).first()
 
-    raw_lb = ReferralConfig.get("referral_leaderboard_visible")
-    leaderboard_visible = str(raw_lb).lower() not in ("false", "0", "no", "off") if raw_lb is not None else True
-    top_recruiters = []
-    if leaderboard_visible:
-        try:
-            top_raw = (
-                db.session.query(
-                    Users.id,
-                    Users.name,
-                    db.func.count(Referrals.id).label("recruits_count")
-                )
-                .join(Referrals, Referrals.referrer_id == Users.id)
-                .filter(Referrals.status == "qualified")
-                .group_by(Users.id, Users.name)
-                .order_by(db.desc("recruits_count"))
-                .limit(10)
-                .all()
-            )
-            top_recruiters = [{"id": r[0], "name": r[1], "count": r[2]} for r in top_raw]
-        except Exception:
-            top_recruiters = []
-
     return render_template(
         "referrals.html",
         user=user,
@@ -127,63 +105,6 @@ def referrals_dashboard():
         is_disabled=is_disabled,
         bonus_notice_text=ReferralConfig.get_bonus_notice_text(),
         configs=ReferralConfig.get_all(),
-        top_recruiters=top_recruiters,
-        leaderboard_visible=leaderboard_visible,
-    )
-
-
-@referrals_bp.route("/admin/referrals/export", methods=["GET"])
-@admins_only
-def admin_export_csv():
-    import csv
-    import io
-    from flask import Response
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow([
-        "ID",
-        "Referral Code",
-        "Referrer User ID",
-        "Referrer Username",
-        "Referrer Team",
-        "Referee User ID",
-        "Referee Username",
-        "Referee Team",
-        "Status",
-        "Awarded Points",
-        "Referee IP",
-        "Referee Fingerprint",
-        "Created At",
-        "Qualified At",
-    ])
-
-    refs = Referrals.query.order_by(Referrals.id.desc()).all()
-    for r in refs:
-        ref_team = r.referrer_team.name if (r.referrer_team) else ""
-        referee_team = r.referee_user.team.name if (r.referee_user and r.referee_user.team) else ""
-        writer.writerow([
-            r.id,
-            r.referral_code,
-            r.referrer_id,
-            r.referrer_user.name if r.referrer_user else "Unknown",
-            ref_team,
-            r.referee_id,
-            r.referee_user.name if r.referee_user else "Unknown",
-            referee_team,
-            r.status,
-            r.award.value if r.award else 0,
-            r.referee_ip or "",
-            r.referee_fingerprint or "",
-            r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else "",
-            r.qualified_at.strftime("%Y-%m-%d %H:%M:%S") if r.qualified_at else "",
-        ])
-
-    csv_data = output.getvalue()
-    return Response(
-        csv_data,
-        mimetype="text/csv",
-        headers={"Content-Disposition": "attachment; filename=referrals_roster_export.csv"}
     )
 
 
@@ -258,7 +179,7 @@ def api_referrals_me():
             "is_disabled": is_disabled,
             "my_referral": my_ref_data,
             "recruits": recruits_data,
-            "program_name": ReferralConfig.get("referral_program_name", "Referral & Recruitment Directive"),
+            "program_name": ReferralConfig.get("referral_program_name", "Referrals"),
             "instructions": ReferralConfig.get("referral_instructions", ""),
             "show_bonus_notice": ReferralConfig.get_bool("referral_show_bonus_notice"),
             "bonus_notice_text": ReferralConfig.get_bonus_notice_text(),
@@ -320,31 +241,8 @@ def admin_referrals():
 def admin_save_settings():
     form_data = request.form.to_dict()
     ReferralConfig.update_all(form_data)
-    try:
-        from CTFd.cache import clear_config
-        clear_config()
-    except Exception:
-        pass
     flash("Referral system configuration saved successfully.", "success")
     return redirect(url_for("referrals.admin_referrals", tab=request.args.get("tab", "settings")))
-
-
-@referrals_bp.route("/admin/referrals/settings/ajax", methods=["POST"])
-@admins_only
-def admin_save_settings_ajax():
-    data = request.get_json() or request.form.to_dict()
-    from CTFd.plugins.referrals.config import DEFAULT_CONFIGS
-    for k, v in data.items():
-        if k in DEFAULT_CONFIGS:
-            if isinstance(v, bool):
-                v = "true" if v else "false"
-            ReferralConfig.set(k, str(v))
-    try:
-        from CTFd.cache import clear_config
-        clear_config()
-    except Exception:
-        pass
-    return jsonify({"success": True, "message": "Settings updated successfully."})
 
 
 @referrals_bp.route("/admin/referrals/actions", methods=["POST"])

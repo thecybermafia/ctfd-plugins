@@ -40,4 +40,4 @@ def load(app):
         app, base_path="/plugins/image_upload/assets/"
     )
 
-    register_admin_plugin_menu_bar(title="Image Reviews", route="/admin/image_uploads")
+    register_admin_plugin_menu_bar(title="Image Upload", route="/admin/image_uploads")

@@ -1,117 +1,498 @@
 {% extends "challenge.html" %}
 
+{% block description %}
+<div class="bingo-mission-briefing p-2 px-3 rounded border font-monospace small mb-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+  <div class="d-flex align-items-center gap-2">
+    <i class="fas fa-shield-alt text-success"></i>
+    <span>{{ challenge.description or "Complete 5 sectors in a row across the matrix to establish vector lock and neutralize threats." }}</span>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="badge bg-secondary font-monospace" style="font-size: 0.72rem;">OBJECTIVE: 5 IN A ROW</span>
+    <span class="badge bg-dark border border-success text-success font-monospace" style="font-size: 0.72rem;">BLACKOUT: 25/25</span>
+  </div>
+</div>
+{% endblock %}
+
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
 <input id="bingo-size" type="hidden" value="{{ challenge.grid_size or 5 }}">
 <textarea id="bingo-cells-data" style="display: none;">{{ (challenge.cells_data or []) | tojson }}</textarea>
 
-<div class="bingo-wrapper my-3">
-  
-  <!-- Score and Pattern Header Stats -->
-  <div class="bingo-hud-stats d-flex justify-content-between align-items-center p-2 mb-3 rounded" style="background: rgba(8, 12, 18, 0.95); border: 1px solid var(--cyber-border-bright);">
-    <div>
-      <span class="text-muted small text-uppercase font-monospace">Tiles Solved:</span>
-      <strong id="bingo-tiles-ratio" class="text-cyan ms-1 font-monospace">0 / 25</strong>
+<div class="bingo-wrapper bingo-hud-container my-1" data-chal-id="{{ challenge.id }}">
+  <!-- HUD Top Telemetry Status Bar -->
+  <div class="bingo-hud-telemetry-bar p-2 px-3 mb-2 rounded border d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <div class="hud-pulse-radar"></div>
+      <span class="fw-bold font-monospace small hud-brand-title">
+        <i class="fas fa-crosshairs me-1 text-success"></i>TACTICAL BINGO HUD // MATRIX v5.2
+      </span>
+      <span class="badge bg-dark border border-secondary text-light font-monospace d-none d-sm-inline" style="font-size: 0.72rem;">
+        SECTORS: <span id="bingo-tiles-ratio" class="text-success fw-bold">0 / 25</span>
+      </span>
     </div>
-    <div>
-      <span class="text-muted small text-uppercase font-monospace">Lines Completed:</span>
-      <strong id="bingo-lines-count" class="text-success ms-1 font-monospace">0</strong>
-    </div>
-    <div>
-      <span class="text-muted small text-uppercase font-monospace">Line Bonus:</span>
-      <strong class="text-success ms-1 font-monospace">+{{ challenge.line_bonus or 50 }} PTS</strong>
+
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-dark border border-warning text-warning font-monospace" style="font-size: 0.72rem;">
+        VECTORS: <span id="bingo-lines-count" class="fw-bold">0</span>
+      </span>
+      <span class="badge bg-success text-dark font-monospace" style="font-size: 0.72rem;">
+        BONUS: +{{ challenge.line_bonus or 50 }} PTS
+      </span>
+      {% if challenge.max_attempts and challenge.max_attempts > 0 %}
+      <span class="badge {% if challenge.attempts_used >= challenge.max_attempts %}bg-danger{% else %}bg-dark border border-secondary text-light{% endif %} font-monospace" style="font-size: 0.72rem;">
+        ATTEMPTS: {{ challenge.attempts_used }} / {{ challenge.max_attempts }}
+      </span>
+      {% endif %}
     </div>
   </div>
 
-  <!-- Interactive Bingo 5x5 Card -->
-  <div class="bingo-grid-container p-3 rounded" style="background: rgba(6, 10, 15, 0.98); border: 1px solid var(--cyber-border); overflow-x: auto;">
-    <div id="bingo-board-grid" class="bingo-board-grid" style="display: grid; gap: 8px; margin: 0 auto;">
-      <!-- Tiles populated by view.js -->
-    </div>
-  </div>
+  <!-- HUD Cockpit Deck: Grid Matrix + Target Interrogation Console -->
+  <div class="row g-2 align-items-stretch">
+    <!-- Left Column: Tactical Bingo Grid Matrix -->
+    <div class="col-12 col-lg-7 d-flex flex-column">
+      <div class="card flex-grow-1 hud-panel-card">
+        <!-- Board HUD Header -->
+        <div class="card-header py-1.5 px-3 d-flex justify-content-between align-items-center border-bottom hud-panel-header">
+          <div class="small font-monospace fw-bold text-uppercase d-flex align-items-center gap-2">
+            <i class="fas fa-th text-success"></i>
+            <span>DEFENSE MATRIX GRID (5x5)</span>
+          </div>
+          <span class="small font-monospace text-muted" style="font-size: 0.7rem;">5-IN-A-ROW VECTOR LOCK</span>
+        </div>
 
-  <!-- Active Tile Prompt & Submission Box -->
-  <div id="bingo-tile-prompt-box" class="card mt-3 d-none" style="border: 1px solid var(--cyber-cyan) !important;">
-    <div class="card-header d-flex justify-content-between align-items-center py-2">
-      <h6 id="bingo-prompt-title" class="mb-0 text-cyan">Tile Title</h6>
-      <span id="bingo-prompt-pts" class="badge bg-success text-dark">15 PTS</span>
-    </div>
-    <div class="card-body py-2">
-      <p id="bingo-prompt-desc" class="mb-2 small text-light"></p>
-      <div id="bingo-prompt-form">
-        <div class="input-group">
-          <input type="text" id="bingo-prompt-flag-input" class="form-control font-monospace" placeholder="Enter tile flag...">
-          <button class="btn btn-primary" id="bingo-prompt-submit-btn" type="button">
-            <i class="fas fa-check"></i> Submit Tile
-          </button>
+        <div class="card-body p-2 hud-board-body d-flex flex-column justify-content-between">
+          <!-- B - I - N - G - O Tactical Channel Modules -->
+          <div class="bingo-hud-channel-row mb-1.5" id="bingo-header-row">
+            <!-- Channel modules injected by view.js -->
+          </div>
+
+          <!-- 5x5 Tactical Grid -->
+          <div id="bingo-board-grid" class="bingo-hud-grid">
+            <!-- Tiles injected by view.js -->
+          </div>
         </div>
       </div>
-      <div id="bingo-prompt-solved-msg" class="text-success fw-bold d-none py-1 font-monospace">
-        <i class="fas fa-check-circle"></i> Tile already solved!
+    </div>
+
+    <!-- Right Column: Target Interrogation & Verification Console -->
+    <div class="col-12 col-lg-5 d-flex flex-column">
+      <div class="card flex-grow-1 hud-panel-card hud-console-card">
+        <div class="card-header py-1.5 px-3 border-bottom d-flex justify-content-between align-items-center hud-panel-header">
+          <div class="small font-monospace fw-bold text-uppercase d-flex align-items-center gap-2">
+            <i class="fas fa-satellite text-warning"></i>
+            <span>TARGET INTERROGATION</span>
+          </div>
+          <span id="bingo-prompt-badge" class="badge bg-secondary font-monospace" style="font-size: 0.7rem;">SELECT SECTOR</span>
+        </div>
+
+        <div class="card-body p-3 d-flex flex-column justify-content-between">
+          <div>
+            <!-- Sector Target Title & Points -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 id="bingo-prompt-title" class="fw-bold font-monospace text-body mb-0 text-truncate pe-2" style="font-size: 0.95rem;">Select any square to inspect</h6>
+              <span id="bingo-prompt-pts" class="badge bg-success text-dark font-monospace flex-shrink-0" style="font-size: 0.75rem;">10 PTS</span>
+            </div>
+
+            <!-- Intel Dossier Box -->
+            <div class="hud-intel-box p-2.5 px-3 rounded mb-2 border">
+              <div class="small font-monospace text-muted mb-1 text-uppercase" style="font-size: 0.68rem;">
+                <i class="fas fa-terminal me-1 text-primary"></i> Objective Intel Briefing:
+              </div>
+              <div id="bingo-prompt-desc" class="hud-intel-text small text-body" style="font-size: 0.82rem; line-height: 1.45; min-height: 48px;">
+                Click any sector on the tactical matrix to view its cybersecurity scenario and authenticate the flag.
+              </div>
+            </div>
+
+            <!-- Verification Input Form -->
+            <div id="bingo-prompt-form">
+              <div class="mb-2">
+                <label for="bingo-prompt-flag-input" class="form-label small font-monospace text-muted mb-1" style="font-size: 0.72rem;">
+                  Authenticate Keyword / Flag:
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text font-monospace bg-dark text-success border-secondary" style="font-size: 0.75rem;">&gt;_</span>
+                  <input type="text" id="bingo-prompt-flag-input" class="form-control font-monospace form-control-sm" placeholder="enter_flag_or_keyword">
+                </div>
+              </div>
+              <div class="d-grid mt-2">
+                <button class="btn btn-success btn-sm fw-bold font-monospace py-1.5" id="bingo-prompt-submit-btn" type="button">
+                  <i class="fas fa-bolt me-1"></i> AUTHENTICATE &amp; DAUB
+                </button>
+              </div>
+            </div>
+
+            <!-- Solved Status Alert -->
+            <div id="bingo-prompt-solved-msg" class="hud-solved-alert p-2.5 px-3 rounded border border-success d-none align-items-center gap-2.5">
+              <i class="fas fa-shield-check fs-3 text-success"></i>
+              <div>
+                <strong class="font-monospace text-success d-block small">SECTOR NEUTRALIZED &amp; LOCKED</strong>
+                <span class="font-monospace text-muted" style="font-size: 0.72rem;">Objective authenticated. +10 PTS credited to team telemetry.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom HUD Vector Summary -->
+          <div class="mt-2 pt-2 border-top hud-vector-telemetry font-monospace small" style="font-size: 0.75rem;">
+            <div class="text-muted text-uppercase mb-1" style="font-size: 0.68rem;">Vector Completion Status:</div>
+            <div class="d-flex justify-content-between align-items-center mb-0.5">
+              <span>Horizontal Lines:</span>
+              <span id="hud-rows-count" class="text-success fw-bold">0 / 5</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-0.5">
+              <span>Vertical Lines:</span>
+              <span id="hud-cols-count" class="text-success fw-bold">0 / 5</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span>Diagonal Locks:</span>
+              <span id="hud-diags-count" class="text-success fw-bold">0 / 2</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Educational Post-Solve / Admin Explanation -->
+  {% if solved_by_me %}
+  <div class="card mt-2 hud-panel-card border-success">
+    <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace py-1.5 px-3">
+      <i class="fas fa-clipboard-check me-2"></i>SECURITY AWARENESS BINGO // AUDIT REPORT
+    </div>
+    <div class="card-body p-3">
+      {% if challenge.explanation %}
+      <div class="mb-2 small font-monospace">{{ challenge.explanation }}</div>
+      {% endif %}
+      <div class="list-group list-group-flush">
+        {% for cell in challenge.cells_data %}
+        <div class="list-group-item bg-transparent border-secondary border-opacity-25 p-1.5 font-monospace small">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong>#{{ loop.index }}: {{ cell.title }}</strong>
+            <span class="badge bg-success text-dark">SOLVED</span>
+          </div>
+          <div class="text-muted mt-0.5" style="font-size: 0.75rem;">{{ cell.desc }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
+
+<style>
+/* ==========================================================================
+   TACTICAL BINGO HUD STYLES
+   ========================================================================== */
+.bingo-hud-container {
+  font-family: var(--matrix-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  user-select: none;
+  width: 100% !important;
+}
+
+.bingo-mission-briefing {
+  background: var(--matrix-bg-surface, rgba(16, 28, 20, 0.85));
+  border-color: var(--matrix-border, #183821) !important;
+  color: var(--matrix-text-main, #d4eedb);
+}
+
+[data-bs-theme="light"] .bingo-mission-briefing {
+  background: #f8fafc;
+  border-color: #cbd5e1 !important;
+  color: #1e293b;
+}
+
+.hud-panel-card {
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--matrix-border, #183821);
+  background: var(--matrix-bg-card, rgba(13, 22, 16, 0.96));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+[data-bs-theme="light"] .hud-panel-card {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.hud-panel-header {
+  background: var(--matrix-bg-surface, #101c14);
+}
+
+[data-bs-theme="light"] .hud-panel-header {
+  background: #f1f5f9;
+}
+
+/* Radar Pulse Indicator */
+.hud-pulse-radar {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--matrix-green, #00e676);
+  box-shadow: 0 0 8px var(--matrix-green, #00e676);
+  animation: hudRadarPulse 1.8s infinite;
+}
+
+@keyframes hudRadarPulse {
+  0% { transform: scale(0.9); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+  100% { transform: scale(0.9); opacity: 1; }
+}
+
+/* Tactical B-I-N-G-O Channel Modules */
+.bingo-hud-channel-row {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+}
+
+.hud-channel-box {
+  height: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.hud-channel-letter {
+  font-family: var(--matrix-font-display, "Impact", "Arial Black", sans-serif);
+  font-size: 1.15rem;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.hud-channel-sub {
+  font-size: 0.5rem;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+/* Distinct Channel Neon Themes */
+.hud-chan-0 {
+  background: rgba(0, 180, 216, 0.15);
+  border: 1px solid #00b4d8;
+  color: #00e5ff;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+}
+.hud-chan-1 {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid #a855f7;
+  color: #c084fc;
+  text-shadow: 0 0 8px rgba(192, 132, 252, 0.5);
+}
+.hud-chan-2 {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid #f59e0b;
+  color: #fbbf24;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+}
+.hud-chan-3 {
+  background: rgba(0, 230, 118, 0.15);
+  border: 1px solid #00e676;
+  color: #00ff88;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+.hud-chan-4 {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #ff3366;
+  text-shadow: 0 0 8px rgba(255, 51, 102, 0.5);
+}
+
+[data-bs-theme="light"] .hud-chan-0 { background: #e0f2fe; border-color: #0284c7; color: #0284c7; text-shadow: none; }
+[data-bs-theme="light"] .hud-chan-1 { background: #f3e8ff; border-color: #9333ea; color: #9333ea; text-shadow: none; }
+[data-bs-theme="light"] .hud-chan-2 { background: #fef3c7; border-color: #d97706; color: #b45309; text-shadow: none; }
+[data-bs-theme="light"] .hud-chan-3 { background: #ecfdf5; border-color: #059669; color: #047857; text-shadow: none; }
+[data-bs-theme="light"] .hud-chan-4 { background: #ffe4e6; border-color: #e11d48; color: #be123c; text-shadow: none; }
+
+/* Grid Tiles */
+.bingo-hud-grid {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+}
+
+.hud-tile {
+  background: var(--matrix-bg-surface, #101c14);
+  border: 1px solid var(--matrix-border, #183821);
+  border-radius: 5px;
+  min-height: 72px;
+  height: 74px;
+  padding: 5px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+[data-bs-theme="light"] .hud-tile {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.hud-tile:hover {
+  transform: translateY(-1px);
+  border-color: var(--matrix-green, #00e676) !important;
+  box-shadow: 0 3px 10px var(--matrix-green-glow, rgba(0, 230, 118, 0.25));
+  z-index: 2;
+}
+
+[data-bs-theme="light"] .hud-tile:hover {
+  border-color: #059669 !important;
+  box-shadow: 0 3px 8px rgba(5, 150, 105, 0.2);
+}
+
+.hud-tile.selected {
+  border-color: var(--matrix-green, #00e676) !important;
+  box-shadow: 0 0 0 2px var(--matrix-green, #00e676), 0 0 12px var(--matrix-green-glow, rgba(0, 230, 118, 0.35)) !important;
+  transform: scale(1.02);
+  z-index: 3;
+}
+
+[data-bs-theme="light"] .hud-tile.selected {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 2px #059669, 0 0 10px rgba(5, 150, 105, 0.25) !important;
+}
+
+.hud-tile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.6rem;
+  color: var(--matrix-text-muted, #64748b);
+  z-index: 1;
+  line-height: 1;
+  margin-bottom: auto;
+}
+
+.hud-tile-title {
+  font-weight: 600;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--matrix-text-main, #d4eedb);
+  word-break: break-word;
+  margin: auto 0;
+  z-index: 1;
+  padding: 0 1px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+[data-bs-theme="light"] .hud-tile-title {
+  color: #0f172a;
+}
+
+/* Center Pivot */
+.hud-tile.center-pivot {
+  border-color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+[data-bs-theme="light"] .hud-tile.center-pivot {
+  background: #fefce8;
+}
+
+/* Solved / Locked Reticle */
+.hud-tile.solved {
+  background: var(--matrix-green-subtle, rgba(0, 230, 118, 0.12)) !important;
+  border-color: var(--matrix-green, #00e676) !important;
+}
+
+[data-bs-theme="light"] .hud-tile.solved {
+  background: #ecfdf5 !important;
+  border-color: #10b981 !important;
+}
+
+.hud-lock-seal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  width: 44px;
+  height: 44px;
+  border: 1.5px dashed var(--matrix-green, #00e676);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 230, 118, 0.22);
+  color: var(--matrix-green, #00e676);
+  pointer-events: none;
+  z-index: 3;
+  box-shadow: 0 0 8px var(--matrix-green-glow, rgba(0, 230, 118, 0.3));
+  animation: hudLockPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+[data-bs-theme="light"] .hud-lock-seal {
+  border-color: #059669;
+  background: rgba(5, 150, 105, 0.2);
+  color: #059669;
+  box-shadow: none;
+}
+
+.hud-lock-check {
+  font-size: 0.85rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.hud-lock-text {
+  font-size: 0.44rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+@keyframes hudLockPop {
+  0% { transform: translate(-50%, -50%) scale(1.6) rotate(-25deg); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(-8deg); opacity: 1; }
+}
+
+/* Completed Vector Line Highlight */
+.hud-tile.hud-vector-locked {
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5), inset 0 0 4px rgba(245, 158, 11, 0.3) !important;
+  border-color: #f59e0b !important;
+}
+
+/* Console Intel Box */
+.hud-intel-box {
+  background: rgba(125, 125, 125, 0.06);
+  border-color: var(--matrix-border, #183821) !important;
+}
+
+[data-bs-theme="light"] .hud-intel-box {
+  background: #f8fafc;
+  border-color: #e2e8f0 !important;
+}
+
+.hud-intel-text {
+  color: var(--matrix-text-main, #d4eedb);
+}
+
+[data-bs-theme="light"] .hud-intel-text {
+  color: #1e293b;
+}
+
+.hud-solved-alert {
+  background: rgba(0, 230, 118, 0.1);
+  display: flex;
+}
+
+[data-bs-theme="light"] .hud-solved-alert {
+  background: #ecfdf5;
+}
+</style>
 {% endblock %}
 
 {% block submit %}
 <!-- Handled inside input block -->
 {% endblock %}
-
-<style>
-.bingo-tile {
-  background: var(--cyber-bg-surface);
-  border: 1px solid var(--cyber-border);
-  border-radius: 4px;
-  height: 85px;
-  padding: 8px 6px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-
-.bingo-tile:hover {
-  border-color: var(--cyber-cyan);
-  transform: translateY(-2px);
-  box-shadow: 0 0 12px var(--cyber-cyan-glow);
-}
-
-.bingo-tile.selected {
-  border-color: var(--cyber-cyan) !important;
-  box-shadow: 0 0 15px var(--cyber-cyan-glow) !important;
-}
-
-.bingo-tile.solved {
-  background: linear-gradient(135deg, rgba(0, 255, 102, 0.12) 0%, rgba(0, 255, 102, 0.22) 100%) !important;
-  border-color: var(--cyber-green) !important;
-}
-
-.bingo-tile.solved .tile-title {
-  color: var(--cyber-green) !important;
-}
-
-.bingo-tile .tile-title {
-  font-family: var(--cyber-font-display);
-  font-size: 0.72rem;
-  line-height: 1.15;
-  color: var(--cyber-text-main);
-  word-break: break-word;
-}
-
-.bingo-tile .tile-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.68rem;
-  font-family: var(--cyber-font-mono);
-  color: var(--cyber-text-muted);
-}
-
-.bingo-tile.solved .tile-footer {
-  color: var(--cyber-green);
-}
-</style>

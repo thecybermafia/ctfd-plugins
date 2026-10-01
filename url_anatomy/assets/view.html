@@ -2,7 +2,7 @@
 
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
-<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="" x-model="submission">
 <script type="application/json" id="url-anatomy-config-json">{
   "is_solved": {% if solved_by_me %}true{% else %}false{% endif %},
   "enable_qr_code": {{ (challenge.enable_qr_code | default(false)) | tojson }},
@@ -15,7 +15,7 @@
       "raw_url": {{ (u.raw_url | default(u.url | default(""))) | tojson }},
       "punycode_url": {{ (u.punycode_url | default("")) | tojson }},
       "tokens": {{ (u.tokens | default([])) | tojson }}
-      {% if solved_by_me or is_admin() %},
+      {% if solved_by_me %},
       "correct_token": {{ (u.correct_token | default("")) | tojson }},
       "explanation": {{ (u.explanation | default("")) | tojson }},
       "is_malicious": {{ (u.is_malicious | default(false)) | tojson }}
@@ -25,19 +25,93 @@
   ]
 }</script>
 
-<div class="url-anatomy-container my-3" data-chal-id="{{ challenge.id }}">
+<style>
+.url-token-btn {
+  transition: all 0.15s ease-in-out;
+  border-width: 1.5px !important;
+}
+.url-token-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.url-token-btn.url-token-active {
+  background: var(--matrix-green) !important;
+  border-color: var(--matrix-green-bright) !important;
+  color: #05160a !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 10px var(--matrix-green-glow) !important;
+}
+[data-bs-theme="light"] .url-token-btn.url-token-active {
+  color: #ffffff !important;
+}
+.url-token-btn.url-token-active .badge {
+  background: rgba(0, 0, 0, 0.4) !important;
+  color: #ffffff !important;
+}
+.token-ribbon-guide-pill {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+</style>
+
+<div class="url-anatomy-container my-2" data-chal-id="{{ challenge.id }}">
   <!-- Top Telemetry Header -->
-  <div class="tactical-telemetry-header d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border">
+  <div class="tactical-telemetry-header d-flex flex-wrap justify-content-between align-items-center p-2 px-3 mb-3 rounded border">
     <div class="d-flex align-items-center gap-2">
-      <span class="badge bg-primary font-monospace">TACTICAL URL DISSECTOR</span>
-      <span class="small font-monospace text-muted">Click the specific URL token that answers each intelligence question</span>
+      <span class="badge bg-success text-dark font-monospace"><i class="fas fa-link me-1"></i> LINK INSPECTOR</span>
+      <span class="small font-monospace text-muted">Click the exact part of the web address that answers the question</span>
     </div>
     <div class="d-flex align-items-center gap-2">
       <span id="url-progress-badge" class="badge bg-dark border border-secondary text-light font-monospace">
-        Answered: <span id="url-answered-count">0</span> / {{ challenge.urls_data | length }}
+        Completed: <span id="url-answered-count">0</span> / {{ challenge.urls_data | length }}
       </span>
     </div>
   </div>
+
+  <!-- Non-Tech Friendly Visual Link Breakdown Cheatsheet -->
+  <details class="mb-3 border border-secondary border-opacity-25 rounded tactical-card" open>
+    <summary class="cursor-pointer text-cyan font-monospace small fw-bold p-2 px-3">
+      <i class="fas fa-lightbulb me-1 text-warning"></i> Quick Guide: How To Spot Deceptive Links in 5 Seconds (Click to toggle)
+    </summary>
+    <div class="p-3 border-top border-secondary border-opacity-25">
+      <div class="alert alert-info py-2 px-3 mb-3 small font-monospace">
+        <i class="fas fa-shield-alt me-1"></i> <strong>Golden Rule:</strong> Find the <u>first single slash</u> <code>/</code> in any web link. The name directly to the left of it is the <strong>Real Website Owner</strong>! Everything before that can be faked by scammers.
+      </div>
+
+      <!-- Interactive Visual Link Anatomy Diagram -->
+      <div class="row g-2 text-center font-monospace mb-2">
+        <div class="col-md-3 col-6">
+          <div class="p-2 rounded border border-info border-opacity-50 bg-info bg-opacity-10 h-100">
+            <span class="badge bg-info text-dark mb-1">1. Protocol</span>
+            <code class="d-block fw-bold text-info">https://</code>
+            <small class="text-muted d-block" style="font-size: 0.72rem;">Encrypted tunnel (Scammers use https too!)</small>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="p-2 rounded border border-warning border-opacity-50 bg-warning bg-opacity-10 h-100">
+            <span class="badge bg-warning text-dark mb-1">2. Fake Prefix</span>
+            <code class="d-block fw-bold text-warning">login.paypal.com.</code>
+            <small class="text-muted d-block" style="font-size: 0.72rem;">Deceptive subdomains added to trick you</small>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="p-2 rounded border border-danger border-opacity-75 bg-danger bg-opacity-10 h-100" style="box-shadow: 0 0 8px rgba(220,53,69,0.25);">
+            <span class="badge bg-danger text-light mb-1">3. REAL OWNER</span>
+            <code class="d-block fw-bold text-danger">attacker-site.com</code>
+            <small class="text-danger fw-bold d-block" style="font-size: 0.72rem;">Who ACTUALLY receives your password!</small>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="p-2 rounded border border-secondary border-opacity-50 bg-secondary bg-opacity-10 h-100">
+            <span class="badge bg-secondary mb-1">4. Page / File</span>
+            <code class="d-block fw-bold text-light">/account/login</code>
+            <small class="text-muted d-block" style="font-size: 0.72rem;">Path to a page on the attacker's server</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
 
   <!-- URL Questions List -->
   <div class="d-flex flex-column gap-3 mb-3">
@@ -45,32 +119,36 @@
     <div class="card tactical-card url-question-card" data-url-id="{{ u.id }}">
       <div class="card-header tactical-card-header p-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-secondary font-monospace">#{{ loop.index }}</span>
-          <span class="fw-bold font-monospace small">{{ u.question }}</span>
+          <span class="badge bg-secondary font-monospace">Case #{{ loop.index }}</span>
+          <span class="fw-bold font-monospace">{{ u.question }}</span>
         </div>
         {% if challenge.allow_punycode_toggle and u.punycode_url %}
         <button type="button" class="btn btn-sm btn-outline-info font-monospace py-0 px-2 punycode-toggle-btn" data-url-id="{{ u.id }}">
-          Show Punycode (Raw)
+          Show Raw ASCII (Punycode)
         </button>
         {% endif %}
       </div>
 
       <div class="card-body p-3">
         <!-- Interactive Tokenized URL Display -->
-        <div class="small font-monospace text-muted mb-2">RFC 3986 Tokenized Ribbon (Click to select):</div>
+        <div class="small font-monospace text-muted mb-2">
+          <i class="fas fa-hand-pointer me-1"></i> Click on the suspicious or controlling piece of this web address:
+        </div>
         <div class="d-flex flex-wrap align-items-center gap-1 p-2 rounded border border-secondary border-opacity-50 url-token-ribbon tactical-ribbon-bg" data-url-id="{{ u.id }}" style="min-height: 48px;">
           <!-- Tokens rendered dynamically or from Jinja -->
           {% for tok in u.tokens %}
-          <button type="button" class="btn btn-sm btn-outline-secondary font-monospace url-token-btn" data-url-id="{{ u.id }}" data-token-value="{{ tok.value }}" data-token-punycode="{{ tok.punycode or '' }}" data-token-type="{{ tok.type }}" {% if solved_by_me %}disabled{% endif %} style="border-radius: 4px; padding: 4px 8px; font-size: 0.85rem;">
+          <button type="button" class="btn btn-sm btn-outline-secondary font-monospace url-token-btn" data-url-id="{{ u.id }}" data-token-value="{{ tok.value }}" data-token-punycode="{{ tok.punycode or '' }}" data-token-type="{{ tok.type }}" {% if solved_by_me %}disabled{% endif %} style="border-radius: 4px; padding: 6px 12px; font-size: 0.9rem;">
             <span class="token-text">{{ tok.value }}</span>
-            <span class="badge bg-secondary text-dark ms-1" style="font-size: 0.6rem;">{{ tok.type }}</span>
+            {% if solved_by_me %}
+            <span class="badge bg-secondary text-dark ms-1" style="font-size: 0.62rem;">{{ tok.type }}</span>
+            {% endif %}
           </button>
           {% endfor %}
         </div>
 
-        <div class="mt-2 d-flex justify-content-between align-items-center font-monospace small">
-          <span class="text-muted">Selected Segment: <strong class="text-warning selected-segment-preview" data-url-id="{{ u.id }}">None</strong></span>
-          <span class="badge bg-secondary token-status-badge" data-url-id="{{ u.id }}">PENDING</span>
+        <div class="mt-2 d-flex flex-wrap justify-content-between align-items-center font-monospace small gap-2">
+          <span class="text-muted">Selected Segment: <strong class="text-warning selected-segment-preview" data-url-id="{{ u.id }}">None (Click a segment above)</strong></span>
+          <span class="badge bg-secondary token-status-badge" data-url-id="{{ u.id }}">WAITING FOR SELECTION</span>
         </div>
       </div>
     </div>
@@ -78,10 +156,10 @@
   </div>
 
   <!-- Educational Post-Solve / Admin Explanation -->
-  {% if solved_by_me or is_admin() %}
+  {% if solved_by_me %}
   <div class="card mb-3 tactical-card border-success">
     <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
-      URL Anatomy Debrief &amp; Attack Breakdown
+      <i class="fas fa-graduation-cap me-1"></i> Link Analysis Findings &amp; Safety Debrief
     </div>
     <div class="card-body">
       {% if challenge.explanation %}
@@ -92,7 +170,7 @@
         <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 p-2">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <span class="font-monospace fw-bold text-light">{{ u.question }}</span>
-            <span class="badge bg-success font-monospace">Target: {{ u.correct_token }}</span>
+            <span class="badge bg-success font-monospace">Correct Part: {{ u.correct_token }}</span>
           </div>
           {% if u.explanation %}
           <div class="small text-muted font-monospace">{{ u.explanation }}</div>
@@ -108,12 +186,12 @@
   {% if not solved_by_me %}
   <div class="d-grid mt-3">
     <button id="challenge-submit" class="challenge-submit btn btn-primary py-2 fw-bold font-monospace" type="button" disabled>
-      Submit URL Dissection
+      <i class="fas fa-shield-check me-2"></i> Submit Link Inspection Answers
     </button>
   </div>
   {% else %}
   <div class="alert alert-success border border-success text-center py-2 font-monospace mb-0">
-    All URL Tokens Verified!
+    <i class="fas fa-check-double me-2"></i> All Link Segments Successfully Identified!
   </div>
   {% endif %}
 </div>

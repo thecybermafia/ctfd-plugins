@@ -1,75 +1,69 @@
 {% extends "admin/challenges/create.html" %}
 
 {% block type %}
-<input type="hidden" value="bingo" name="type" id="chaltype">
+	<input type="hidden" value="bingo" name="type" id="chaltype">
 {% endblock %}
 
 {% block value %}
-<div class="form-group mb-3">
-	<label for="value" class="form-label fw-bold">Full Card Points</label>
-	<div class="form-text text-muted small mb-1">Base points awarded for solving the full Bingo card.</div>
-	<input type="number" class="form-control" name="value" placeholder="e.g. 500" value="500" required>
-</div>
+	<div class="form-group mb-3">
+		<label for="value"><b>Full Card Points</b><br>
+			<small class="form-text text-muted">Base points awarded for solving the full Bingo card</small>
+		</label>
+		<input type="number" class="form-control" name="value" placeholder="e.g. 500" value="500" required>
+	</div>
 
-<div class="row g-3 mb-3">
-	<div class="col-md-4">
-		<label for="grid_size" class="form-label fw-bold">Grid Size</label>
-		<select class="form-select form-control" name="grid_size">
-			<option value="3">3 x 3 (9 Squares)</option>
-			<option value="4">4 x 4 (16 Squares)</option>
-			<option value="5" selected>5 x 5 (25 Squares - Standard)</option>
-		</select>
+	<div class="form-row row mb-3">
+		<div class="form-group col-md-4">
+			<label for="grid_size"><b>Grid Size</b></label>
+			<select class="form-control custom-select" name="grid_size">
+				<option value="3">3 x 3 (9 Squares - Fast & Fun)</option>
+				<option value="4">4 x 4 (16 Squares)</option>
+				<option value="5" selected>5 x 5 (25 Squares - Classic)</option>
+			</select>
+		</div>
+		<div class="form-group col-md-4">
+			<label for="line_bonus"><b>Line Bonus (Points)</b></label>
+			<input type="number" class="form-control" name="line_bonus" value="50" min="0">
+			<small class="form-text text-muted">Per row, column, or diagonal</small>
+		</div>
+		<div class="form-group col-md-4">
+			<label for="blackout_bonus"><b>Blackout Bonus</b></label>
+			<input type="number" class="form-control" name="blackout_bonus" value="250" min="0">
+			<small class="form-text text-muted">Extra bonus for full card</small>
+		</div>
 	</div>
-	<div class="col-md-4">
-		<label for="line_bonus" class="form-label fw-bold">Line Bonus</label>
-		<div class="form-text text-muted small mb-1">Points per row, column, or diagonal.</div>
-		<input type="number" class="form-control" name="line_bonus" value="50" min="0">
-	</div>
-	<div class="col-md-4">
-		<label for="blackout_bonus" class="form-label fw-bold">Blackout Bonus</label>
-		<div class="form-text text-muted small mb-1">Bonus for completing all squares.</div>
-		<input type="number" class="form-control" name="blackout_bonus" value="250" min="0">
-	</div>
-</div>
 
-<div class="form-group mb-3">
-	<div class="form-check form-switch mb-2">
-		<input class="form-check-input" type="checkbox" name="shuffle_cards" id="shuffle_cards" value="true">
-		<label class="form-check-label fw-bold" for="shuffle_cards">Shuffle Card Layout per Team / User</label>
+	<div class="form-group mb-3">
+		<label for="squares_text">
+			<b>Bingo Squares (One per line: <code>Square Title | Flag</code>)</b><br>
+			<small class="form-text text-muted">
+				Simply list each square name and its required flag separated by <code>|</code>. No JSON required!
+			</small>
+		</label>
+		<textarea class="form-control font-monospace" name="squares_text" rows="8" placeholder="Robots.txt | flag{robots}&#10;Base64 Decode | flag{base64}&#10;SQL Injection | flag{sqli}&#10;FREE SPACE | FREE">Robots.txt | flag{robots}
+Base64 Decode | flag{base64}
+SQL Injection | flag{sqli}
+Rot13 Cipher | flag{rot13}
+Port Scanner | flag{port_scan}
+Cookie Monster | flag{cookie}
+Exif Metadata | flag{exif}
+Reverse Strings | flag{strings}
+Buffer Overflow | flag{overflow}
+Wireshark PCAP | flag{pcap}
+Recover Inode | flag{inode}
+Crack MD5 | flag{crack_md5}
+FREE SPACE | FREE
+XSS Alert | flag{xss}
+RSA Factor | flag{rsa}
+DNS Record | flag{dns}
+Steganography | flag{stego}
+SUID Privesc | flag{privesc}
+API Fuzzing | flag{fuzz}
+Git History | flag{git_leaks}
+JWT Forgery | flag{jwt}
+Zip Path Traversal | flag{zip}
+IDOR Access | flag{idor}
+Command Injection | flag{cmdi}
+Grand Champion | flag{champion}</textarea>
 	</div>
-	<div class="form-text text-muted small">Generates a unique deterministic tile arrangement for each team to prevent sequential answer sharing.</div>
-</div>
-
-<div class="form-group mb-3">
-	<label for="squares_text" class="form-label fw-bold">Bingo Squares Configuration</label>
-	<div class="form-text text-muted small mb-2">
-		Format: <code>Square Title | Flag | Points | Optional Linked Challenge ID</code><br>
-		Tip: You can link a tile directly to an existing CTFd challenge (e.g. <code>Solve SQLi | chal:14 | 20</code>). When the participant solves challenge #14, the bingo tile will auto-complete.
-	</div>
-	<textarea class="form-control font-monospace" name="squares_text" rows="8" placeholder="Robots.txt | flag{robots} | 10&#10;Solve Phishing | chal:12 | 20&#10;FREE SPACE | FREE | 0">Robots.txt | flag{robots} | 10
-Base64 Decode | flag{base64} | 10
-SQL Injection | flag{sqli} | 15
-Rot13 Cipher | flag{rot13} | 10
-Port Scanner | flag{port_scan} | 10
-Cookie Monster | flag{cookie} | 10
-Exif Metadata | flag{exif} | 10
-Reverse Strings | flag{strings} | 10
-Buffer Overflow | flag{overflow} | 15
-Wireshark PCAP | flag{pcap} | 15
-Recover Inode | flag{inode} | 15
-Crack MD5 | flag{crack_md5} | 10
-FREE SPACE | FREE | 0
-XSS Alert | flag{xss} | 15
-RSA Factor | flag{rsa} | 15
-DNS Record | flag{dns} | 10
-Steganography | flag{stego} | 15
-SUID Privesc | flag{privesc} | 15
-API Fuzzing | flag{fuzz} | 15
-Git History | flag{git_leaks} | 10
-JWT Forgery | flag{jwt} | 15
-Zip Path Traversal | flag{zip} | 15
-IDOR Access | flag{idor} | 15
-Command Injection | flag{cmdi} | 15
-Grand Champion | flag{champion} | 20</textarea>
-</div>
 {% endblock %}

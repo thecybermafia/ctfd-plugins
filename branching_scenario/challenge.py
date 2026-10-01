@@ -64,6 +64,77 @@ def get_default_sample_nodes():
     }
 
 
+def parse_simple_scenario_text(text):
+    nodes = {}
+    current_node_id = None
+    lines = (text or "").split("\n")
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("[") and "]" in line:
+            end_bracket = line.index("]")
+            node_id = line[1:end_bracket].strip()
+            title = line[end_bracket+1:].strip()
+            current_node_id = node_id
+            nodes[current_node_id] = {
+                "title": title or node_id.replace("_", " ").title(),
+                "text": "",
+                "options": [],
+                "is_ending": False,
+                "is_win": "win" in node_id.lower()
+            }
+        elif current_node_id:
+            if line.startswith(">"):
+                choice_body = line[1:].strip()
+                consequence = ""
+                if "|" in choice_body:
+                    parts = choice_body.split("|", 1)
+                    choice_body = parts[0].strip()
+                    consequence = parts[1].strip()
+                target_node = ""
+                choice_text = choice_body
+                if "->" in choice_body:
+                    cparts = choice_body.split("->", 1)
+                    choice_text = cparts[0].strip()
+                    target_node = cparts[1].strip()
+                nodes[current_node_id]["options"].append({
+                    "text": choice_text,
+                    "next_node": target_node,
+                    "consequence": consequence
+                })
+            else:
+                if nodes[current_node_id]["text"]:
+                    nodes[current_node_id]["text"] += " " + line
+                else:
+                    nodes[current_node_id]["text"] = line
+
+    for nid, nd in nodes.items():
+        if not nd.get("options"):
+            nd["is_ending"] = True
+
+    return nodes
+
+
+def scenario_to_simple_text(nodes_json):
+    try:
+        nodes = json.loads(nodes_json or "{}")
+        blocks = []
+        for nid, nd in nodes.items():
+            b = [f"[{nid}] {nd.get('title', '')}"]
+            if nd.get("text"):
+                b.append(nd.get("text", ""))
+            for opt in nd.get("options", []):
+                line = f"> {opt.get('text', '')} -> {opt.get('next_node', '')}"
+                if opt.get("consequence"):
+                    line += f" | {opt.get('consequence', '')}"
+                b.append(line)
+            blocks.append("\n".join(b))
+        return "\n\n".join(blocks)
+    except Exception:
+        return ""
+
+
 class BranchingScenarioChallengeType(BaseChallenge):
     id = "branching_scenario"
     name = "branching_scenario"
@@ -109,11 +180,12 @@ class BranchingScenarioChallengeType(BaseChallenge):
             "show_feedback": bool(c.show_feedback),
             "is_solved": is_solved,
             "attempts_used": attempts_used,
-            "explanation": c.explanation if (is_solved or is_admin()) else "",
+            "explanation": c.explanation if is_solved else "",
         })
 
         if is_admin():
             data["nodes_json"] = c.nodes_json
+            data["scenario_text"] = scenario_to_simple_text(c.nodes_json)
 
         return data
 
@@ -130,10 +202,15 @@ class BranchingScenarioChallengeType(BaseChallenge):
             c.show_feedback = str(data.get("show_feedback", "true")).lower() in ("true", "1", "yes", "on")
             c.explanation = data.get("explanation", "").strip()
 
-            nodes_json_val = data.get("nodes_json", "").strip()
-            if not nodes_json_val:
-                nodes_json_val = json.dumps(get_default_sample_nodes(), indent=2)
-            c.nodes_json = nodes_json_val
+            scenario_text = (data.get("scenario_text") or "").strip()
+            nodes_json_val = (data.get("nodes_json") or "").strip()
+            if scenario_text:
+                parsed_nodes = parse_simple_scenario_text(scenario_text)
+                c.nodes_json = json.dumps(parsed_nodes, indent=2)
+            elif nodes_json_val:
+                c.nodes_json = nodes_json_val
+            else:
+                c.nodes_json = json.dumps(get_default_sample_nodes(), indent=2)
 
             db.session.commit()
 
@@ -153,7 +230,10 @@ class BranchingScenarioChallengeType(BaseChallenge):
         if "show_feedback" in data:
             challenge.show_feedback = str(data["show_feedback"]).lower() in ("true", "1", "yes", "on")
 
-        if "nodes_json" in data:
+        if "scenario_text" in data and data["scenario_text"].strip():
+            parsed_nodes = parse_simple_scenario_text(data["scenario_text"])
+            challenge.nodes_json = json.dumps(parsed_nodes, indent=2)
+        elif "nodes_json" in data:
             challenge.nodes_json = data["nodes_json"].strip()
 
         return super().update(challenge, request)

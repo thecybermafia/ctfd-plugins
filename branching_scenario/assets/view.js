@@ -2,16 +2,13 @@ CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
 CTFd._internal.challenge.render = null;
-CTFd._internal.challenge.postRender = function() {};
-CTFd._internal.challenge.submit = function() {
-  return Promise.resolve();
-};
 
-CTFd.plugin.run((_CTFd) => {
+function initScenario() {
   const chalIdEl = document.getElementById("challenge-id");
-  if (!chalIdEl) return;
-  const challengeId = chalIdEl.value;
+  const container = document.querySelector(".branching-scenario-container");
+  if (!chalIdEl || !container) return false;
 
+  const challengeId = chalIdEl.value;
   const configJsonEl = document.getElementById("branching-scenario-config-json");
   const chalInput = document.getElementById("challenge-input");
   const restartBtn = document.getElementById("scenario-restart-btn");
@@ -99,7 +96,8 @@ CTFd.plugin.run((_CTFd) => {
     renderNode(currentNodeId);
   }
 
-  if (restartBtn) {
+  if (restartBtn && !restartBtn.dataset.bound) {
+    restartBtn.dataset.bound = "true";
     restartBtn.addEventListener("click", restartScenario);
   }
 
@@ -178,8 +176,8 @@ CTFd.plugin.run((_CTFd) => {
           statusBadge.className = "badge bg-success font-monospace";
         }
         if (outcomeCard) {
-          outcomeCard.className = "p-3 rounded border border-success text-center font-monospace mt-3 bg-dark";
-          outcomeCard.style.boxShadow = "0 0 15px rgba(40, 167, 69, 0.4)";
+          outcomeCard.className = "p-3 rounded border border-success text-center font-monospace mt-3 tactical-card";
+          outcomeCard.style.boxShadow = "0 0 15px var(--matrix-green-glow)";
         }
         if (outcomeTitle) {
           outcomeTitle.textContent = "CRISIS CONTAINED - OBJECTIVE ACCOMPLISHED";
@@ -199,7 +197,7 @@ CTFd.plugin.run((_CTFd) => {
           statusBadge.className = "badge bg-danger font-monospace";
         }
         if (outcomeCard) {
-          outcomeCard.className = "p-3 rounded border border-danger text-center font-monospace mt-3 bg-dark";
+          outcomeCard.className = "p-3 rounded border border-danger text-center font-monospace mt-3 tactical-card";
         }
         if (outcomeTitle) {
           outcomeTitle.textContent = "BREACH OCCURRED - COUNTERMEASURE FAILED";
@@ -233,12 +231,10 @@ CTFd.plugin.run((_CTFd) => {
         (node.options || []).forEach((opt, idx) => {
           const btn = document.createElement("button");
           btn.type = "button";
-          btn.className = "btn btn-outline-light text-start p-2 font-monospace d-flex align-items-center gap-2";
-          btn.style.background = "rgba(0, 0, 0, 0.4)";
-          btn.style.borderColor = "rgba(255, 255, 255, 0.2)";
+          btn.className = "btn btn-outline-secondary text-start p-2 font-monospace d-flex align-items-center gap-2 tactical-card text-reset w-100 mb-2";
           btn.innerHTML = `
             <span class="badge bg-secondary font-monospace" style="font-size: 0.7rem;">#${idx + 1}</span>
-            <span class="small text-light flex-grow-1">${escapeHtml(opt.text)}</span>
+            <span class="small flex-grow-1">${escapeHtml(opt.text)}</span>
             <span class="text-muted small">&rarr;</span>
           `;
 
@@ -261,7 +257,8 @@ CTFd.plugin.run((_CTFd) => {
   }
 
   // Challenge submit button handler
-  if (submitBtn) {
+  if (submitBtn && !submitBtn.dataset.bound) {
+    submitBtn.dataset.bound = "true";
     submitBtn.addEventListener("click", () => {
       const payload = JSON.stringify({
         node_id: currentNodeId,
@@ -271,14 +268,43 @@ CTFd.plugin.run((_CTFd) => {
         chalInput.value = payload;
         chalInput.dispatchEvent(new Event("input", { bubbles: true }));
       }
-      const parentSubmit = document.querySelector(".submit-row button#challenge-submit");
-      if (parentSubmit && parentSubmit !== submitBtn) {
-        parentSubmit.click();
-      } else if (window.CTFd && window.CTFd.pages && window.CTFd.pages.challenge) {
-        window.CTFd.pages.challenge.submitChallenge(challengeId, payload);
+      const alpineEl = document.querySelector("[x-data='Challenge']");
+      if (alpineEl && alpineEl.__x && alpineEl.__x.$data) {
+        alpineEl.__x.$data.submission = payload;
+        alpineEl.__x.$data.submitChallenge();
       }
     });
   }
 
   renderNode(currentNodeId);
-});
+  return true;
+}
+
+CTFd._internal.challenge.postRender = initScenario;
+window.addEventListener("ctfd:challenge-rendered", initScenario);
+
+let scenarioRetryCount = 0;
+const scenarioTimer = setInterval(function() {
+  scenarioRetryCount++;
+  if (initScenario() || scenarioRetryCount > 20) {
+    clearInterval(scenarioTimer);
+  }
+}, 50);
+
+CTFd._internal.challenge.submit = function(preview) {
+  const challenge_id = parseInt(document.getElementById("challenge-id").value, 10);
+  const submission = document.getElementById("challenge-input").value;
+
+  const body = {
+    challenge_id: challenge_id,
+    submission: submission
+  };
+  const params = {};
+  if (preview) {
+    params["preview"] = true;
+  }
+
+  return CTFd.api.post_challenge_attempt(params, body).then(function(response) {
+    return response;
+  });
+};

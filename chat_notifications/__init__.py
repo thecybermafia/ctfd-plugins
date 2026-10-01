@@ -102,7 +102,7 @@ def load(app):
     app.register_blueprint(chat_notifications_bp)
 
     # Register admin navigation link
-    register_admin_plugin_menu_bar(title="Chat Notifications", route="/admin/chat_notifications")
+    register_admin_plugin_menu_bar(title="Webhook Notifications", route="/admin/chat_notifications")
 
     # Set up database event hooks
     setup_event_listeners()

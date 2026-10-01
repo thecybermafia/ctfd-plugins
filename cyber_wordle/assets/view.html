@@ -36,6 +36,29 @@
     </div>
   </div>
 
+  <!-- Physical Typing Input Field -->
+  {% if not challenge.is_solved %}
+  <div class="wordle-input-area mb-3 text-center" style="max-width: 360px; margin: 0 auto;">
+    <div class="input-group">
+      <input 
+        id="wordle-type-input" 
+        type="text" 
+        class="form-control form-control-lg font-monospace text-uppercase text-center fw-bold" 
+        maxlength="{{ challenge.word_length or 5 }}" 
+        placeholder="TYPE {{ challenge.word_length or 5 }}-LETTER WORD..."
+        autocomplete="off"
+        style="letter-spacing: 0.25em; border-color: var(--matrix-green); box-shadow: 0 0 10px var(--matrix-green-glow);"
+      >
+      <button id="wordle-direct-submit" class="btn btn-primary px-3 font-monospace fw-bold" type="button">
+        ENTER
+      </button>
+    </div>
+    <small class="text-muted font-monospace mt-1 d-block">
+      Type using your keyboard or click on the keypad below
+    </small>
+  </div>
+  {% endif %}
+
   <!-- Virtual Keyboard -->
   <div id="wordle-keyboard" class="d-flex flex-column gap-1 align-items-center mb-3" style="max-width: 480px; margin: 0 auto; user-select: none;">
     <!-- Populated by view.js -->

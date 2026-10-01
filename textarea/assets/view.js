@@ -14,8 +14,10 @@ window.CTFd._internal.challenge.submit = function() {
 };
 
 function initTextareaChallenge() {
+  const container = document.getElementById("textarea-challenge-container");
+  if (!container) return false;
   const chalIdEl = document.getElementById("challenge-id");
-  if (!chalIdEl) return;
+  if (!chalIdEl) return false;
   const challengeId = chalIdEl.value;
 
   // Ensure full width fit inside modal tab panel
@@ -42,8 +44,52 @@ function initTextareaChallenge() {
   const statusDesc = document.getElementById("ta-status-desc");
   const statusFeedback = document.getElementById("ta-status-feedback");
 
-  if (!submitBtn || submitBtn.dataset.bound === "true") return;
-  submitBtn.dataset.bound = "true";
+  if (!submitBtn) return false;
+  if (!submitBtn.dataset.bound) {
+    submitBtn.dataset.bound = "true";
+    submitBtn.addEventListener("click", () => {
+      const text = contentInput ? contentInput.value.trim() : "";
+      if (!text) {
+        alert("Please enter your writeup or solution text before submitting.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Submitting...';
+
+      const csrfToken = (window.init && window.init.csrfNonce) || (window.CTFd && window.CTFd.config && window.CTFd.config.csrfNonce) || "";
+
+      fetch(`/api/v1/challenges/${challengeId}/textarea/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": csrfToken
+        },
+        body: JSON.stringify({
+          content: text,
+          nonce: csrfToken
+        })
+      })
+        .then(r => r.json())
+        .then(res => {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
+
+          if (res.success) {
+            alert(res.message);
+            loadStatus();
+          } else {
+            alert(res.message || "Submission failed");
+          }
+        })
+        .catch(err => {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
+          alert("Network communication error. Please try again.");
+          console.error("Submission error:", err);
+        });
+    });
+  }
 
   function updateCharCount() {
     if (!contentInput || !charCounter) return;
@@ -96,49 +142,19 @@ function initTextareaChallenge() {
 
   loadStatus();
 
-  submitBtn.addEventListener("click", () => {
-    const text = contentInput ? contentInput.value.trim() : "";
-    if (!text) {
-      alert("Please enter your writeup or solution text before submitting.");
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Submitting...';
-
-    const csrfToken = (window.init && window.init.csrfNonce) || (window.CTFd && window.CTFd.config && window.CTFd.config.csrfNonce) || "";
-
-    fetch(`/api/v1/challenges/${challengeId}/textarea/submit`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "CSRF-Token": csrfToken
-      },
-      body: JSON.stringify({
-        content: text,
-        nonce: csrfToken
-      })
-    })
-      .then(r => r.json())
-      .then(res => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
-
-        if (res.success) {
-          alert(res.message);
-          loadStatus();
-        } else {
-          alert(res.message || "Submission failed");
-        }
-      })
-      .catch(err => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit for Evaluation';
-        alert("Network communication error. Please try again.");
-        console.error("Submission error:", err);
-      });
-  });
+  return true;
 }
+
+CTFd._internal.challenge.postRender = initTextareaChallenge;
+window.addEventListener("ctfd:challenge-rendered", initTextareaChallenge);
+
+let taRetryCount = 0;
+const taTimer = setInterval(function() {
+  taRetryCount++;
+  if (initTextareaChallenge() || taRetryCount > 20) {
+    clearInterval(taTimer);
+  }
+}, 50);
 
 document.addEventListener("shown.bs.modal", () => {
   setTimeout(initTextareaChallenge, 50);

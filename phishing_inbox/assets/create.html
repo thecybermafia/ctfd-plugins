@@ -42,10 +42,37 @@
 </div>
 
 <div class="form-group mb-3">
-	<label for="emails_json" class="form-label fw-bold">Emails Configuration JSON</label>
-	<div class="form-text text-muted small mb-2">
-		Define the list of emails in the inbox. Leave blank to automatically populate with standard corporate phishing and legitimate samples.
+	<div class="d-flex justify-content-between align-items-center mb-1">
+		<label for="emails_text" class="form-label fw-bold mb-0">Quick Emails (Simple Format)</label>
+		<button type="button" class="btn btn-sm btn-outline-info font-monospace py-0 px-2" id="load-sample-emails-btn">
+			Load Sample Phishing Pack
+		</button>
 	</div>
-	<textarea class="form-control font-monospace" name="emails_json" rows="12" placeholder='Leave blank to use pre-configured high-fidelity samples'></textarea>
+	<div class="form-text text-muted small mb-2">
+		One email per line in format: <code>Sender Name | Sender Email | Subject | Action (report/safe/delete) | Body Content | Explanation</code>
+	</div>
+	<textarea class="form-control font-monospace" name="emails_text" id="emails_text" rows="6" placeholder="Microsoft Support | alert@micr0soft-portal.cc | Password Expiry Notice | report | Click here to keep your corporate password active | Deceptive homoglyph domain"></textarea>
 </div>
+
+<details class="mb-3">
+	<summary class="cursor-pointer text-muted small font-monospace">Advanced: Edit Raw JSON Directly</summary>
+	<div class="mt-2">
+		<div class="form-text text-muted small mb-1">
+			Define the list of emails in the inbox. Leave blank to automatically populate with standard corporate phishing and legitimate samples.
+		</div>
+		<textarea class="form-control font-monospace" name="emails_json" id="emails_json" rows="8" placeholder='Leave blank to use pre-configured high-fidelity samples'></textarea>
+	</div>
+</details>
+
+<script>
+document.getElementById('load-sample-emails-btn')?.addEventListener('click', function() {
+	const sample = `Bank of America Alerts | security-alert@bank0famerica-verify.com | URGENT: Suspicious Debit Activity | report | Unauthorized login attempts detected. Click here to verify your account identity: http://bank0famerica-verify.com/login | Fake domain with urgency and spoofed branding.
+Corporate HR | hr-benefits@company.internal | 2027 Open Enrollment Summary | safe | Open enrollment starts Monday. Please review the updated policy overview on the company intranet portal. | Legitimate internal communication with valid domain.
+IT Helpdesk | admin@office365-passwords-sync.net | Action Required: Password Expiring | report | Your Microsoft 365 business password will expire today at 13:00 UTC. Confirm below to retain access. | Deceptive third-party domain attempting credential theft.
+FedEx Delivery | tracking@delivery-notification-service.org | Delivery Exception: Package Undeliverable | delete | Your parcel could not be delivered. Download the attached electronic shipping label to arrange redelivery. | Classic delivery scam with dangerous attachment.
+SANS Institute | newsbites@sans.org | Weekly Cyber Threat Digest | safe | The SANS executive summary of this week's top cybersecurity news stories and security patches. | Legitimate cybersecurity newsletter.`;
+	const el = document.getElementById('emails_text');
+	if (el) el.value = sample;
+});
+</script>
 {% endblock %}

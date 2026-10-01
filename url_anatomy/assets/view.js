@@ -2,16 +2,13 @@ CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
 CTFd._internal.challenge.render = null;
-CTFd._internal.challenge.postRender = function() {};
-CTFd._internal.challenge.submit = function() {
-  return Promise.resolve();
-};
 
-CTFd.plugin.run((_CTFd) => {
+function initUrlAnatomy() {
   const chalIdEl = document.getElementById("challenge-id");
-  if (!chalIdEl) return;
-  const challengeId = chalIdEl.value;
+  const container = document.querySelector(".url-anatomy-container");
+  if (!chalIdEl || !container) return false;
 
+  const challengeId = chalIdEl.value;
   const configJsonEl = document.getElementById("url-anatomy-config-json");
   const chalInput = document.getElementById("challenge-input");
   const answeredCountEl = document.getElementById("url-answered-count");
@@ -57,9 +54,9 @@ CTFd.plugin.run((_CTFd) => {
           statusBadge.className = "badge bg-success token-status-badge font-monospace";
         }
       } else {
-        if (previewEl) previewEl.textContent = "None";
+        if (previewEl) previewEl.textContent = "None (Click a segment above)";
         if (statusBadge) {
-          statusBadge.textContent = "PENDING";
+          statusBadge.textContent = "WAITING FOR SELECTION";
           statusBadge.className = "badge bg-secondary token-status-badge font-monospace";
         }
       }
@@ -69,11 +66,11 @@ CTFd.plugin.run((_CTFd) => {
         const puny = btn.getAttribute("data-token-punycode");
         const isMatched = selected && (selected === val || (puny && selected === puny));
         if (isMatched) {
-          btn.classList.add("btn-warning", "text-dark", "fw-bold");
-          btn.classList.remove("btn-outline-light");
+          btn.classList.add("url-token-active");
+          btn.classList.remove("btn-outline-secondary");
         } else {
-          btn.classList.remove("btn-warning", "text-dark", "fw-bold");
-          btn.classList.add("btn-outline-light");
+          btn.classList.remove("url-token-active");
+          btn.classList.add("btn-outline-secondary");
         }
       });
     });
@@ -94,6 +91,8 @@ CTFd.plugin.run((_CTFd) => {
 
   // Token click handlers
   document.querySelectorAll(".url-token-btn").forEach((btn) => {
+    if (btn.dataset.urlBound) return;
+    btn.dataset.urlBound = "true";
     btn.addEventListener("click", () => {
       if (isSolved) return;
       const urlId = btn.getAttribute("data-url-id");
@@ -111,6 +110,8 @@ CTFd.plugin.run((_CTFd) => {
 
   // Punycode toggle handlers
   document.querySelectorAll(".punycode-toggle-btn").forEach((toggleBtn) => {
+    if (toggleBtn.dataset.urlBound) return;
+    toggleBtn.dataset.urlBound = "true";
     let showRaw = false;
     toggleBtn.addEventListener("click", () => {
       showRaw = !showRaw;
@@ -129,20 +130,50 @@ CTFd.plugin.run((_CTFd) => {
   });
 
   // Challenge submit button handler
-  if (submitBtn) {
+  if (submitBtn && !submitBtn.dataset.urlBound) {
+    submitBtn.dataset.urlBound = "true";
     submitBtn.addEventListener("click", () => {
       if (chalInput) {
         chalInput.value = JSON.stringify(userSelections);
         chalInput.dispatchEvent(new Event("input", { bubbles: true }));
       }
-      const parentSubmit = document.querySelector(".submit-row button#challenge-submit");
-      if (parentSubmit && parentSubmit !== submitBtn) {
-        parentSubmit.click();
-      } else if (window.CTFd && window.CTFd.pages && window.CTFd.pages.challenge) {
-        window.CTFd.pages.challenge.submitChallenge(challengeId, JSON.stringify(userSelections));
+      const alpineEl = document.querySelector("[x-data='Challenge']");
+      if (alpineEl && alpineEl.__x && alpineEl.__x.$data) {
+        alpineEl.__x.$data.submission = chalInput ? chalInput.value : JSON.stringify(userSelections);
+        alpineEl.__x.$data.submitChallenge();
       }
     });
   }
 
   updateSelectionsUI();
-});
+  return true;
+}
+
+CTFd._internal.challenge.postRender = initUrlAnatomy;
+window.addEventListener("ctfd:challenge-rendered", initUrlAnatomy);
+
+let urlAnatomyRetry = 0;
+const urlAnatomyTimer = setInterval(function() {
+  urlAnatomyRetry++;
+  if (initUrlAnatomy() || urlAnatomyRetry > 20) {
+    clearInterval(urlAnatomyTimer);
+  }
+}, 50);
+
+CTFd._internal.challenge.submit = function(preview) {
+  const challenge_id = parseInt(document.getElementById("challenge-id").value, 10);
+  const submission = document.getElementById("challenge-input").value;
+
+  const body = {
+    challenge_id: challenge_id,
+    submission: submission
+  };
+  const params = {};
+  if (preview) {
+    params["preview"] = true;
+  }
+
+  return CTFd.api.post_challenge_attempt(params, body).then(function(response) {
+    return response;
+  });
+};

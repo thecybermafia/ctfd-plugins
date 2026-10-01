@@ -6,45 +6,114 @@
 <div class="image-upload-wrapper w-100 my-2" id="image-upload-container">
   
   <!-- Current Review Status Alert (Dynamically styles for Light & Dark mode) -->
-  <div id="iu-status-alert" class="alert d-none mb-3" role="alert">
+  <div id="iu-status-alert" class="alert d-none mb-3 iu-hud-panel" role="alert">
     <div class="d-flex align-items-center">
       <i id="iu-status-icon" class="fas fa-info-circle fa-2x me-3"></i>
-      <div>
-        <h5 id="iu-status-title" class="alert-heading mb-1 font-monospace fw-bold">Status</h5>
-        <p id="iu-status-desc" class="mb-0 small"></p>
+      <div class="flex-grow-1">
+        <h5 id="iu-status-title" class="alert-heading mb-1 font-monospace fw-bold">STATUS</h5>
+        <p id="iu-status-desc" class="mb-0 small font-monospace"></p>
         <p id="iu-status-feedback" class="mt-1 mb-0 fw-bold small font-monospace"></p>
       </div>
     </div>
   </div>
 
   <!-- Previously Uploaded Image Preview (if any) -->
-  <div id="iu-current-preview" class="text-center mb-3 d-none">
-    <label class="form-label text-muted small d-block font-monospace">Submitted Telemetry Proof:</label>
-    <a id="iu-preview-link" href="#" target="_blank">
-      <img id="iu-preview-img" src="" alt="Submitted proof" class="img-thumbnail" style="max-height: 200px;">
-    </a>
+  <div id="iu-current-preview" class="iu-hud-panel mb-3 d-none">
+    <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom border-secondary border-opacity-25">
+      <span class="font-monospace small fw-bold text-uppercase text-muted">
+        <i class="fas fa-satellite me-1 text-matrix-green"></i> Active Telemetry On Record
+      </span>
+      <a id="iu-preview-link" href="#" target="_blank" class="btn btn-sm btn-outline-info font-monospace py-0 px-2 small">
+        <i class="fas fa-external-link-alt me-1"></i> Full Resolution
+      </a>
+    </div>
+    <div class="iu-telemetry-frame text-center p-2 rounded">
+      <img id="iu-preview-img" src="" alt="Submitted proof" class="img-fluid rounded iu-preview-img">
+    </div>
   </div>
 
-  <!-- Upload Form -->
+  <!-- Upload Form Box -->
   <div id="iu-upload-form-box" class="w-100">
+    <!-- Cyber Dropzone Section -->
     <div class="mb-3">
-      <label for="iu-file-input" class="form-label fw-bold font-monospace">
-        <i class="fas fa-upload me-1"></i> Upload Evidence / Screenshot
+      <label class="form-label font-monospace fw-bold small text-uppercase mb-2 text-matrix-green d-flex align-items-center justify-content-between">
+        <span><i class="fas fa-shield-halved me-1"></i> Telemetry Proof / Screenshot Evidence</span>
+        <span class="text-muted fw-normal font-monospace small">PNG, JPG, WEBP, ZIP, PDF</span>
       </label>
-      <input class="form-control" type="file" id="iu-file-input" accept="image/*,.pdf,.zip">
-      <div class="form-text text-muted small font-monospace">
-        Max size: {{ challenge.max_file_size_mb or 10 }}MB. Allowed formats: {{ challenge.allowed_extensions or 'png, jpg, jpeg, webp, gif' }}.
+
+      <!-- Native hidden file input -->
+      <input type="file" id="iu-file-input" class="d-none" accept="image/*,.pdf,.zip" data-max-size="{{ challenge.max_file_size_mb or 10 }}" data-allowed="{{ challenge.allowed_extensions or 'png, jpg, jpeg, webp, gif, pdf, zip' }}">
+
+      <!-- Interactive Cyber Drag-and-Drop Card -->
+      <div id="iu-dropzone" class="iu-dropzone p-4 text-center rounded position-relative" tabindex="0" role="button" aria-label="Upload evidence file">
+        <!-- Tactical HUD corner brackets -->
+        <span class="iu-corner iu-corner-tl"></span>
+        <span class="iu-corner iu-corner-tr"></span>
+        <span class="iu-corner iu-corner-bl"></span>
+        <span class="iu-corner iu-corner-br"></span>
+
+        <!-- Empty State Prompt -->
+        <div id="iu-dropzone-prompt" class="iu-dropzone-prompt py-2">
+          <div class="iu-icon-badge mb-3">
+            <i class="fas fa-cloud-arrow-up fa-2x"></i>
+          </div>
+          <div class="iu-dropzone-title font-monospace fw-bold mb-1">
+            DRAG &amp; DROP EVIDENCE SCREENSHOT
+          </div>
+          <div class="iu-dropzone-sub font-monospace small text-muted mb-3">
+            or <span class="iu-browse-btn btn btn-sm btn-outline-success font-monospace px-3 py-1 ms-1"><i class="fas fa-folder-open me-1"></i> BROWSE LOCAL FILES</span>
+          </div>
+          <div class="iu-specs-strip d-flex flex-wrap justify-content-center align-items-center gap-2 font-monospace">
+            <span class="badge iu-spec-pill"><i class="fas fa-database me-1"></i> MAX {{ challenge.max_file_size_mb or 10 }}MB</span>
+            <span class="badge iu-spec-pill"><i class="fas fa-file-circle-check me-1"></i> {{ (challenge.allowed_extensions or 'png, jpg, jpeg, webp, gif') | upper }}</span>
+          </div>
+        </div>
+
+        <!-- Selected File State -->
+        <div id="iu-selected-file-box" class="iu-selected-file-box d-none text-start p-2">
+          <div class="d-flex align-items-center gap-3">
+            <div id="iu-thumb-wrapper" class="iu-thumb-wrapper text-center">
+              <img id="iu-selected-thumb" class="iu-selected-thumb rounded d-none" alt="Preview">
+              <div id="iu-file-icon" class="iu-file-icon d-flex align-items-center justify-content-center rounded">
+                <i class="fas fa-file-code fa-2x text-matrix-green"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <div id="iu-selected-name" class="font-monospace fw-bold text-truncate iu-file-name text-matrix-green mb-1"></div>
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                <span id="iu-selected-size" class="font-monospace small text-muted"></span>
+                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 font-monospace small">
+                  <span class="pulse-dot me-1"></span> STAGED FOR TRANSMISSION
+                </span>
+              </div>
+            </div>
+            <div class="d-flex flex-column gap-1">
+              <button type="button" id="iu-change-btn" class="btn btn-sm btn-outline-secondary font-monospace py-1 px-2" title="Change file">
+                <i class="fas fa-sync-alt me-1"></i> Replace
+              </button>
+              <button type="button" id="iu-remove-btn" class="btn btn-sm btn-outline-danger font-monospace py-1 px-2" title="Remove file">
+                <i class="fas fa-times me-1"></i> Remove
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+      <div id="iu-file-error" class="text-danger small font-monospace mt-1 d-none"></div>
     </div>
 
+    <!-- Execution Notes / Methodology -->
     <div class="mb-3">
-      <label for="iu-notes" class="form-label fw-bold font-monospace">Execution Notes / Methodology (Optional)</label>
-      <textarea class="form-control font-monospace" id="iu-notes" rows="2" placeholder="Document attack vector, methodology, or reproduction steps..."></textarea>
+      <label for="iu-notes" class="form-label font-monospace fw-bold small text-uppercase mb-1 text-matrix-green">
+        <i class="fas fa-terminal me-1"></i> Execution Notes / Attack Vector <span class="text-muted fw-normal font-monospace">(Optional)</span>
+      </label>
+      <textarea class="form-control font-monospace iu-notes-input" id="iu-notes" rows="2" placeholder="Document reproduction steps, exploit payload, or proof notes..."></textarea>
+      <div class="form-text text-muted small font-monospace">Telemetry notes assist mission evaluators in verifying proof.</div>
     </div>
 
-    <div>
-      <button id="iu-submit-btn" class="btn btn-primary w-100 py-2">
-        <i class="fas fa-paper-plane me-1"></i> Submit for Mission Review
+    <!-- Submit Button -->
+    <div class="mt-3">
+      <button id="iu-submit-btn" class="btn btn-success w-100 py-2 fw-bold font-monospace text-uppercase iu-submit-action-btn">
+        <i class="fas fa-satellite-dish me-2"></i> Transmit Proof for Mission Review
       </button>
     </div>
   </div>
@@ -66,6 +135,158 @@
     width: 100% !important;
   }
 
+  /* HUD Panels */
+  .iu-hud-panel {
+    border-radius: 8px;
+    border: 1px solid var(--matrix-border, #183821);
+    background: var(--matrix-bg-card, rgba(13, 22, 16, 0.96));
+    padding: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  /* Interactive Dropzone */
+  .iu-dropzone {
+    border: 2px dashed var(--matrix-border-bright, #225230);
+    background: var(--matrix-bg-card, rgba(13, 22, 16, 0.8));
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    min-height: 140px;
+    position: relative;
+  }
+  .iu-dropzone:hover,
+  .iu-dropzone:focus {
+    border-color: var(--matrix-green, #00e676);
+    box-shadow: 0 0 18px var(--matrix-green-glow, rgba(0, 230, 118, 0.2));
+    background: var(--matrix-green-subtle, rgba(0, 230, 118, 0.05));
+    outline: none;
+  }
+  .iu-dropzone.iu-dragover {
+    border-color: var(--matrix-green-bright, #00ff88) !important;
+    border-style: solid !important;
+    box-shadow: 0 0 25px var(--matrix-green-glow, rgba(0, 230, 118, 0.3)), inset 0 0 15px rgba(0, 230, 118, 0.08) !important;
+    background: rgba(0, 230, 118, 0.08) !important;
+    transform: scale(1.01);
+  }
+
+  /* Tactical Corner Accents */
+  .iu-corner {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    border-color: var(--matrix-green, #00e676);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+  .iu-dropzone:hover .iu-corner,
+  .iu-dropzone.iu-dragover .iu-corner {
+    opacity: 1;
+    border-color: var(--matrix-green-bright, #00ff88);
+  }
+  .iu-corner-tl { top: 3px; left: 3px; border-top: 2px solid; border-left: 2px solid; }
+  .iu-corner-tr { top: 3px; right: 3px; border-top: 2px solid; border-right: 2px solid; }
+  .iu-corner-bl { bottom: 3px; left: 3px; border-bottom: 2px solid; border-left: 2px solid; }
+  .iu-corner-br { bottom: 3px; right: 3px; border-bottom: 2px solid; border-right: 2px solid; }
+
+  /* Icon Badge */
+  .iu-icon-badge {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 230, 118, 0.1);
+    border: 1px solid var(--matrix-border-bright, #225230);
+    color: var(--matrix-green, #00e676);
+    transition: all 0.25s ease;
+  }
+  .iu-dropzone:hover .iu-icon-badge,
+  .iu-dropzone.iu-dragover .iu-icon-badge {
+    transform: translateY(-2px);
+    background: rgba(0, 230, 118, 0.2);
+    color: var(--matrix-green-bright, #00ff88);
+    box-shadow: 0 0 15px var(--matrix-green-glow, rgba(0, 230, 118, 0.3));
+  }
+
+  .iu-dropzone-title {
+    font-size: 0.95rem;
+    letter-spacing: 0.75px;
+    color: var(--matrix-text-main, #d4eedb);
+  }
+
+  .iu-spec-pill {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--matrix-border, #183821);
+    color: var(--matrix-text-muted, #6b9c77);
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.35rem 0.6rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* Selected File Card */
+  .iu-thumb-wrapper {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
+  .iu-selected-thumb {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border: 1px solid var(--matrix-green, #00e676);
+    box-shadow: 0 0 10px var(--matrix-green-glow, rgba(0, 230, 118, 0.25));
+  }
+  .iu-file-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(0, 230, 118, 0.08);
+    border: 1px solid var(--matrix-border-bright, #225230);
+  }
+  .iu-file-name {
+    font-size: 0.95rem;
+  }
+
+  /* Telemetry Frame */
+  .iu-telemetry-frame {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--matrix-border, #183821);
+  }
+  .iu-preview-img {
+    max-height: 220px;
+    border: 1px solid var(--matrix-border-bright, #225230);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Textarea */
+  .iu-notes-input {
+    background-color: var(--matrix-bg-input, #070d09) !important;
+    border: 1px solid var(--matrix-border, #183821) !important;
+    color: var(--matrix-text-main, #d4eedb) !important;
+    font-size: 0.85rem;
+  }
+  .iu-notes-input:focus {
+    border-color: var(--matrix-green, #00e676) !important;
+    box-shadow: 0 0 0 0.2rem var(--matrix-green-glow, rgba(0, 230, 118, 0.2)) !important;
+  }
+
+  /* Submit Action Button */
+  .iu-submit-action-btn {
+    background: linear-gradient(135deg, var(--matrix-green-dim, #00b050) 0%, var(--matrix-green, #00e676) 100%) !important;
+    border: 1px solid var(--matrix-green-bright, #00ff88) !important;
+    color: #041007 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+  }
+  .iu-submit-action-btn:hover:not(:disabled) {
+    box-shadow: 0 0 20px var(--matrix-green-glow, rgba(0, 230, 118, 0.4)) !important;
+    transform: translateY(-1px);
+    color: #000000 !important;
+  }
+
   /* Status Alert Theme-Adaptive Styles */
   #iu-status-alert {
     border-radius: 8px;
@@ -74,116 +295,87 @@
     padding: 1rem 1.25rem;
     transition: all 0.2s ease;
   }
-
   #iu-status-alert .alert-heading {
     color: inherit !important;
     text-shadow: none !important;
     font-size: 1.05rem;
     letter-spacing: 0.5px;
   }
-
   #iu-status-alert p {
     color: inherit !important;
     opacity: 0.95;
   }
 
-  /* Light Theme Alert Styling */
-  [data-bs-theme="light"] #iu-status-alert.alert-warning {
-    background-color: #fffbeb !important;
-    border-color: #fde68a !important;
-    color: #92400e !important;
-  }
-  [data-bs-theme="light"] #iu-status-alert.alert-warning #iu-status-icon {
-    color: #d97706 !important;
-  }
-
-  [data-bs-theme="light"] #iu-status-alert.alert-success {
-    background-color: #f0fdf4 !important;
-    border-color: #bbf7d0 !important;
-    color: #166534 !important;
-  }
-  [data-bs-theme="light"] #iu-status-alert.alert-success #iu-status-icon {
-    color: #16a34a !important;
-  }
-
-  [data-bs-theme="light"] #iu-status-alert.alert-danger {
-    background-color: #fff1f2 !important;
-    border-color: #fecdd3 !important;
-    color: #9f1239 !important;
-  }
-  [data-bs-theme="light"] #iu-status-alert.alert-danger #iu-status-icon {
-    color: #e11d48 !important;
-  }
-
-  [data-bs-theme="light"] #iu-status-alert.alert-secondary,
-  [data-bs-theme="light"] #iu-status-alert.alert-info {
-    background-color: #f8fafc !important;
+  /* Light Theme Overrides */
+  [data-bs-theme="light"] .iu-hud-panel {
+    background: #ffffff !important;
     border-color: #cbd5e1 !important;
-    color: #334155 !important;
   }
-  [data-bs-theme="light"] #iu-status-alert.alert-secondary #iu-status-icon,
-  [data-bs-theme="light"] #iu-status-alert.alert-info #iu-status-icon {
-    color: #0284c7 !important;
+  [data-bs-theme="light"] .iu-dropzone {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
   }
-
-  /* Dark Theme Alert Styling */
-  [data-bs-theme="dark"] #iu-status-alert.alert-warning {
-    background-color: rgba(255, 170, 0, 0.12) !important;
-    border-color: rgba(255, 170, 0, 0.45) !important;
-    color: #ffd580 !important;
+  [data-bs-theme="light"] .iu-dropzone:hover,
+  [data-bs-theme="light"] .iu-dropzone:focus {
+    border-color: var(--matrix-green) !important;
+    background: var(--matrix-green-subtle) !important;
+    box-shadow: 0 0 15px var(--matrix-green-glow) !important;
   }
-  [data-bs-theme="dark"] #iu-status-alert.alert-warning #iu-status-icon {
-    color: #ffaa00 !important;
+  [data-bs-theme="light"] .iu-dropzone.iu-dragover {
+    border-color: var(--matrix-green) !important;
+    background: var(--matrix-green-subtle) !important;
   }
-
-  [data-bs-theme="dark"] #iu-status-alert.alert-success {
-    background-color: rgba(0, 230, 118, 0.12) !important;
-    border-color: rgba(0, 230, 118, 0.45) !important;
-    color: #d4eedb !important;
+  [data-bs-theme="light"] .iu-corner {
+    border-color: var(--matrix-green) !important;
   }
-  [data-bs-theme="dark"] #iu-status-alert.alert-success #iu-status-icon {
-    color: #00e676 !important;
+  [data-bs-theme="light"] .iu-icon-badge {
+    background: var(--matrix-green-subtle) !important;
+    border-color: var(--matrix-border-bright) !important;
+    color: var(--matrix-green) !important;
   }
-
-  [data-bs-theme="dark"] #iu-status-alert.alert-danger {
-    background-color: rgba(255, 45, 85, 0.12) !important;
-    border-color: rgba(255, 45, 85, 0.45) !important;
-    color: #ffd1dc !important;
-  }
-  [data-bs-theme="dark"] #iu-status-alert.alert-danger #iu-status-icon {
-    color: #ff2d55 !important;
-  }
-
-  [data-bs-theme="dark"] #iu-status-alert.alert-secondary,
-  [data-bs-theme="dark"] #iu-status-alert.alert-info {
-    background-color: rgba(8, 12, 18, 0.95) !important;
-    border-color: var(--cyber-border-bright) !important;
-    color: #e2e8f0 !important;
-  }
-  [data-bs-theme="dark"] #iu-status-alert.alert-secondary #iu-status-icon,
-  [data-bs-theme="dark"] #iu-status-alert.alert-info #iu-status-icon {
-    color: var(--cyber-cyan) !important;
-  }
-
-  /* Form Control Theme-Adaptive Styles */
-  [data-bs-theme="light"] #iu-upload-form-box .form-control {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
+  [data-bs-theme="light"] .iu-dropzone-title {
     color: #0f172a !important;
   }
-  [data-bs-theme="light"] #iu-upload-form-box .form-control:focus {
-    border-color: #059669 !important;
-    box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.18) !important;
+  [data-bs-theme="light"] .iu-spec-pill {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #475569 !important;
+  }
+  [data-bs-theme="light"] .iu-notes-input {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+  [data-bs-theme="light"] .iu-notes-input:focus {
+    border-color: var(--matrix-green) !important;
+    box-shadow: 0 0 0 0.2rem var(--matrix-green-glow) !important;
+  }
+  [data-bs-theme="light"] .iu-submit-action-btn {
+    background: linear-gradient(135deg, var(--matrix-green) 0%, var(--matrix-green-bright) 100%) !important;
+    border-color: var(--matrix-green-dim) !important;
+    color: #ffffff !important;
+  }
+  [data-bs-theme="light"] .iu-telemetry-frame {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+  .text-matrix-green {
+    color: var(--matrix-green) !important;
   }
 
-  [data-bs-theme="dark"] #iu-upload-form-box .form-control {
-    background-color: rgba(10, 15, 20, 0.95) !important;
-    border: 1px solid var(--matrix-border) !important;
-    color: var(--matrix-green-bright) !important;
+  /* Pulse Dot Animation */
+  .pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+    animation: iuPulse 1.8s infinite ease-in-out;
+    vertical-align: middle;
   }
-  [data-bs-theme="dark"] #iu-upload-form-box .form-control:focus {
-    border-color: var(--matrix-green-bright) !important;
-    box-shadow: 0 0 0 0.2rem rgba(0, 230, 118, 0.25) !important;
+  @keyframes iuPulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.15); }
   }
 </style>
 {% endblock %}

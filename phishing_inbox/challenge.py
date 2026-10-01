@@ -68,6 +68,51 @@ def get_default_sample_emails():
     ]
 
 
+def parse_simple_emails_text(text):
+    """
+    Format:
+    Sender Name | Sender Email | Subject | Correct Action (report/safe/delete) | Body HTML | Explanation
+    """
+    lines = [l.strip() for l in (text or "").split("\n") if l.strip()]
+    items = []
+    for idx, line in enumerate(lines):
+        parts = [p.strip() for p in line.split("|")]
+        sender_name = parts[0] if len(parts) > 0 else "Sender"
+        sender_email = parts[1] if len(parts) > 1 else "sender@example.com"
+        subject = parts[2] if len(parts) > 2 else "No Subject"
+        action = parts[3].lower() if len(parts) > 3 else "report"
+        body = parts[4] if len(parts) > 4 else "Email content..."
+        explanation = parts[5] if len(parts) > 5 else ""
+
+        items.append({
+            "id": f"email_{idx+1}",
+            "sender_name": sender_name,
+            "sender_email": sender_email,
+            "subject": subject,
+            "date": "Today, 10:00 AM",
+            "body_html": f"<p>{body}</p>",
+            "correct_action": action,
+            "explanation": explanation,
+            "auth_results": {"spf": "FAIL" if action == "report" else "PASS", "dkim": "FAIL" if action == "report" else "PASS", "dmarc": "FAIL" if action == "report" else "PASS"}
+        })
+    return items
+
+
+def emails_to_simple_text(emails_json):
+    try:
+        import re
+        emails = json.loads(emails_json or "[]")
+        lines = []
+        for e in emails:
+            body = e.get("body_html", "") or e.get("body", "")
+            clean_body = re.sub(r'<[^>]+>', ' ', body).strip()
+            clean_body = " ".join(clean_body.split())
+            lines.append(f"{e.get('sender_name', '')} | {e.get('sender_email', '') or e.get('from', '')} | {e.get('subject', '')} | {e.get('correct_action', 'report')} | {clean_body} | {e.get('explanation', '')}")
+        return "\n".join(lines)
+    except Exception:
+        return ""
+
+
 class PhishingInboxChallengeType(BaseChallenge):
     id = "phishing_inbox"
     name = "phishing_inbox"
@@ -110,21 +155,25 @@ class PhishingInboxChallengeType(BaseChallenge):
         raw_emails = c.emails_data
         sanitized_emails = []
         for em in raw_emails:
+            sender_email = em.get("sender_email") or em.get("from") or ""
+            sender_name = em.get("sender_name") or (sender_email.split("@")[0].title() if "@" in sender_email else "")
+            body_html = em.get("body_html") or em.get("body") or ""
+
             item = {
                 "id": em.get("id"),
                 "subject": em.get("subject", "No Subject"),
-                "sender_name": em.get("sender_name", ""),
-                "sender_email": em.get("sender_email", ""),
+                "sender_name": sender_name,
+                "sender_email": sender_email,
                 "reply_to": em.get("reply_to", ""),
                 "date": em.get("date", ""),
-                "body_html": em.get("body_html", ""),
+                "body_html": body_html,
                 "attachments": em.get("attachments", []),
             }
             if c.show_auth_headers:
                 item["auth_results"] = em.get("auth_results", {})
 
-            # Only reveal solution details if already solved or admin
-            if is_solved or is_admin():
+            # Only reveal solution details if already solved
+            if is_solved:
                 item["correct_action"] = em.get("correct_action", "")
                 item["explanation"] = em.get("explanation", "")
 
@@ -138,11 +187,12 @@ class PhishingInboxChallengeType(BaseChallenge):
             "max_attempts": c.max_attempts or 0,
             "attempts_used": attempts_used,
             "is_solved": is_solved,
-            "explanation": c.explanation if (is_solved or is_admin()) else "",
+            "explanation": c.explanation if is_solved else "",
         })
 
         if is_admin():
             data["emails_json"] = c.emails_json
+            data["emails_text"] = emails_to_simple_text(c.emails_json)
 
         return data
 
@@ -159,10 +209,15 @@ class PhishingInboxChallengeType(BaseChallenge):
             c.max_attempts = int(data.get("max_attempts", 0) or 0)
             c.explanation = data.get("explanation", "")
 
-            emails_json_val = data.get("emails_json", "").strip()
-            if not emails_json_val:
-                emails_json_val = json.dumps(get_default_sample_emails(), indent=2)
-            c.emails_json = emails_json_val
+            emails_text = (data.get("emails_text") or "").strip()
+            emails_json_val = (data.get("emails_json") or "").strip()
+            if emails_text:
+                parsed_emails = parse_simple_emails_text(emails_text)
+                c.emails_json = json.dumps(parsed_emails, indent=2)
+            elif emails_json_val:
+                c.emails_json = emails_json_val
+            else:
+                c.emails_json = json.dumps(get_default_sample_emails(), indent=2)
             db.session.commit()
 
         return challenge
@@ -183,7 +238,10 @@ class PhishingInboxChallengeType(BaseChallenge):
             val = str(data["show_auth_headers"]).lower() in ("true", "1", "yes", "on")
             setattr(challenge, "show_auth_headers", val)
 
-        if "emails_json" in data:
+        if "emails_text" in data and data["emails_text"].strip():
+            parsed_emails = parse_simple_emails_text(data["emails_text"])
+            challenge.emails_json = json.dumps(parsed_emails, indent=2)
+        elif "emails_json" in data:
             challenge.emails_json = data["emails_json"]
 
         return super().update(challenge, request)

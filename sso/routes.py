@@ -273,7 +273,7 @@ def admin_sso_disable():
 @admins_only
 def api_sso_status():
     if request.method == "POST":
-        data = request.get_json() or request.form or {}
+        data = request.get_json(silent=True) or request.form or {}
         action = data.get("action", "")
         if action == "disable" or data.get("enabled") in (False, "false", "disabled", 0):
             set_config("sso_provider", "disabled")

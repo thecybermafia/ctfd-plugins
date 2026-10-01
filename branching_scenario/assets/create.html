@@ -48,10 +48,54 @@
 </div>
 
 <div class="form-group mb-3">
-	<label for="nodes_json" class="form-label fw-bold">Scenario Decision Tree JSON</label>
-	<div class="form-text text-muted small mb-2">
-		Graph of narrative nodes, media attachments, and decision options. Leave blank for default deepfake voice vishing incident.
+	<div class="d-flex justify-content-between align-items-center mb-1">
+		<label for="scenario_text" class="form-label fw-bold mb-0">Quick Scenario Script (Simple Format)</label>
+		<button type="button" class="btn btn-sm btn-outline-info font-monospace py-0 px-2" id="load-sample-scenario-btn">
+			Load CEO Fraud Scenario
+		</button>
 	</div>
-	<textarea class="form-control font-monospace" name="nodes_json" rows="12" placeholder='Leave blank to use pre-configured high-fidelity samples'></textarea>
+	<div class="form-text text-muted small mb-2">
+		Write steps in simple format: <code>[node_id] Title</code>, narrative body, and choices starting with <code>&gt; Choice text -&gt; next_node | Feedback</code>
+	</div>
+	<textarea class="form-control font-monospace" name="scenario_text" id="scenario_text" rows="8" placeholder="[start] Urgent Request from CEO&#10;The CEO messages requesting an immediate wire transfer.&#10;&gt; Wire funds now -> fail_wire | Never bypass authorization.&#10;&gt; Verify out-of-band via phone -> win | Good verification!"></textarea>
 </div>
+
+<details class="mb-3">
+	<summary class="cursor-pointer text-muted small font-monospace">Advanced: Edit Raw JSON Graph Directly</summary>
+	<div class="mt-2">
+		<div class="form-text text-muted small mb-1">
+			Graph of narrative nodes, media attachments, and decision options. Leave blank for default scenario.
+		</div>
+		<textarea class="form-control font-monospace" name="nodes_json" id="nodes_json" rows="8" placeholder='Leave blank to use pre-configured high-fidelity samples'></textarea>
+	</div>
+</details>
+
+<script>
+document.getElementById('load-sample-scenario-btn')?.addEventListener('click', function() {
+	const sample = `[start] Urgent Executive Wire Request
+You receive a direct message on Microsoft Teams from CEO Mark Vance: 'I am currently in an emergency confidential board meeting and cannot take calls. We need an immediate $75,000 retainer wired to escrow-legal-vance.com to close an urgent buyout. Please execute the wire transfer immediately to Account #90218829.'
+> Execute the $75,000 wire transfer immediately as instructed by the CEO. -> fail_wire | You initiated the wire transfer without verifying out-of-band. The offshore account was frozen by fraud monitoring, but $75,000 has left corporate accounts. You fell for Business Email Compromise (BEC).
+> Reply on Teams asking the CEO to provide written authorization via personal WhatsApp or SMS. -> fail_spoof | The attacker controls the compromised account and immediately confirmed the fraudulent wire via fake SMS. Unverified channels controlled by the attacker do not authenticate requests.
+> Adhere to corporate financial policy: Place an out-of-band phone call to the CEO's Executive Assistant using the verified internal directory. -> verify_step | You contacted the Executive Assistant via the verified internal phone system. She confirms Mark Vance is traveling on a commercial flight without internet access and never initiated any acquisition retainer!
+
+[verify_step] Executive Impersonation Confirmed
+Out-of-band verification confirms this is an active Business Email Compromise (BEC) and executive impersonation attack against corporate treasury. The attacker is still actively messaging on Teams demanding confirmation of the wire transfer. What is your immediate next action?
+> Message the attacker on Teams stating that you know they are an imposter. -> fail_taunt | Confronting the attacker tipped them off. They immediately purged their login logs and pivoted to targeting another employee before Security Operations could isolate the compromised session.
+> Immediately report the incident to the Security Operations Center (SOC) / CISO, quarantine the compromised session, and flag the fraudulent beneficiary account with banking fraud partners. -> win | Outstanding incident response! SOC severed the attacker's unauthorized session, revoked compromised OAuth tokens, and coordinated with corporate treasury to blacklist the attacker's routing numbers.
+
+[fail_wire] CRITICAL BREACH - FUNDS EXFILTRATED
+The wire transfer was sent to an offshore laundering mule account. Corporate treasury sustained a total loss of $75,000. Never execute wire transfers based on urgent messages without authenticating via out-of-band dual-control procedures.
+
+[fail_spoof] ATTACKER CONTROLLED CHANNEL
+Relying on channels supplied by or shared with the attacker simply allowed the attacker to fabricate further confirmation. Out-of-band authentication must use independently verified contact details from official corporate directories.
+
+[fail_taunt] OPSEC COMPROMISED - ADVERSARY EVADED
+Confronting the threat actor tipped them off before the security team could trace their source IP or quarantine the session. Always discreetly report active attacks to the Incident Response team first.
+
+[win] THREAT NEUTRALIZED - CRISIS AVERTED
+Congratulations! By strictly enforcing out-of-band verification and following standard operating procedures for incident escalation, you prevented a catastrophic BEC financial loss and enabled SOC to secure executive credentials.`;
+	const el = document.getElementById('scenario_text');
+	if (el) el.value = sample;
+});
+</script>
 {% endblock %}

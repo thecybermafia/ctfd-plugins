@@ -1,37 +1,47 @@
 {% extends "admin/challenges/update.html" %}
 
 {% block value %}
-<div class="form-group mb-3">
-	<label for="value" class="form-label fw-bold">Reward Points</label>
-	<div class="form-text text-muted small mb-1">Points awarded for successfully arranging the incident sequence.</div>
-	<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
-</div>
-
-<div class="form-check form-switch mb-3">
-	<input class="form-check-input" type="checkbox" name="allow_distractor_bin" id="allow_distractor_bin" value="true" {% if challenge.allow_distractor_bin %}checked{% endif %}>
-	<label class="form-check-label fw-bold" for="allow_distractor_bin">Enable Prohibited / Distractor Rejection Bin</label>
-	<div class="form-text text-muted small">Provides a dedicated bin where operatives must isolate prohibited or incorrect countermeasure cards.</div>
-</div>
-
-<div class="form-group mb-3">
-	<label for="explanation" class="form-label fw-bold">Educational Debrief / Master Explanation</label>
-	<div class="form-text text-muted small mb-1">Shown to operatives after solving or upon exhausting attempts.</div>
-	<textarea class="form-control" name="explanation" rows="3">{{ challenge.explanation or '' }}</textarea>
-</div>
-
-<div class="form-group mb-3">
-	<label for="steps_json" class="form-label fw-bold">Correct Playbook Steps JSON (Ordered)</label>
-	<div class="form-text text-muted small mb-2">
-		Ordered list of valid procedure steps (id, order, text, explanation).
+<div class="card mb-4 border-secondary shadow-sm">
+	<div class="card-header bg-secondary text-white fw-bold py-2">
+		<i class="fas fa-sliders me-1"></i> Challenge Configuration &amp; Scoring
 	</div>
-	<textarea class="form-control font-monospace" name="steps_json" rows="10">{{ challenge.steps_json or '' }}</textarea>
+	<div class="card-body">
+		<div class="row g-3 mb-3">
+			<div class="col-md-6">
+				<label for="value" class="form-label fw-bold">Reward Points</label>
+				<div class="form-text text-muted small mb-1">Points awarded for successfully sequencing the incident playbook.</div>
+				<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
+			</div>
+			<div class="col-md-6 d-flex align-items-center">
+				<div class="form-check form-switch mt-3">
+					<input class="form-check-input" type="checkbox" name="allow_distractor_bin" id="allow_distractor_bin" value="true" {% if challenge.allow_distractor_bin %}checked{% endif %}>
+					<label class="form-check-label fw-bold" for="allow_distractor_bin">Enable Prohibited / Distractor Bin</label>
+					<div class="form-text text-muted small">Provides a dedicated bin where operatives must isolate prohibited or incorrect actions.</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="mb-2">
+			<label for="explanation" class="form-label fw-bold">Educational Debrief / Master Explanation</label>
+			<div class="form-text text-muted small mb-1">Shown to operatives after solving or upon exhausting attempts.</div>
+			<textarea class="form-control" name="explanation" rows="3">{{ challenge.explanation or '' }}</textarea>
+		</div>
+	</div>
 </div>
 
-<div class="form-group mb-3">
-	<label for="distractors_json" class="form-label fw-bold">Distractor / Prohibited Steps JSON</label>
-	<div class="form-text text-muted small mb-2">
-		List of deceptive or prohibited actions that do not belong in the process.
-	</div>
-	<textarea class="form-control font-monospace" name="distractors_json" rows="6">{{ challenge.distractors_json or '' }}</textarea>
+<!-- Interactive Visual Sequence & Distractor Builder Root -->
+<div id="visual-sequence-builder-root"></div>
+
+<!-- Raw JSON Textareas (Managed automatically by the visual builder) -->
+<div class="d-none">
+	<textarea class="form-control font-monospace" name="steps_json">{{ challenge.steps_json or '' }}</textarea>
+	<textarea class="form-control font-monospace" name="distractors_json">{{ challenge.distractors_json or '' }}</textarea>
 </div>
+
+<script src="/plugins/incident_sequence/assets/admin-sequence-builder.js"></script>
+<script>
+	if (window.initSequenceBuilder) {
+		setTimeout(window.initSequenceBuilder, 50);
+	}
+</script>
 {% endblock %}

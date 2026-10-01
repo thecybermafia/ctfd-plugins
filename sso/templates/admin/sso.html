@@ -41,44 +41,6 @@
 <div class="container">
   {% include "components/errors.html" %}
 
-  <!-- Hidden dedicated disable form for instant 1-click execution -->
-  <form id="sso-disable-form" method="POST" action="{{ url_for('sso.admin_sso_disable') }}" style="display: none;">
-    <input type="hidden" name="nonce" value="{{ Session.nonce }}">
-  </form>
-
-  <!-- SSO Operational Status Banner -->
-  <div class="card mb-4 shadow-sm border-{% if sso_provider and sso_provider != 'disabled' %}success{% else %}secondary{% endif %}">
-    <div class="card-body d-flex flex-wrap justify-content-between align-items-center py-3 gap-2">
-      <div class="d-flex align-items-center gap-3">
-        <span class="badge {% if sso_provider and sso_provider != 'disabled' %}badge-success bg-success{% else %}badge-secondary bg-secondary{% endif %} text-white px-3 py-2 font-monospace fs-6">
-          <span class="fas {% if sso_provider and sso_provider != 'disabled' %}fa-check-circle{% else %}fa-power-off{% endif %} me-1"></span>
-          {% if sso_provider and sso_provider != 'disabled' %}
-            SSO ACTIVE: {{ sso_provider | upper }}
-          {% else %}
-            SSO DISABLED
-          {% endif %}
-        </span>
-        <span class="text-muted small">
-          {% if sso_provider and sso_provider != 'disabled' %}
-            Authentication is routed through <strong>{{ sso_provider | upper }}</strong>. Local accounts can log in via <code>/login?fallback=1</code>.
-          {% else %}
-            Single Sign-On is disabled. All participants and administrators authenticate using standard CTFd local credentials.
-          {% endif %}
-        </span>
-      </div>
-      <div>
-        {% if sso_provider and sso_provider != 'disabled' %}
-          <button type="button" class="btn btn-danger btn-sm px-3 fw-bold shadow-sm" onclick="if(confirm('Are you sure you want to disable Single Sign-On? Competitors will use local login.')){ document.getElementById('sso-disable-form').submit(); }">
-            <span class="fas fa-ban me-1"></span> Disable SSO Now
-          </button>
-        {% else %}
-          <button type="button" class="btn btn-outline-success btn-sm px-3 fw-bold" onclick="document.getElementById('general-tab-btn').click(); document.getElementById('sso_provider').focus();">
-            <span class="fas fa-toggle-on me-1"></span> Enable A Provider
-          </button>
-        {% endif %}
-      </div>
-    </div>
-  </div>
 
   <form method="POST" id="sso-settings-form" novalidate>
     <input type="hidden" name="nonce" value="{{ Session.nonce }}">

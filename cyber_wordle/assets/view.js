@@ -3,10 +3,12 @@ CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
 CTFd._internal.challenge.render = null;
 
-CTFd._internal.challenge.postRender = function() {
+function initWordle() {
   const $ = (window.CTFd && window.CTFd.lib && window.CTFd.lib.$) || window.$;
+  if (!$) return false;
+
   const container = $("#wordle-container");
-  if (!container.length) return;
+  if (!container.length) return false;
 
   const wordLen = parseInt(container.attr("data-word-len") || "5", 10);
   const maxAttempts = parseInt(container.attr("data-max-attempts") || "6", 10);
@@ -34,7 +36,6 @@ CTFd._internal.challenge.postRender = function() {
 
     for (let c = 0; c < wordLen; c++) {
       let letter = "";
-      let statusClass = "border-secondary";
       let bgStyle = "background: rgba(15, 23, 42, 0.7);";
       let textStyle = "color: #fff;";
 
@@ -42,8 +43,8 @@ CTFd._internal.challenge.postRender = function() {
         letter = guessData.word[c] || "";
         const evalStatus = (guessData.evaluation && guessData.evaluation[c]) || "absent";
         if (evalStatus === "correct") {
-          bgStyle = "background: #198754;";
-          textStyle = "color: #fff;";
+          bgStyle = "background: var(--matrix-green, #198754);";
+          textStyle = "color: #030d06; font-weight: 800;";
           keyStatus[letter] = "correct";
         } else if (evalStatus === "present") {
           bgStyle = "background: #d97706;";
@@ -84,8 +85,8 @@ CTFd._internal.challenge.postRender = function() {
         let color = "#e2e8f0;";
         const st = keyStatus[key];
         if (st === "correct") {
-          bg = "background: #198754;";
-          color = "#fff;";
+          bg = "background: var(--matrix-green, #198754);";
+          color = "#030d06;";
         } else if (st === "present") {
           bg = "background: #d97706;";
           color = "#fff;";
@@ -112,7 +113,7 @@ CTFd._internal.challenge.postRender = function() {
 
   function updateActiveRow() {
     if (isSolved || currentAttempt >= maxAttempts) {
-      $("#challenge-submit").prop("disabled", true);
+      $("#challenge-submit, #wordle-direct-submit").prop("disabled", true);
       return;
     }
 
@@ -123,23 +124,31 @@ CTFd._internal.challenge.postRender = function() {
       tile.text(letter);
       if (letter) {
         tile.css({
-          "border-color": "var(--cyber-cyan, #0dcaf0)",
-          "background": "rgba(13, 202, 240, 0.15)"
+          "border-color": "var(--matrix-green, #00ff41)",
+          "background": "var(--matrix-green-subtle, rgba(0, 255, 65, 0.15))",
+          "box-shadow": "0 0 8px var(--matrix-green-glow)"
         });
       } else {
         tile.css({
           "border-color": "rgba(255,255,255,0.2)",
-          "background": "rgba(15, 23, 42, 0.7)"
+          "background": "rgba(15, 23, 42, 0.7)",
+          "box-shadow": "none"
         });
       }
     }
 
     if (currentWord.length === wordLen) {
       $("#challenge-input").val(currentWord);
-      $("#challenge-submit").prop("disabled", false);
+      $("#challenge-submit, #wordle-direct-submit").prop("disabled", false);
     } else {
       $("#challenge-input").val("");
-      $("#challenge-submit").prop("disabled", true);
+      $("#challenge-submit, #wordle-direct-submit").prop("disabled", true);
+    }
+
+    // Sync input box value if not currently focused
+    const typeInput = $("#wordle-type-input");
+    if (typeInput.length && !typeInput.is(":focus") && typeInput.val() !== currentWord) {
+      typeInput.val(currentWord);
     }
   }
 
@@ -154,7 +163,7 @@ CTFd._internal.challenge.postRender = function() {
       }
     } else if (key === "ENTER") {
       if (currentWord.length === wordLen) {
-        $("#challenge-submit").click();
+        triggerSubmit();
       }
     } else if (/^[A-Z]$/.test(key)) {
       if (currentWord.length < wordLen) {
@@ -164,6 +173,39 @@ CTFd._internal.challenge.postRender = function() {
     }
   }
 
+  function triggerSubmit() {
+    if (currentWord.length !== wordLen) return;
+    $("#challenge-input").val(currentWord);
+
+    const alpineEl = document.querySelector("[x-data='Challenge']");
+    if (alpineEl && alpineEl.__x && alpineEl.__x.$data) {
+      alpineEl.__x.$data.submission = currentWord;
+      alpineEl.__x.$data.submitChallenge();
+    } else {
+      $("#challenge-submit").click();
+    }
+  }
+
+  // Bind physical input field
+  $(document).off("input", "#wordle-type-input").on("input", "#wordle-type-input", function() {
+    let val = ($(this).val() || "").toUpperCase().replace(/[^A-Z]/g, "");
+    if (val.length > wordLen) val = val.slice(0, wordLen);
+    $(this).val(val);
+    currentWord = val;
+    updateActiveRow();
+  });
+
+  $(document).off("keydown", "#wordle-type-input").on("keydown", "#wordle-type-input", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      triggerSubmit();
+    }
+  });
+
+  $(document).off("click", "#wordle-direct-submit").on("click", "#wordle-direct-submit", function() {
+    triggerSubmit();
+  });
+
   // Bind virtual keyboard clicks
   $(document).off("click", ".wordle-key").on("click", ".wordle-key", function(e) {
     e.preventDefault();
@@ -171,10 +213,9 @@ CTFd._internal.challenge.postRender = function() {
     handleKeyInput(key);
   });
 
-  // Bind physical keyboard
+  // Bind physical keyboard on document when not in other input
   $(document).off("keydown.wordle").on("keydown.wordle", function(e) {
-    // Only capture if not focused in another text input
-    if ($(e.target).is("input:not(#challenge-input), textarea")) return;
+    if ($(e.target).is("input, textarea")) return;
     if (e.key === "Backspace") {
       handleKeyInput("DEL");
     } else if (e.key === "Enter") {
@@ -184,13 +225,28 @@ CTFd._internal.challenge.postRender = function() {
     }
   });
 
+  $(document).off("click", "#challenge-submit").on("click", "#challenge-submit", function() {
+    triggerSubmit();
+  });
+
   updateActiveRow();
-};
+  return true;
+}
+
+CTFd._internal.challenge.postRender = initWordle;
+window.addEventListener("ctfd:challenge-rendered", initWordle);
+
+let wordleRetryCount = 0;
+const wordleTimer = setInterval(function() {
+  wordleRetryCount++;
+  if (initWordle() || wordleRetryCount > 20) {
+    clearInterval(wordleTimer);
+  }
+}, 50);
 
 CTFd._internal.challenge.submit = function(preview) {
-  const $ = (window.CTFd && window.CTFd.lib && window.CTFd.lib.$) || window.$;
-  const challenge_id = parseInt($("#challenge-id").val(), 10);
-  const submission = $("#challenge-input").val();
+  const challenge_id = parseInt(document.getElementById("challenge-id").value, 10);
+  const submission = document.getElementById("challenge-input").value;
 
   const body = {
     challenge_id: challenge_id,
@@ -202,16 +258,16 @@ CTFd._internal.challenge.submit = function(preview) {
   }
 
   return CTFd.api.post_challenge_attempt(params, body).then(function(response) {
-    if (response.status === 429 || response.status === 403) {
-      return response;
-    }
-    // Reload challenge modal view after attempt to refresh wordle grid and keyboard state
-    if (CTFd._internal && CTFd._internal.challenge && CTFd._internal.challenge.render) {
+    if (response && response.data) {
+      // Reload challenge modal view after attempt to refresh wordle grid and keyboard state
       setTimeout(function() {
-        if (window.loadChal) {
-          window.loadChal(challenge_id);
+        if (window.CTFd && window.CTFd.pages && window.CTFd.pages.challenge) {
+          const alpineBoard = document.querySelector("[x-data='ChallengeBoard']");
+          if (alpineBoard && alpineBoard.__x && alpineBoard.__x.$data) {
+            alpineBoard.__x.$data.loadChallenge(challenge_id);
+          }
         }
-      }, 500);
+      }, 600);
     }
     return response;
   });

@@ -240,42 +240,64 @@ def _dispatch_to_channel(url, platform_config, prefix, enabled, text, card_title
     thread = threading.Thread(target=_send_payload, args=(url, payload, event_type), daemon=True)
     thread.start()
 
+SUPPORTED_PLATFORMS = ["discord", "slack", "teams", "google_chat", "telegram", "custom"]
+
 def dispatch_participant(text, card_title=None, fields=None, color_key="info", event_type="notification"):
-    url = (
+    dispatched_urls = set()
+
+    for p in SUPPORTED_PLATFORMS:
+        url = (get_config(f"webhook_{p}_participant_url") or "").strip()
+        enabled = (get_config(f"webhook_{p}_participant_enabled") or "false") == "true"
+        prefix = get_config(f"webhook_{p}_participant_prefix") or "[CTFd]"
+        chat_id = get_config("webhook_telegram_participant_chat_id") if p == "telegram" else None
+        platform_name = "generic" if p == "custom" else p
+        if url and enabled:
+            _dispatch_to_channel(url, platform_name, prefix, True, text, card_title, fields, color_key, chat_id, event_type=event_type)
+            dispatched_urls.add(url)
+
+    # Legacy fallback for backwards compatibility
+    legacy_url = (
         get_config("chat_notifications_webhook_url") or
         get_config("gchat_participant_webhook_url") or
         get_config("gchat_webhook_url") or ""
     ).strip()
-    enabled = (
+    legacy_enabled = (
         get_config("chat_notifications_enabled") or
         get_config("gchat_enabled", "true")
     ) == "true"
-    prefix = (
-        get_config("chat_notifications_prefix") or
-        get_config("gchat_prefix", "[CTFd]")
-    )
-    platform = get_config("chat_notifications_platform", "auto")
-    chat_id = get_config("chat_notifications_telegram_chat_id")
-
-    _dispatch_to_channel(url, platform, prefix, enabled, text, card_title, fields, color_key, chat_id, event_type=event_type)
+    if legacy_url and legacy_enabled and legacy_url not in dispatched_urls:
+        legacy_prefix = get_config("chat_notifications_prefix") or "[CTFd]"
+        legacy_plat = get_config("chat_notifications_platform", "auto")
+        legacy_tg = get_config("chat_notifications_telegram_chat_id")
+        _dispatch_to_channel(legacy_url, legacy_plat, legacy_prefix, True, text, card_title, fields, color_key, legacy_tg, event_type=event_type)
 
 def dispatch_admin(text, card_title=None, fields=None, color_key="admin_alert", event_type="notification"):
-    url = (
+    dispatched_urls = set()
+
+    for p in SUPPORTED_PLATFORMS:
+        url = (get_config(f"webhook_{p}_admin_url") or "").strip()
+        enabled = (get_config(f"webhook_{p}_admin_enabled") or "false") == "true"
+        prefix = get_config(f"webhook_{p}_admin_prefix") or "[CTFd-Admin]"
+        chat_id = get_config("webhook_telegram_admin_chat_id") if p == "telegram" else None
+        platform_name = "generic" if p == "custom" else p
+        if url and enabled:
+            _dispatch_to_channel(url, platform_name, prefix, True, text, card_title, fields, color_key, chat_id, event_type=event_type)
+            dispatched_urls.add(url)
+
+    # Legacy fallback for backwards compatibility
+    legacy_url = (
         get_config("chat_notifications_admin_webhook_url") or
         get_config("gchat_admin_webhook_url") or ""
     ).strip()
-    enabled = (
+    legacy_enabled = (
         get_config("chat_notifications_admin_enabled") or
         get_config("gchat_admin_enabled", "true")
     ) == "true"
-    prefix = (
-        get_config("chat_notifications_admin_prefix") or
-        get_config("gchat_admin_prefix", "[CTFd-Admin]")
-    )
-    platform = get_config("chat_notifications_admin_platform", "auto")
-    chat_id = get_config("chat_notifications_admin_telegram_chat_id")
-
-    _dispatch_to_channel(url, platform, prefix, enabled, text, card_title, fields, color_key, chat_id, event_type=event_type)
+    if legacy_url and legacy_enabled and legacy_url not in dispatched_urls:
+        legacy_prefix = get_config("chat_notifications_admin_prefix") or "[CTFd-Admin]"
+        legacy_plat = get_config("chat_notifications_admin_platform", "auto")
+        legacy_tg = get_config("chat_notifications_admin_telegram_chat_id")
+        _dispatch_to_channel(legacy_url, legacy_plat, legacy_prefix, True, text, card_title, fields, color_key, legacy_tg, event_type=event_type)
 
 def dispatch_async(text, card_title=None, fields=None, color_key="info", channel="participant", event_type="notification"):
     if channel in ("participant", "both"):

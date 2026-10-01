@@ -47,7 +47,6 @@ DEFAULT_CONFIGS = {
     "referral_show_bonus_notice": "true",
     "referral_bonus_notice_text": "",
     "referral_show_progress_in_roster": "true",
-    "referral_leaderboard_visible": "true",
     "referral_instructions": (
         "Share your unique recruit link with operatives to expand your syndicate. "
         "Bonus points unlock when your recruit proves field capability by reaching the challenge score milestone!"
@@ -59,34 +58,25 @@ class ReferralConfig:
     @staticmethod
     def get(key, default=None):
         def_val = DEFAULT_CONFIGS.get(key, default)
-        try:
-            from CTFd.models import Configs
-            cfg = Configs.query.filter_by(key=key).first()
-            if cfg is not None and cfg.value is not None and cfg.value != "":
-                return cfg.value
-        except Exception:
-            pass
         val = get_config(key)
         if val is None or val == "":
             return def_val
         return val
 
     @staticmethod
-    def get_bool(key, default=False):
-        val = ReferralConfig.get(key, default)
+    def get_bool(key):
+        val = ReferralConfig.get(key)
         if isinstance(val, bool):
             return val
-        if val is None:
-            return default
         return str(val).lower() in ("true", "1", "yes", "on")
 
     @staticmethod
-    def get_int(key, default=0):
-        val = ReferralConfig.get(key, default)
+    def get_int(key):
+        val = ReferralConfig.get(key)
         try:
             return int(val)
         except (ValueError, TypeError):
-            return int(DEFAULT_CONFIGS.get(key, default))
+            return int(DEFAULT_CONFIGS.get(key, 0))
 
     @staticmethod
     def get_bonus_notice_text():
@@ -118,11 +108,6 @@ class ReferralConfig:
     @staticmethod
     def set(key, value):
         set_config(key, str(value))
-        try:
-            from CTFd.cache import clear_config
-            clear_config()
-        except Exception:
-            pass
 
     @staticmethod
     def get_all():
@@ -149,14 +134,8 @@ class ReferralConfig:
                 "referral_block_subnets",
                 "referral_disallow_teammates",
                 "referral_auto_revoke_on_ban",
-                "referral_leaderboard_visible",
             ):
                 ReferralConfig.set(k, "false")
-        try:
-            from CTFd.cache import clear_config
-            clear_config()
-        except Exception:
-            pass
 
     # --- Exclusion Management for Users & Teams ---
     @staticmethod

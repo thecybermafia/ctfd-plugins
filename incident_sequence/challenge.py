@@ -97,38 +97,24 @@ class IncidentSequenceChallengeType(BaseChallenge):
         raw_steps = c.steps_data
         raw_distractors = c.distractors_data
 
-        # If not solved and not admin, shuffle cards and hide order/explanation
-        if is_solved or is_admin():
+        # If not solved, shuffle cards and hide order/explanation
+        if is_solved:
             sanitized_steps = sorted(raw_steps, key=lambda s: int(s.get("order", 0)))
             sanitized_distractors = raw_distractors
         else:
-            all_cards = []
-            for s in raw_steps:
-                all_cards.append({
-                    "id": s.get("id"),
-                    "text": s.get("text", "")
-                })
-            for d in raw_distractors:
-                all_cards.append({
-                    "id": d.get("id"),
-                    "text": d.get("text", "")
-                })
-            # Deterministic shuffle seeded by challenge id so order is consistent per challenge
-            rnd = random.Random(c.id)
-            rnd.shuffle(all_cards)
-
-            sanitized_steps = all_cards
+            sanitized_steps = c.get_shuffled_cards()
             sanitized_distractors = []
 
         data.update({
             "cards_data": sanitized_steps,
-            "distractors_data": sanitized_distractors if (is_solved or is_admin()) else [],
+            "steps_data": sanitized_steps if is_solved else [],
+            "distractors_data": sanitized_distractors if is_solved else [],
             "allow_distractor_bin": bool(c.allow_distractor_bin),
             "total_steps": len(raw_steps),
             "total_distractors": len(raw_distractors),
             "is_solved": is_solved,
             "attempts_used": attempts_used,
-            "explanation": c.explanation if (is_solved or is_admin()) else "",
+            "explanation": c.explanation if is_solved else "",
         })
 
         if is_admin():
@@ -165,11 +151,15 @@ class IncidentSequenceChallengeType(BaseChallenge):
     def update(cls, challenge, request):
         data = request.form or request.get_json() or {}
 
+        challenge = super().update(challenge, request)
+
         if "explanation" in data:
             challenge.explanation = data["explanation"].strip()
 
         if "allow_distractor_bin" in data:
-            challenge.allow_distractor_bin = str(data["allow_distractor_bin"]).lower() in ("true", "1", "yes", "on")
+            challenge.allow_distractor_bin = str(data["allow_distractor_bin"]).lower() in ("true", "1", "yes", "on", "checked")
+        elif request.form and "name" in request.form:
+            challenge.allow_distractor_bin = False
 
         if "steps_json" in data:
             challenge.steps_json = data["steps_json"].strip()
@@ -177,7 +167,8 @@ class IncidentSequenceChallengeType(BaseChallenge):
         if "distractors_json" in data:
             challenge.distractors_json = data["distractors_json"].strip()
 
-        return super().update(challenge, request)
+        db.session.commit()
+        return challenge
 
     @classmethod
     def attempt(cls, challenge, request):
@@ -219,8 +210,11 @@ class IncidentSequenceChallengeType(BaseChallenge):
             return ChallengeResponse(status="incorrect", message="Invalid playbook sequence format.")
 
         expected_steps = sorted(c.steps_data, key=lambda s: int(s.get("order", 0)))
-        expected_step_ids = [s.get("id") for s in expected_steps]
-        distractor_ids = set([d.get("id") for d in c.distractors_data])
+        expected_step_ids = [str(s.get("id")) for s in expected_steps]
+        distractor_ids = set([str(d.get("id")) for d in c.distractors_data])
+
+        submitted_sequence = [str(s) for s in submitted_sequence]
+        submitted_distractors = [str(d) for d in submitted_distractors]
 
         # Verify no distractors are included in the sequence
         for s_id in submitted_sequence:

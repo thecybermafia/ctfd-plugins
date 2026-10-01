@@ -76,14 +76,11 @@ class RedFlagHotspotChallengeType(BaseChallenge):
         raw_hotspots = c.hotspots_data
         total_hotspots = len(raw_hotspots)
 
-        # Sanitize hotspot coordinates if participant has not solved yet
-        if is_solved or is_admin():
+        # Hotspot coordinates and debrief are strictly sealed until participant has solved
+        if is_solved:
             sanitized_hotspots = raw_hotspots
         else:
-            sanitized_hotspots = [
-                {"id": h.get("id"), "label": f"Red Flag #{i+1}"}
-                for i, h in enumerate(raw_hotspots)
-            ]
+            sanitized_hotspots = []
 
         data.update({
             "image_url": c.image_url or "",
@@ -94,7 +91,7 @@ class RedFlagHotspotChallengeType(BaseChallenge):
             "min_hits_required": c.min_hits_required or 0,
             "is_solved": is_solved,
             "attempts_used": attempts_used,
-            "explanation": c.explanation if (is_solved or is_admin()) else "",
+            "explanation": c.explanation if is_solved else "",
         })
 
         if is_admin():
@@ -213,6 +210,20 @@ class RedFlagHotspotChallengeType(BaseChallenge):
             cx = click["x"]
             cy = click["y"]
             for h in hotspots:
+                # Check bounding box if provided (supports rectangular banners, forms, bars)
+                if "x_min" in h and "x_max" in h and "y_min" in h and "y_max" in h:
+                    if float(h["x_min"]) <= cx <= float(h["x_max"]) and float(h["y_min"]) <= cy <= float(h["y_max"]):
+                        hit_hotspot_ids.add(h.get("id"))
+                        continue
+                if "w" in h and "h" in h:
+                    hx = float(h.get("x", 0.0))
+                    hy = float(h.get("y", 0.0))
+                    half_w = float(h["w"]) / 2.0
+                    half_h = float(h["h"]) / 2.0
+                    if (hx - half_w) <= cx <= (hx + half_w) and (hy - half_h) <= cy <= (hy + half_h):
+                        hit_hotspot_ids.add(h.get("id"))
+                        continue
+                # Fallback to circle with tolerance radius
                 hx = float(h.get("x", 0.0))
                 hy = float(h.get("y", 0.0))
                 tol = float(h.get("radius", default_tol))

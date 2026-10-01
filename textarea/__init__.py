@@ -40,4 +40,4 @@ def load(app):
         app, base_path="/plugins/textarea/assets/"
     )
 
-    register_admin_plugin_menu_bar(title="Textarea Reviews", route="/admin/textarea_submissions")
+    register_admin_plugin_menu_bar(title="Manual Verification", route="/admin/textarea_submissions")

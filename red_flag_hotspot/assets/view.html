@@ -2,105 +2,390 @@
 
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
-<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
-<script type="application/json" id="hotspot-config-json">{"image_url": {{ (challenge.image_url or '') | tojson }}, "max_clicks": {{ challenge.max_clicks | default(5) }}, "tolerance_radius": {{ challenge.tolerance_radius | default(6.0) }}, "hotspots_data": {% if solved_by_me or is_admin() %}{{ challenge.hotspots_data | tojson }}{% else %}[]{% endif %}, "is_solved": {% if solved_by_me %}true{% else %}false{% endif %}}</script>
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="" x-model="submission">
+<script type="application/json" id="hotspot-config-json">{
+  "image_url": {{ (challenge.image_url or '') | tojson }},
+  "max_clicks": {{ challenge.max_clicks | default(5) }},
+  "tolerance_radius": {{ challenge.tolerance_radius | default(6.0) }},
+  "min_hits_required": {{ challenge.min_hits_required | default(3) }},
+  "hotspots_count": {{ challenge.hotspots_count | default(challenge.hotspots_data | length) }},
+  "hotspots_data": {% if solved_by_me %}{{ challenge.hotspots_data | tojson }}{% else %}[]{% endif %},
+  "is_solved": {% if solved_by_me %}true{% else %}false{% endif %}
+}</script>
 
-<div class="red-flag-hotspot-container my-3" data-chal-id="{{ challenge.id }}">
-  <!-- Top Telemetry Header -->
-  <div class="tactical-telemetry-header d-flex flex-wrap justify-content-between align-items-center p-2 mb-3 rounded border">
-    <div class="d-flex align-items-center gap-2">
-      <span class="badge bg-primary font-monospace">TACTICAL RECON</span>
-      <span class="small font-monospace text-muted">Click or tap suspicious deceptive indicators</span>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-      <span id="hotspot-target-badge" class="badge bg-dark border border-secondary text-light font-monospace">
-        Targets: {{ challenge.hotspots_data | length }}
-      </span>
-      <span id="hotspot-markers-badge" class="badge bg-dark border border-secondary text-info font-monospace">
-        Markers: <span id="hotspot-markers-count">0</span> / {{ challenge.max_clicks }}
-      </span>
-    </div>
-  </div>
+<div class="red-flag-hotspot-container w-100 my-2" data-chal-id="{{ challenge.id }}">
 
-  <!-- Image Inspection Viewport -->
-  <div class="card tactical-card mb-3">
-    <div class="card-header tactical-card-header d-flex justify-content-between align-items-center p-2 border-bottom">
-      <span class="small font-monospace text-muted fw-bold">Evidence Image Canvas</span>
-      <div class="d-flex gap-2">
-        <button type="button" id="hotspot-clear-btn" class="btn btn-sm btn-outline-danger font-monospace py-0 px-2" {% if solved_by_me %}disabled{% endif %}>
-          Clear Pins
+  <!-- Main Inspection Card -->
+  <div class="rfh-canvas-card rounded overflow-hidden">
+    <!-- Clean, simple unified header -->
+    <div class="rfh-canvas-header d-flex flex-wrap justify-content-between align-items-center p-2 px-3 border-bottom gap-2">
+      <div class="d-flex align-items-center gap-2 font-monospace small">
+        <i class="fas fa-flag text-danger"></i>
+        <span>Click suspicious parts of the image to place pins (find at least {{ challenge.min_hits_required or 3 }}):</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge rfh-pin-counter font-monospace">
+          Pins: <span id="hotspot-markers-count" class="fw-bold">0</span> / {{ challenge.max_clicks or 5 }}
+        </span>
+        <button type="button" id="hotspot-clear-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2 small" title="Clear all placed pins" {% if solved_by_me %}disabled{% endif %}>
+          <i class="fas fa-undo me-1"></i> Clear
         </button>
+        <button type="button" id="hotspot-zoom-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2 small" title="View image full size in lightbox">
+          <i class="fas fa-search-plus me-1"></i> Full Size
+        </button>
+        <a href="{{ challenge.image_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2 small" title="Open raw evidence image in new tab">
+          <i class="fas fa-arrow-up-right-from-square me-1"></i> New Tab
+        </a>
       </div>
     </div>
     
-    <div class="card-body p-2 position-relative text-center overflow-auto tactical-hotspot-canvas" id="hotspot-canvas-container" style="user-select: none;">
+    <!-- Image Viewport -->
+    <div class="rfh-canvas-body p-2 position-relative text-center overflow-auto" id="hotspot-canvas-container" style="user-select: none;">
       {% if challenge.image_url %}
-      <div class="hotspot-viewport-inner position-relative d-inline-block text-start">
-        <img id="hotspot-target-image" src="{{ challenge.image_url }}" alt="Evidence Artifact" class="img-fluid d-block" style="max-height: 520px; width: 100%; max-width: 900px; cursor: crosshair; border-radius: 4px;">
+      <div class="rfh-viewport-inner position-relative d-inline-block text-start">
+        <img id="hotspot-target-image" src="{{ challenge.image_url }}" alt="Phishing Evidence" class="img-fluid d-block rfh-target-img">
         
-        <!-- Interactive Pins Overlay (perfectly aligned on image) -->
+        <!-- Interactive Pins Overlay -->
         <div id="hotspot-pins-overlay" class="position-absolute top-0 start-0 w-100 h-100 pointer-events-none" style="pointer-events: none;">
           <!-- Pins placed dynamically via JS -->
         </div>
         
-        <!-- Solved Targets Overlay (revealed if challenge solved or admin) -->
+        <!-- Solved Targets Overlay (ONLY rendered post-solve) -->
         <div id="hotspot-targets-overlay" class="position-absolute top-0 start-0 w-100 h-100" style="pointer-events: none; display: none;">
-          <!-- Target circles rendered via JS -->
+          <!-- Target circles rendered via JS post-solve -->
         </div>
       </div>
       {% else %}
       <div class="p-5 text-center text-muted font-monospace">No inspection image provided.</div>
       {% endif %}
     </div>
-
-    <div class="card-footer tactical-card-footer p-2 border-top font-monospace text-muted small d-flex justify-content-between align-items-center">
-      <span>Click on suspicious elements in the screenshot to place red flag pins.</span>
-      <span id="hotspot-coords-preview" class="text-cyan fw-bold font-monospace">X: --% | Y: --%</span>
-    </div>
   </div>
 
-  <!-- Educational Debrief Section -->
-  {% if solved_by_me or is_admin() %}
-  <div class="card mb-3 tactical-card border-success">
-    <div class="card-header bg-success bg-opacity-25 text-success fw-bold font-monospace">
-      Red Flag Analysis &amp; Findings
+  <div class="d-flex justify-content-between align-items-center font-monospace small text-muted px-1 mt-1 mb-3">
+    <small><i class="fas fa-info-circle me-1"></i> Click on any placed pin to remove it.</small>
+    <small class="rfh-goal-hint">Minimum required: {{ challenge.min_hits_required or 3 }} of {{ challenge.hotspots_count or 5 }} red flags</small>
+  </div>
+
+  <!-- Educational Post-Solve Debrief (STRICTLY ONLY WHEN SOLVED) -->
+  {% if solved_by_me %}
+  <div class="rfh-debrief-card mb-3 rounded border border-success p-3">
+    <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom border-success border-opacity-25">
+      <i class="fas fa-shield-halved fa-lg text-success"></i>
+      <h6 class="mb-0 fw-bold font-monospace text-success text-uppercase">
+        Red Flag Analysis &amp; Findings
+      </h6>
     </div>
-    <div class="card-body">
-      {% if challenge.explanation %}
-      <div class="mb-3 small font-monospace">{{ challenge.explanation }}</div>
-      {% endif %}
-      <div class="list-group list-group-flush" id="hotspot-findings-list">
-        {% for spot in challenge.hotspots_data %}
-        <div class="list-group-item bg-transparent border-secondary border-opacity-25 p-2">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="font-monospace fw-bold">{{ spot.label or 'Red Flag #' ~ loop.index }}</span>
-            <span class="badge bg-info text-dark font-monospace">X: {{ spot.x }}% | Y: {{ spot.y }}%</span>
-          </div>
-          {% if spot.explanation %}
-          <div class="small text-muted font-monospace">{{ spot.explanation }}</div>
-          {% endif %}
+    
+    {% if challenge.explanation %}
+    <div class="mb-3 small font-monospace rfh-debrief-overview">{{ challenge.explanation }}</div>
+    {% endif %}
+
+    <div class="list-group list-group-flush rfh-findings-list" id="hotspot-findings-list">
+      {% for spot in challenge.hotspots_data %}
+      <div class="list-group-item bg-transparent border-secondary border-opacity-25 px-0 py-2">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="font-monospace fw-bold text-matrix-green">
+            <i class="fas fa-check-circle me-1 text-success"></i> {{ spot.label or 'Red Flag #' ~ loop.index }}
+          </span>
+          <span class="badge bg-success bg-opacity-25 text-success border border-success font-monospace small">
+            VERIFIED
+          </span>
         </div>
-        {% endfor %}
+        {% if spot.explanation %}
+        <div class="small text-muted font-monospace ps-3">{{ spot.explanation }}</div>
+        {% endif %}
       </div>
+      {% endfor %}
     </div>
   </div>
   {% endif %}
 
+  <!-- Submission Feedback Alert -->
+  <div id="rfh-feedback-alert" class="alert d-none my-2 text-center font-monospace" role="alert"></div>
+
   <!-- Submit Row -->
   {% if not solved_by_me %}
-  <div class="d-grid mt-3">
-    <button id="challenge-submit" class="challenge-submit btn btn-primary py-2 fw-bold font-monospace" type="button" disabled>
-      Submit Identified Red Flags
+  <div>
+    <button id="rfh-submit-btn" class="challenge-submit btn btn-outline-secondary w-100 py-2 fw-bold font-monospace text-uppercase rfh-submit-btn" type="button" disabled>
+      Click on suspicious areas to place pins (need at least {{ challenge.min_hits_required or 3 }})
     </button>
   </div>
   {% else %}
   <div class="alert alert-success border border-success text-center py-2 font-monospace mb-0">
-    All Red Flags Successfully Identified!
+    <i class="fas fa-check-double me-2"></i> Challenge Solved! Review the identified red flags above.
   </div>
   {% endif %}
+
 </div>
+
+<!-- Full Image Standalone Lightbox -->
+<div id="rfh-lightbox-modal" class="rfh-lightbox d-none" role="dialog" aria-modal="true">
+  <div class="rfh-lightbox-backdrop"></div>
+  <div class="rfh-lightbox-dialog">
+    <div class="rfh-lightbox-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+      <div class="d-flex align-items-center gap-2 font-monospace text-matrix-green">
+        <i class="fas fa-shield-virus"></i>
+        <span class="small fw-bold text-uppercase">Phishing Evidence Specimen (High Resolution)</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" id="rfh-zoom-in-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2 small" title="Zoom in">
+          <i class="fas fa-plus"></i>
+        </button>
+        <button type="button" id="rfh-zoom-reset-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2 small" title="Reset zoom">
+          100%
+        </button>
+        <button type="button" id="rfh-zoom-out-btn" class="btn btn-sm btn-outline-secondary font-monospace py-0 px-2 small" title="Zoom out">
+          <i class="fas fa-minus"></i>
+        </button>
+        <a href="{{ challenge.image_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-info font-monospace py-0 px-2 small" title="Open in new browser tab">
+          <i class="fas fa-arrow-up-right-from-square me-1"></i> New Tab
+        </a>
+        <button type="button" id="rfh-lightbox-close-btn" class="btn btn-sm btn-outline-danger font-monospace py-0 px-2 small" title="Close preview (Esc)">
+          <i class="fas fa-times me-1"></i> Close
+        </button>
+      </div>
+    </div>
+    <div class="rfh-lightbox-content p-3 text-center overflow-auto">
+      <img id="rfh-lightbox-image" src="{{ challenge.image_url }}" alt="Phishing Evidence High Res" class="img-fluid rounded">
+    </div>
+  </div>
+</div>
+
+<style>
+  .submit-row:has(.red-flag-hotspot-container) > div:first-child {
+    width: 100% !important;
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+  .submit-row:has(.red-flag-hotspot-container) > .key-submit {
+    display: none !important;
+  }
+
+  /* Canvas Card */
+  .rfh-canvas-card {
+    background: var(--matrix-bg-card, rgba(13, 22, 16, 0.96));
+    border: 1px solid var(--matrix-border, #183821);
+  }
+  .rfh-canvas-header {
+    background: var(--matrix-bg-surface, #101c14);
+    border-color: var(--matrix-border, #183821) !important;
+    color: var(--matrix-text-main, #d4eedb);
+  }
+  .rfh-pin-counter {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--matrix-border-bright, #225230);
+    color: var(--matrix-text-main, #d4eedb);
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  /* Target Image */
+  .rfh-target-img {
+    max-height: calc(100vh - 280px);
+    width: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    cursor: crosshair;
+    border-radius: 4px;
+    border: 1px solid var(--matrix-border-dim, #102416);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Submit Button */
+  .rfh-submit-btn {
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+  }
+  .rfh-submit-btn.btn-success {
+    background: linear-gradient(135deg, var(--matrix-green-dim, #00b050) 0%, var(--matrix-green, #00e676) 100%) !important;
+    border: 1px solid var(--matrix-green-bright, #00ff88) !important;
+    color: #041007 !important;
+  }
+  .rfh-submit-btn.btn-success:hover {
+    box-shadow: 0 0 20px var(--matrix-green-glow, rgba(0, 230, 118, 0.4)) !important;
+    transform: translateY(-1px);
+    color: #000000 !important;
+  }
+  .rfh-submit-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  /* Feedback Alert */
+  #rfh-feedback-alert {
+    font-size: 0.88rem;
+    animation: rfhAlertFadeIn 0.25s ease-out;
+  }
+  @keyframes rfhAlertFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Debrief Card */
+  .rfh-debrief-card {
+    background: var(--matrix-bg-card, rgba(13, 22, 16, 0.96));
+  }
+
+  /* Standalone Cyber Lightbox */
+  .rfh-lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 105000 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    box-sizing: border-box;
+  }
+  .rfh-lightbox-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(4, 10, 6, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    cursor: pointer;
+  }
+  .rfh-lightbox-dialog {
+    position: relative;
+    z-index: 2;
+    background: var(--matrix-bg-card, #0d1610);
+    border: 1px solid var(--matrix-border-bright, #225230);
+    box-shadow: 0 0 45px rgba(0, 230, 118, 0.28), 0 20px 50px rgba(0, 0, 0, 0.9);
+    border-radius: 8px;
+    max-width: 95vw;
+    max-height: 94vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: rfhModalZoom 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes rfhModalZoom {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .rfh-lightbox-header {
+    background: var(--matrix-bg-surface, #101c14);
+    border-color: var(--matrix-border, #183821) !important;
+    flex-shrink: 0;
+  }
+  .rfh-lightbox-content {
+    overflow: auto;
+    max-height: calc(94vh - 52px);
+    background: rgba(0, 0, 0, 0.45);
+  }
+  #rfh-lightbox-image {
+    max-width: 100%;
+    height: auto;
+    transition: transform 0.15s ease-out;
+    transform-origin: center center;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    cursor: zoom-in;
+  }
+
+  /* Light Theme */
+  [data-bs-theme="light"] .rfh-canvas-card {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+  }
+  [data-bs-theme="light"] .rfh-canvas-header {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+  [data-bs-theme="light"] .rfh-pin-counter {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+  [data-bs-theme="light"] .rfh-target-img {
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  [data-bs-theme="light"] .rfh-submit-btn.btn-success {
+    background: linear-gradient(135deg, var(--matrix-green) 0%, var(--matrix-green-bright) 100%) !important;
+    border-color: var(--matrix-green-dim) !important;
+    color: #ffffff !important;
+  }
+  [data-bs-theme="light"] .rfh-debrief-card {
+    background: var(--matrix-green-subtle) !important;
+    border-color: var(--matrix-border) !important;
+  }
+  [data-bs-theme="light"] .rfh-lightbox-dialog {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25) !important;
+  }
+  [data-bs-theme="light"] .rfh-lightbox-header {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+  [data-bs-theme="light"] .rfh-lightbox-content {
+    background: #f1f5f9 !important;
+  }
+  [data-bs-theme="light"] .rfh-lightbox-backdrop {
+    background: rgba(15, 23, 42, 0.65) !important;
+  }
+  .text-matrix-green {
+    color: var(--matrix-green) !important;
+  }
+
+  /* Reticle Marker Styling */
+  .rfh-pin {
+    transition: transform 0.15s ease;
+  }
+  .rfh-pin:hover {
+    transform: translate(-50%, -50%) scale(1.15) !important;
+    z-index: 100;
+  }
+  .rfh-pin-reticle {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #ff2d55;
+    border-radius: 50%;
+    background: rgba(255, 45, 85, 0.3);
+    box-shadow: 0 0 12px rgba(255, 45, 85, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    animation: rfhPinPing 2s infinite ease-in-out;
+  }
+  @keyframes rfhPinPing {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 45, 85, 0.6); }
+    50% { box-shadow: 0 0 18px rgba(255, 45, 85, 0.95); }
+  }
+  .rfh-pin-center {
+    width: 6px;
+    height: 6px;
+    background: #ffffff;
+    border-radius: 50%;
+  }
+  .rfh-pin-h-line {
+    position: absolute;
+    width: 100%;
+    height: 1.5px;
+    background: rgba(255, 45, 85, 0.85);
+  }
+  .rfh-pin-v-line {
+    position: absolute;
+    height: 100%;
+    width: 1.5px;
+    background: rgba(255, 45, 85, 0.85);
+  }
+  .rfh-pin-badge {
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  }
+</style>
 {% endblock %}
 
 {% block submit %}
-<!-- Handled inside input block -->
+<!-- Handled inside input container -->
 {% endblock %}

@@ -1,58 +1,24 @@
 {% extends "admin/challenges/update.html" %}
 
 {% block value %}
-<div class="form-group mb-3">
-	<label for="value" class="form-label fw-bold">Points</label>
-	<div class="form-text text-muted small mb-1">Standard points awarded for approved writeup.</div>
-	<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
-</div>
-
-<div class="row g-3 mb-3">
-	<div class="col-md-6">
-		<label for="min_chars" class="form-label fw-bold">Minimum Characters</label>
-		<div class="form-text text-muted small mb-1">Minimum required length (0 for no limit).</div>
-		<input type="number" class="form-control" name="min_chars" value="{{ challenge.min_chars or 0 }}" min="0">
+	<div class="form-group mb-3">
+		<label for="value"><b>Points</b></label>
+		<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
 	</div>
-	<div class="col-md-6">
-		<label for="max_chars" class="form-label fw-bold">Maximum Characters</label>
-		<div class="form-text text-muted small mb-1">Maximum allowed length (up to 50,000).</div>
-		<input type="number" class="form-control" name="max_chars" value="{{ challenge.max_chars or 5000 }}" min="1" max="50000">
-	</div>
-</div>
 
-<div class="form-group mb-3">
-	<label for="placeholder" class="form-label fw-bold">Input Placeholder Prompt</label>
-	<div class="form-text text-muted small mb-1">Prompt displayed inside the empty writeup field.</div>
-	<input type="text" class="form-control" name="placeholder" value="{{ challenge.placeholder or '' }}">
-</div>
-
-<div class="border rounded p-3 mb-3 bg-dark">
-	<div class="form-check form-switch mb-2">
-		<input class="form-check-input" type="checkbox" name="auto_grade" id="auto_grade" value="true" {% if challenge.auto_grade %}checked{% endif %}>
-		<label class="form-check-label fw-bold" for="auto_grade">Enable Automated Keyword Auto-Grading</label>
-	</div>
-	<div class="form-text text-muted small mb-3">
-		Automatically validates submissions containing specific required keywords without waiting for manual admin review.
+	<div class="form-row row mb-3">
+		<div class="form-group col-md-6">
+			<label for="min_chars"><b>Minimum Characters</b></label>
+			<input type="number" class="form-control" name="min_chars" value="{{ challenge.min_chars }}" min="0">
+		</div>
+		<div class="form-group col-md-6">
+			<label for="max_chars"><b>Maximum Characters</b></label>
+			<input type="number" class="form-control" name="max_chars" value="{{ challenge.max_chars }}" min="1" max="50000">
+		</div>
 	</div>
 
 	<div class="form-group mb-3">
-		<label for="required_keywords" class="form-label fw-bold">Required Keywords (Comma-separated)</label>
-		<input type="text" class="form-control font-monospace" name="required_keywords" value="{{ challenge.required_keywords or '' }}">
+		<label for="placeholder"><b>Input Placeholder Prompt</b></label>
+		<input type="text" class="form-control" name="placeholder" value="{{ challenge.placeholder }}">
 	</div>
-
-	<div class="row g-3">
-		<div class="col-md-6">
-			<label for="auto_pass_mode" class="form-label fw-bold">Matching Requirement</label>
-			<select class="form-select form-control" name="auto_pass_mode">
-				<option value="all" {% if challenge.auto_pass_mode == 'all' %}selected{% endif %}>All keywords must be present</option>
-				<option value="any" {% if challenge.auto_pass_mode == 'any' %}selected{% endif %}>At least one keyword must be present</option>
-			</select>
-		</div>
-		<div class="col-md-6">
-			<label for="auto_award_points" class="form-label fw-bold">Auto-Award Points</label>
-			<div class="form-text text-muted small mb-1">Points to award automatically (0 to award default points).</div>
-			<input type="number" class="form-control" name="auto_award_points" value="{{ challenge.auto_award_points or 0 }}" min="0">
-		</div>
-	</div>
-</div>
 {% endblock %}

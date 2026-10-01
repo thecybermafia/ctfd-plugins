@@ -3,51 +3,164 @@
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
 <textarea id="cw-clues-data" style="display: none;">{{ (challenge.clues_data or []) | tojson }}</textarea>
-<textarea id="cw-solved-clues-data" style="display: none;">{{ (challenge.solved_clues or []) | tojson }}</textarea>
 
-<div class="crossword-wrapper my-3">
+<div class="crossword-wrapper my-2">
   
-  <div class="alert alert-dark p-2 mb-3" style="background: rgba(8, 12, 18, 0.95); border: 1px solid var(--cyber-border-bright, rgba(255,255,255,0.15));">
-    <div style="color: var(--cyber-cyan, #0dcaf0);" class="font-monospace small">
-      Solve each clue below to deduce the master decryption flag / keyword.
-      {% if challenge.partial_scoring %}
-        <span class="text-light">(Partial scoring active: +{{ challenge.points_per_word }} pts per verified word)</span>
-      {% endif %}
+  <!-- Header Telemetry Strip -->
+  <div class="tactical-telemetry-header d-flex flex-wrap justify-content-between align-items-center p-2 px-3 mb-3 rounded border">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-success text-dark font-monospace"><i class="fas fa-cubes me-1"></i> CYBER CROSSWORD MATRIX</span>
+      <span class="small font-monospace text-muted">Solve the puzzle grid to uncover the master flag</span>
     </div>
-  </div>
-
-  <!-- Clues List Table -->
-  <div class="card mb-3" style="background: rgba(8, 12, 18, 0.95); border: 1px solid var(--cyber-border, rgba(255,255,255,0.15));">
-    <div class="card-header py-2 d-flex justify-content-between align-items-center">
-      <span class="text-info fw-bold text-uppercase small font-monospace">Crossword Clues</span>
+    <div class="d-flex align-items-center gap-2">
       <span id="cw-progress-badge" class="badge bg-secondary font-monospace">0 / 0 Solved</span>
     </div>
-    <div class="card-body p-2" id="cw-clues-container" style="max-height: 340px; overflow-y: auto;">
-      <!-- Populated by view.js -->
+  </div>
+
+  <!-- 1. The Interactive Visual Crossword Grid Board -->
+  <div class="card tactical-card mb-3 border border-secondary border-opacity-50 shadow-sm">
+    <div class="card-header tactical-card-header py-2 px-3 d-flex justify-content-between align-items-center border-bottom">
+      <span class="text-cyan fw-bold text-uppercase small font-monospace">
+        <i class="fas fa-border-all me-1"></i> Interactive Crossword Puzzle Board
+      </span>
+      <span class="small text-muted font-monospace d-none d-sm-inline">
+        Click any square to type directly into the puzzle
+      </span>
+    </div>
+    <div class="card-body p-3 p-md-4 text-center overflow-auto" id="cw-board-container" style="background: var(--matrix-bg-surface, rgba(8, 14, 11, 0.95)); min-height: 200px;">
+      <!-- Crossword letter cells generated dynamically by view.js -->
+      <div id="cw-grid-cells-area" class="d-inline-flex flex-column gap-3 text-start"></div>
     </div>
   </div>
 
-  <!-- Solution Submission Form -->
-  <div class="pt-2 border-top" style="border-color: rgba(255,255,255,0.1) !important;">
-    <label for="challenge-input" class="form-label fw-bold font-monospace text-success">
-      Enter Master Flag or Clue Answer:
-    </label>
-    <div class="input-group">
-      <input 
-        id="challenge-input" 
-        class="challenge-input form-control form-control-lg font-monospace" 
-        type="text" 
-        name="submission" 
-        placeholder="Enter keyword or clue word..." 
-        autocomplete="off"
-      >
-      <button id="challenge-submit" class="challenge-submit btn btn-primary px-4 fw-bold font-monospace" type="button">
-        Submit
-      </button>
+  <!-- 2. Clues & Questions Reference List -->
+  <div class="card tactical-card mb-3 border border-secondary border-opacity-50 shadow-sm">
+    <div class="card-header tactical-card-header py-2 px-3 d-flex justify-content-between align-items-center border-bottom">
+      <span class="text-cyan fw-bold text-uppercase small font-monospace">
+        <i class="fas fa-list-ol me-1"></i> Crossword Clues &amp; Questions
+      </span>
+      <span class="badge bg-dark border border-secondary text-muted font-monospace small">Click a clue to focus</span>
+    </div>
+    <div class="card-body p-2" id="cw-clues-container" style="max-height: 280px; overflow-y: auto;">
+      <!-- Populated dynamically by view.js -->
+    </div>
+  </div>
+
+  <!-- 3. Solved Master Flag Submission Card (Generous Padding & Responsive Layout) -->
+  <div class="card tactical-card p-3 p-md-4 mt-3 border border-secondary border-opacity-50 shadow-sm">
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <i class="fas fa-key fa-lg" style="color: var(--matrix-green);"></i>
+      <label for="challenge-input" class="form-label fw-bold font-monospace mb-0 fs-5" style="color: var(--matrix-green);">
+        Solved Master Flag or Keyword:
+      </label>
+    </div>
+    <p class="small text-muted font-monospace mb-3">
+      Enter the final secret keyword or flag deduced from the crossword puzzle solution:
+    </p>
+    <div class="row g-2 align-items-stretch">
+      <div class="col-12 col-sm-8 col-md-9">
+        <input 
+          id="challenge-input" 
+          class="challenge-input form-control form-control-lg font-monospace text-uppercase px-3 py-2 h-100" 
+          type="text" 
+          name="submission" 
+          placeholder="ENTER MASTER KEYWORD / FLAG..." 
+          autocomplete="off"
+          style="letter-spacing: 1.5px; border-color: var(--matrix-border-bright);"
+        >
+      </div>
+      <div class="col-12 col-sm-4 col-md-3">
+        <button id="challenge-submit" class="challenge-submit btn btn-primary btn-lg w-100 py-2 h-100 font-monospace fw-bold text-uppercase d-flex align-items-center justify-content-center" type="button">
+          <i class="fas fa-paper-plane me-2"></i> Submit
+        </button>
+      </div>
     </div>
   </div>
 
 </div>
+
+<style>
+/* Authentic Crossword Board Styling */
+.cw-cell-box {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+.cw-cell-sub {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: var(--matrix-font-mono, monospace);
+  color: var(--matrix-text-muted, #64748b);
+  pointer-events: none;
+  z-index: 2;
+  line-height: 1;
+}
+.cw-cell-input {
+  width: 100%;
+  height: 100%;
+  font-size: 1.25rem;
+  padding: 0;
+  text-align: center;
+  border-radius: 4px;
+  background: var(--matrix-bg-card, rgba(15, 23, 19, 0.95)) !important;
+  border: 2px solid var(--matrix-border, #1e3a29) !important;
+  color: var(--matrix-text-bright, #ffffff) !important;
+  transition: all 0.15s ease;
+  caret-color: var(--matrix-green);
+}
+.cw-cell-input:focus {
+  border-color: var(--matrix-green) !important;
+  box-shadow: 0 0 10px var(--matrix-green-glow) !important;
+  background: var(--matrix-green-subtle) !important;
+  outline: none;
+  z-index: 3;
+}
+.cw-grid-row.word-solved .cw-cell-input {
+  border-color: var(--matrix-green) !important;
+  background: var(--matrix-green-subtle) !important;
+  color: var(--matrix-green-bright) !important;
+}
+.cw-grid-row {
+  transition: background 0.15s ease;
+  padding: 4px;
+  border-radius: 6px;
+}
+.cw-grid-row:hover {
+  background: var(--matrix-green-subtle);
+}
+.cw-clue-item {
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.cw-clue-item:hover {
+  border-color: var(--matrix-green) !important;
+  background: var(--matrix-green-subtle) !important;
+}
+.cw-clue-item.active-clue {
+  border-color: var(--matrix-green) !important;
+  box-shadow: 0 0 8px var(--matrix-green-glow);
+}
+[data-bs-theme="light"] .cw-cell-input {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+[data-bs-theme="light"] .cw-cell-input:focus {
+  border-color: var(--matrix-green) !important;
+  background: #f0fdf4 !important;
+}
+[data-bs-theme="light"] .cw-grid-row.word-solved .cw-cell-input {
+  border-color: var(--matrix-green) !important;
+  background: #f0fdf4 !important;
+  color: var(--matrix-green-dim) !important;
+}
+[data-bs-theme="light"] #cw-board-container {
+  background: #f8fafc !important;
+}
+</style>
 {% endblock %}
 
 {% block submit %}
