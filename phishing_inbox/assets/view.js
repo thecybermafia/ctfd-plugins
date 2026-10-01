@@ -1,3 +1,4 @@
+(function() {
 CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
@@ -424,8 +425,8 @@ function initPhishingInbox() {
 CTFd._internal.challenge.postRender = initPhishingInbox;
 window.addEventListener("ctfd:challenge-rendered", initPhishingInbox);
 
-let inboxRetryCount = 0;
-const inboxTimer = setInterval(function() {
+var inboxRetryCount = 0;
+var inboxTimer = setInterval(function() {
   inboxRetryCount++;
   if (initPhishingInbox() || inboxRetryCount > 20) {
     clearInterval(inboxTimer);
@@ -449,3 +450,4 @@ CTFd._internal.challenge.submit = function(preview) {
     return response;
   });
 };
+})();

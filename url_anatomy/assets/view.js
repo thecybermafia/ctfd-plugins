@@ -1,3 +1,4 @@
+(function() {
 CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
@@ -152,8 +153,8 @@ function initUrlAnatomy() {
 CTFd._internal.challenge.postRender = initUrlAnatomy;
 window.addEventListener("ctfd:challenge-rendered", initUrlAnatomy);
 
-let urlAnatomyRetry = 0;
-const urlAnatomyTimer = setInterval(function() {
+var urlAnatomyRetry = 0;
+var urlAnatomyTimer = setInterval(function() {
   urlAnatomyRetry++;
   if (initUrlAnatomy() || urlAnatomyRetry > 20) {
     clearInterval(urlAnatomyTimer);
@@ -177,3 +178,4 @@ CTFd._internal.challenge.submit = function(preview) {
     return response;
   });
 };
+})();

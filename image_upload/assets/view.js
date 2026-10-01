@@ -1,3 +1,4 @@
+(function() {
 window.CTFd = window.CTFd || {};
 window.CTFd._internal = window.CTFd._internal || {};
 window.CTFd._internal.challenge = window.CTFd._internal.challenge || {};
@@ -21,7 +22,6 @@ function initImageUploadChallenge() {
   const challengeId = chalIdEl.value;
 
   // Ensure full width fit inside modal tab panel
-  const container = document.getElementById("image-upload-container");
   if (container) {
     const col = container.closest(".col-sm-8");
     if (col) {
@@ -314,8 +314,8 @@ function initImageUploadChallenge() {
 CTFd._internal.challenge.postRender = initImageUploadChallenge;
 window.addEventListener("ctfd:challenge-rendered", initImageUploadChallenge);
 
-let iuRetryCount = 0;
-const iuTimer = setInterval(function() {
+var iuRetryCount = 0;
+var iuTimer = setInterval(function() {
   iuRetryCount++;
   if (initImageUploadChallenge() || iuRetryCount > 20) {
     clearInterval(iuTimer);
@@ -331,3 +331,4 @@ if (window.CTFd && window.CTFd.plugin && window.CTFd.plugin.run) {
     setTimeout(initImageUploadChallenge, 100);
   });
 }
+})();

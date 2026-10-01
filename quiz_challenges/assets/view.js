@@ -1,8 +1,4 @@
-CTFd._internal.challenge.data = undefined;
-CTFd._internal.challenge.renderer = null;
-CTFd._internal.challenge.preRender = function() {};
-CTFd._internal.challenge.render = null;
-
+(function() {
 CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
@@ -89,8 +85,8 @@ function initQuiz() {
 CTFd._internal.challenge.postRender = initQuiz;
 window.addEventListener("ctfd:challenge-rendered", initQuiz);
 
-let quizRetryCount = 0;
-const quizTimer = setInterval(function() {
+var quizRetryCount = 0;
+var quizTimer = setInterval(function() {
   quizRetryCount++;
   if (initQuiz() || quizRetryCount > 20) {
     clearInterval(quizTimer);
@@ -119,4 +115,5 @@ CTFd._internal.challenge.submit = function(preview) {
     return response;
   });
 };
+})();
 

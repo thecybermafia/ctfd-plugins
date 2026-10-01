@@ -1,3 +1,4 @@
+(function() {
 CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
@@ -282,8 +283,8 @@ function initCrossword() {
 CTFd._internal.challenge.postRender = initCrossword;
 window.addEventListener("ctfd:challenge-rendered", initCrossword);
 
-let cwRetryCount = 0;
-const cwTimer = setInterval(function() {
+var cwRetryCount = 0;
+var cwTimer = setInterval(function() {
   cwRetryCount++;
   if (initCrossword() || cwRetryCount > 20) {
     clearInterval(cwTimer);
@@ -307,3 +308,4 @@ CTFd._internal.challenge.submit = function(preview) {
     return response;
   });
 };
+})();

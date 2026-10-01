@@ -1,3 +1,4 @@
+(function() {
 CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
@@ -31,15 +32,23 @@ function initWordle() {
   grid.empty();
 
   for (let r = 0; r < maxAttempts; r++) {
-    const rowEl = $('<div class="d-flex justify-content-center gap-1 wordle-row" data-row="' + r + '"></div>');
+    const isCompleted = r < history.length;
+    const isActive = (r === currentAttempt && !isSolved && currentAttempt < maxAttempts);
     const guessData = history[r];
+
+    const rowEl = $(
+      '<div class="d-flex justify-content-center gap-1 wordle-row ' +
+      (isActive ? 'wordle-row-active' : (isCompleted ? 'wordle-row-completed' : 'wordle-row-future')) +
+      '"' + (isActive ? ' data-row="' + r + '"' : '') + '></div>'
+    );
 
     for (let c = 0; c < wordLen; c++) {
       let letter = "";
       let bgStyle = "background: rgba(15, 23, 42, 0.7);";
       let textStyle = "color: #fff;";
+      let borderStyle = "border: 2px solid rgba(255,255,255,0.2);";
 
-      if (guessData) {
+      if (isCompleted && guessData) {
         letter = guessData.word[c] || "";
         const evalStatus = (guessData.evaluation && guessData.evaluation[c]) || "absent";
         if (evalStatus === "correct") {
@@ -55,12 +64,17 @@ function initWordle() {
           textStyle = "color: #9ca3af;";
           if (!keyStatus[letter]) keyStatus[letter] = "absent";
         }
+      } else if (!isActive) {
+        // Future / locked attempts: dimmed placeholder
+        bgStyle = "background: rgba(15, 23, 42, 0.35);";
+        borderStyle = "border: 1px dashed rgba(255,255,255,0.12); opacity: 0.45;";
       }
 
+      const colAttr = isActive ? ' data-col="' + c + '"' : '';
       const tile = $(
         '<div class="wordle-tile font-monospace fw-bold d-flex justify-content-center align-items-center rounded fs-4" ' +
-        'style="width: 52px; height: 52px; border: 2px solid rgba(255,255,255,0.2); ' + bgStyle + textStyle + '" ' +
-        'data-col="' + c + '">' + letter + '</div>'
+        'style="width: 52px; height: 52px; ' + borderStyle + ' ' + bgStyle + textStyle + '"' +
+        colAttr + '>' + letter + '</div>'
       );
       rowEl.append(tile);
     }
@@ -257,8 +271,8 @@ function initWordle() {
 CTFd._internal.challenge.postRender = initWordle;
 window.addEventListener("ctfd:challenge-rendered", initWordle);
 
-let wordleRetryCount = 0;
-const wordleTimer = setInterval(function() {
+var wordleRetryCount = 0;
+var wordleTimer = setInterval(function() {
   wordleRetryCount++;
   if (initWordle() || wordleRetryCount > 20) {
     clearInterval(wordleTimer);
@@ -300,3 +314,4 @@ CTFd._internal.challenge.submit = function(preview) {
     return response;
   });
 };
+})();

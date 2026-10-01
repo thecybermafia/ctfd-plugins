@@ -1,3 +1,4 @@
+(function() {
 CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
@@ -5,8 +6,8 @@ CTFd._internal.challenge.render = null;
 CTFd._internal.challenge.postRender = initIncidentSequence;
 window.addEventListener("ctfd:challenge-rendered", initIncidentSequence);
 
-let seqRetryCount = 0;
-const seqTimer = setInterval(function() {
+var seqRetryCount = 0;
+var seqTimer = setInterval(function() {
   seqRetryCount++;
   if (initIncidentSequence() || seqRetryCount > 20) {
     clearInterval(seqTimer);
@@ -712,3 +713,4 @@ function initIncidentSequence() {
 CTFd.plugin.run((_CTFd) => {
   setTimeout(initIncidentSequence, 50);
 });
+})();

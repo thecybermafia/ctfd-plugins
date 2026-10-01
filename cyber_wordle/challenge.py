@@ -157,6 +157,8 @@ class WordleChallengeType(BaseChallenge):
         submission = (data.get("submission") or "").upper().strip()
 
         user = get_current_user()
+        if not user:
+            return ChallengeResponse(status="incorrect", message="Please log in to submit a guess.")
         team = get_current_team()
 
         c = WordleChallenge.query.filter_by(id=challenge.id).first()
@@ -221,7 +223,7 @@ class WordleChallengeType(BaseChallenge):
         if current_attempt >= (c.max_attempts or 6):
             return ChallengeResponse(
                 status="incorrect",
-                message=f"Maximum attempts ({c.max_attempts}) reached! The secret cipher was: {target}"
+                message=f"Maximum attempts ({c.max_attempts}) reached! Terminal locked. Access denied."
             )
 
         hint_msg = ""

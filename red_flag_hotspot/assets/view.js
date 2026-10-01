@@ -1,3 +1,4 @@
+(function() {
 CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
@@ -37,7 +38,6 @@ function initRedFlagHotspot() {
   const storageKey = `ctfd_hotspot_pins_${challengeId}`;
 
   // Ensure full width in modal submit row
-  const container = document.querySelector(".red-flag-hotspot-container");
   if (container) {
     const col = container.closest(".col-sm-8");
     if (col) {
@@ -463,8 +463,8 @@ function initRedFlagHotspot() {
 CTFd._internal.challenge.postRender = initRedFlagHotspot;
 window.addEventListener("ctfd:challenge-rendered", initRedFlagHotspot);
 
-let rfhRetryCount = 0;
-const rfhTimer = setInterval(function() {
+var rfhRetryCount = 0;
+var rfhTimer = setInterval(function() {
   rfhRetryCount++;
   if (initRedFlagHotspot() || rfhRetryCount > 20) {
     clearInterval(rfhTimer);
@@ -500,3 +500,4 @@ CTFd._internal.challenge.submit = function(preview) {
 
   return CTFd.api.post_challenge_attempt(params, body);
 };
+})();

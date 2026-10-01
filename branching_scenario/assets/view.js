@@ -1,3 +1,4 @@
+(function() {
 CTFd._internal.challenge.data = undefined;
 CTFd._internal.challenge.renderer = null;
 CTFd._internal.challenge.preRender = function() {};
@@ -283,8 +284,8 @@ function initScenario() {
 CTFd._internal.challenge.postRender = initScenario;
 window.addEventListener("ctfd:challenge-rendered", initScenario);
 
-let scenarioRetryCount = 0;
-const scenarioTimer = setInterval(function() {
+var scenarioRetryCount = 0;
+var scenarioTimer = setInterval(function() {
   scenarioRetryCount++;
   if (initScenario() || scenarioRetryCount > 20) {
     clearInterval(scenarioTimer);
@@ -308,3 +309,4 @@ CTFd._internal.challenge.submit = function(preview) {
     return response;
   });
 };
+})();

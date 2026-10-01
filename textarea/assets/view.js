@@ -1,3 +1,4 @@
+(function() {
 window.CTFd = window.CTFd || {};
 window.CTFd._internal = window.CTFd._internal || {};
 window.CTFd._internal.challenge = window.CTFd._internal.challenge || {};
@@ -21,7 +22,6 @@ function initTextareaChallenge() {
   const challengeId = chalIdEl.value;
 
   // Ensure full width fit inside modal tab panel
-  const container = document.getElementById("textarea-challenge-container");
   if (container) {
     const col = container.closest(".col-sm-8");
     if (col) {
@@ -148,8 +148,8 @@ function initTextareaChallenge() {
 CTFd._internal.challenge.postRender = initTextareaChallenge;
 window.addEventListener("ctfd:challenge-rendered", initTextareaChallenge);
 
-let taRetryCount = 0;
-const taTimer = setInterval(function() {
+var taRetryCount = 0;
+var taTimer = setInterval(function() {
   taRetryCount++;
   if (initTextareaChallenge() || taRetryCount > 20) {
     clearInterval(taTimer);
@@ -165,3 +165,4 @@ if (window.CTFd && window.CTFd.plugin && window.CTFd.plugin.run) {
     setTimeout(initTextareaChallenge, 100);
   });
 }
+})();
