@@ -286,8 +286,8 @@
 
               <!-- Right: Distractors / Prohibited Bin -->
               <div class="col-lg-5">
-                <div class="card h-100 border-danger border-opacity-50">
-                  <div class="card-header py-2 px-3 bg-danger bg-opacity-10 d-flex justify-content-between align-items-center border-bottom border-danger border-opacity-25">
+                <div class="card h-100 border border-secondary border-opacity-25 shadow-sm bg-body">
+                  <div class="card-header py-2 px-3 bg-body-tertiary d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25">
                     <div>
                       <strong class="text-danger small font-monospace"><i class="fas fa-ban me-1"></i> PROHIBITED ACTIONS / DISTRACTORS</strong>
                       <div class="text-muted small">Countermeasures that operatives must reject</div>
@@ -297,7 +297,7 @@
                   <div class="card-body p-2" id="builder-dist-list" style="max-height: 520px; overflow-y: auto;">
                     ${renderDistListHtml()}
                   </div>
-                  <div class="card-footer p-2 bg-body-tertiary border-top border-danger border-opacity-25 d-flex justify-content-between align-items-center">
+                  <div class="card-footer p-2 bg-body-tertiary border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
                     <button type="button" class="btn btn-sm btn-outline-danger fw-bold" id="btn-add-dist">
                       <i class="fas fa-plus me-1"></i> Add Prohibited Action
                     </button>
@@ -383,7 +383,7 @@
     function renderDistListHtml() {
       if (distractors.length === 0) {
         return `
-          <div class="text-center text-muted p-4 border border-dashed border-danger border-opacity-25 rounded bg-body-tertiary">
+          <div class="text-center text-muted p-4 border border-dashed rounded bg-body-tertiary">
             No prohibited actions configured.<br>Click <strong>+ Add Prohibited Action</strong> to add distractors.
           </div>
         `;
@@ -392,10 +392,10 @@
       return distractors
         .map((d, idx) => {
           return `
-            <div class="card mb-2 border border-danger border-opacity-50 shadow-sm builder-dist-card bg-danger bg-opacity-10" data-dist-index="${idx}">
-              <div class="card-header py-1 px-2 bg-danger bg-opacity-10 d-flex justify-content-between align-items-center border-bottom border-danger border-opacity-25">
+            <div class="card mb-2 border border-secondary border-opacity-25 shadow-sm builder-dist-card bg-body" data-dist-index="${idx}">
+              <div class="card-header py-1 px-2 bg-body-tertiary d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25">
                 <div class="d-flex align-items-center gap-2">
-                  <span class="badge bg-danger text-uppercase font-monospace">PROHIBITED</span>
+                  <span class="badge bg-danger text-uppercase font-monospace" style="font-size: 0.72rem;">PROHIBITED</span>
                   <span class="badge bg-dark border text-light font-monospace small" style="font-size: 0.7rem;">ID: ${escapeHtml(d.id || `dist_${idx + 1}`)}</span>
                 </div>
                 <div class="d-flex align-items-center gap-1">

@@ -2,7 +2,7 @@
 
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
-<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="" x-model="submission">
 
 <div class="quiz-challenge-container w-100 my-3" data-mode="{{ challenge.question_mode }}">
   <div class="d-flex justify-content-between align-items-center mb-3">

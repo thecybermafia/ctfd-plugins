@@ -137,11 +137,18 @@ function initWordle() {
       }
     }
 
+    const chalInput = document.getElementById("challenge-input");
     if (currentWord.length === wordLen) {
-      $("#challenge-input").val(currentWord);
+      if (chalInput) {
+        chalInput.value = currentWord;
+        chalInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
       $("#challenge-submit, #wordle-direct-submit").prop("disabled", false);
     } else {
-      $("#challenge-input").val("");
+      if (chalInput) {
+        chalInput.value = "";
+        chalInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
       $("#challenge-submit, #wordle-direct-submit").prop("disabled", true);
     }
 
@@ -175,14 +182,28 @@ function initWordle() {
 
   function triggerSubmit() {
     if (currentWord.length !== wordLen) return;
-    $("#challenge-input").val(currentWord);
+    const chalInput = document.getElementById("challenge-input");
+    if (chalInput) {
+      chalInput.value = currentWord;
+      chalInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }
 
     const alpineEl = document.querySelector("[x-data='Challenge']");
-    if (alpineEl && alpineEl.__x && alpineEl.__x.$data) {
-      alpineEl.__x.$data.submission = currentWord;
-      alpineEl.__x.$data.submitChallenge();
+    let alpineData = null;
+    if (window.Alpine && typeof window.Alpine.$data === "function" && alpineEl) {
+      alpineData = window.Alpine.$data(alpineEl);
+    } else if (alpineEl && alpineEl._x_dataStack) {
+      alpineData = alpineEl._x_dataStack[0];
+    } else if (alpineEl && alpineEl.__x) {
+      alpineData = alpineEl.__x.$data;
+    }
+
+    if (alpineData && typeof alpineData.submitChallenge === "function") {
+      alpineData.submission = currentWord;
+      alpineData.submitChallenge();
     } else {
-      $("#challenge-submit").click();
+      const submitBtn = document.getElementById("challenge-submit");
+      if (submitBtn) submitBtn.click();
     }
   }
 
@@ -261,13 +282,20 @@ CTFd._internal.challenge.submit = function(preview) {
     if (response && response.data) {
       // Reload challenge modal view after attempt to refresh wordle grid and keyboard state
       setTimeout(function() {
-        if (window.CTFd && window.CTFd.pages && window.CTFd.pages.challenge) {
-          const alpineBoard = document.querySelector("[x-data='ChallengeBoard']");
-          if (alpineBoard && alpineBoard.__x && alpineBoard.__x.$data) {
-            alpineBoard.__x.$data.loadChallenge(challenge_id);
-          }
+        const alpineBoard = document.querySelector("[x-data='ChallengeBoard']");
+        let boardData = null;
+        if (window.Alpine && typeof window.Alpine.$data === "function" && alpineBoard) {
+          boardData = window.Alpine.$data(alpineBoard);
+        } else if (alpineBoard && alpineBoard._x_dataStack) {
+          boardData = alpineBoard._x_dataStack[0];
+        } else if (alpineBoard && alpineBoard.__x) {
+          boardData = alpineBoard.__x.$data;
         }
-      }, 600);
+
+        if (boardData && typeof boardData.loadChallenge === "function") {
+          boardData.loadChallenge(challenge_id);
+        }
+      }, 500);
     }
     return response;
   });

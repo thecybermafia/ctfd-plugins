@@ -104,12 +104,12 @@
     <!-- Prohibited / Distractor Column -->
     {% if challenge.allow_distractor_bin %}
     <div class="col-md-5 col-12 seq-distractor-col">
-      <div class="card h-100 border-danger border-opacity-50 shadow-sm seq-column-card">
-        <div class="card-header py-2 px-3 border-bottom border-danger border-opacity-25 d-flex justify-content-between align-items-center bg-danger bg-opacity-10">
+      <div class="card h-100 border-secondary border-opacity-25 shadow-sm seq-column-card">
+        <div class="card-header py-2 px-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center bg-body-tertiary">
           <span class="fw-bold font-monospace text-danger small">
             <i class="fas fa-ban me-1"></i> Prohibited Actions Bin
           </span>
-          <span class="badge bg-danger bg-opacity-25 text-danger font-monospace small">Reject Here</span>
+          <span class="badge bg-danger text-light font-monospace small">Reject Here</span>
         </div>
         <div class="card-body p-2 seq-drop-zone seq-drop-zone-danger" id="distractor-card-list" style="min-height: 280px; max-height: 60vh; overflow-y: auto;">
           <!-- Distractor cards injected dynamically -->

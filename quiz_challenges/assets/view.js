@@ -39,11 +39,18 @@ function initQuiz() {
       }
     });
 
+    const chalInput = document.getElementById("challenge-input");
     if (selected.length > 0) {
-      $("#challenge-input").val(selected.join(","));
+      if (chalInput) {
+        chalInput.value = selected.join(",");
+        chalInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
       $("#challenge-submit").prop("disabled", false);
     } else {
-      $("#challenge-input").val("");
+      if (chalInput) {
+        chalInput.value = "";
+        chalInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
       $("#challenge-submit").prop("disabled", true);
     }
   }
@@ -58,8 +65,17 @@ function initQuiz() {
     } else {
       // Trigger modal submit handler
       const alpineEl = document.querySelector("[x-data='Challenge']");
-      if (alpineEl && alpineEl.__x && alpineEl.__x.$data) {
-        alpineEl.__x.$data.submitChallenge();
+      let alpineData = null;
+      if (window.Alpine && typeof window.Alpine.$data === "function" && alpineEl) {
+        alpineData = window.Alpine.$data(alpineEl);
+      } else if (alpineEl && alpineEl._x_dataStack) {
+        alpineData = alpineEl._x_dataStack[0];
+      } else if (alpineEl && alpineEl.__x) {
+        alpineData = alpineEl.__x.$data;
+      }
+
+      if (alpineData && typeof alpineData.submitChallenge === "function") {
+        alpineData.submitChallenge();
       } else {
         CTFd._internal.challenge.submit();
       }

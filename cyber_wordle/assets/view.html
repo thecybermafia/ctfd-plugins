@@ -2,7 +2,7 @@
 
 {% block input %}
 <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
-<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="">
+<input id="challenge-input" class="challenge-input" type="hidden" name="submission" value="" x-model="submission">
 
 <div class="wordle-challenge-wrapper my-3" 
      id="wordle-container"

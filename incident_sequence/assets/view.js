@@ -308,7 +308,7 @@ function initIncidentSequence() {
           if (!card) return;
 
           const dEl = document.createElement("div");
-          dEl.className = "card mb-2 p-2 border border-danger border-opacity-50 shadow-sm seq-card bg-danger bg-opacity-10";
+          dEl.className = "card mb-2 p-2 border border-secondary border-opacity-25 shadow-sm seq-card bg-body";
           dEl.draggable = !isSolved;
           dEl.setAttribute("data-card-id", cardId);
           dEl.setAttribute("data-index", dIndex);

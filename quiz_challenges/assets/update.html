@@ -7,47 +7,55 @@
 	<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
 </div>
 
-<div class="form-group mb-3">
-	<label for="question_mode" class="form-label fw-bold">Question Selection Mode</label>
-	<div class="form-text text-muted small mb-1">Choose whether participants pick one option or multiple options.</div>
-	<select class="form-select form-control" name="question_mode" id="question_mode">
-		<option value="single" {% if challenge.question_mode == 'single' %}selected{% endif %}>Single Choice (Radio - One correct answer)</option>
-		<option value="multiple" {% if challenge.question_mode == 'multiple' %}selected{% endif %}>Multiple Select (Checkboxes - One or more correct answers)</option>
-	</select>
-</div>
-
-<div class="form-group mb-3">
-	<label for="options_text" class="form-label fw-bold">Answer Options</label>
-	<div class="form-text text-muted small mb-1">
-		Enter one option per line. Prefix correct option(s) with an asterisk (*) or [x].
+<div class="card my-3 border border-primary border-opacity-50 shadow-sm bg-body">
+	<div class="card-header bg-primary bg-opacity-10 py-2 px-3 fw-bold text-primary font-monospace d-flex justify-content-between align-items-center">
+		<span><i class="fas fa-tasks me-2"></i>QUIZ ASSESSMENT CONFIGURATION</span>
+		<span class="badge bg-primary font-monospace">{{ 'Single Choice' if challenge.question_mode == 'single' else 'Multiple Select' }}</span>
 	</div>
-	<textarea class="form-control font-monospace" name="options_text" rows="6" required>{{ challenge.options_text }}</textarea>
-</div>
+	<div class="card-body">
+		<div class="form-group mb-3">
+			<label for="question_mode" class="form-label fw-bold">Question Selection Mode</label>
+			<div class="form-text text-muted small mb-1">Choose whether participants pick one option or multiple options.</div>
+			<select class="form-select form-control" name="question_mode" id="question_mode">
+				<option value="single" {% if challenge.question_mode == 'single' %}selected{% endif %}>Single Choice (Radio - One correct answer)</option>
+				<option value="multiple" {% if challenge.question_mode == 'multiple' %}selected{% endif %}>Multiple Select (Checkboxes - One or more correct answers)</option>
+			</select>
+		</div>
 
-<div class="row g-3 mb-3">
-	<div class="col-md-6">
-		<label for="max_attempts" class="form-label fw-bold">Maximum Attempts</label>
-		<div class="form-text text-muted small mb-1">Maximum allowed submissions (0 for unlimited).</div>
-		<input type="number" class="form-control" name="max_attempts" value="{{ challenge.max_attempts or 0 }}" min="0">
-	</div>
-	<div class="col-md-6">
-		<label for="penalty_per_attempt" class="form-label fw-bold">Penalty Per Failed Attempt</label>
-		<div class="form-text text-muted small mb-1">Points deducted for each incorrect attempt (0 for no penalty).</div>
-		<input type="number" class="form-control" name="penalty_per_attempt" value="{{ challenge.penalty_per_attempt or 0 }}" min="0">
-	</div>
-</div>
+		<div class="form-group mb-3">
+			<label for="options_text" class="form-label fw-bold">Answer Options</label>
+			<div class="form-text text-muted small mb-1">
+				Enter one option per line. Prefix correct option(s) with an asterisk (*) or [x].
+			</div>
+			<textarea class="form-control font-monospace" name="options_text" rows="6" required>{{ challenge.options_text }}</textarea>
+		</div>
 
-<div class="form-group mb-3">
-	<div class="form-check form-switch">
-		<input class="form-check-input" type="checkbox" name="randomize_options" id="randomize_options" value="true" {% if challenge.randomize_options %}checked{% endif %}>
-		<label class="form-check-label fw-bold" for="randomize_options">Randomize Option Order</label>
-	</div>
-	<div class="form-text text-muted small">Shuffles option display order for each user/team.</div>
-</div>
+		<div class="row g-3 mb-3">
+			<div class="col-md-6">
+				<label for="max_attempts" class="form-label fw-bold">Maximum Attempts</label>
+				<div class="form-text text-muted small mb-1">Maximum allowed submissions (0 for unlimited).</div>
+				<input type="number" class="form-control" name="max_attempts" value="{{ challenge.max_attempts or 0 }}" min="0">
+			</div>
+			<div class="col-md-6">
+				<label for="penalty_per_attempt" class="form-label fw-bold">Penalty Per Failed Attempt</label>
+				<div class="form-text text-muted small mb-1">Points deducted for each incorrect attempt (0 for no penalty).</div>
+				<input type="number" class="form-control" name="penalty_per_attempt" value="{{ challenge.penalty_per_attempt or 0 }}" min="0">
+			</div>
+		</div>
 
-<div class="form-group mb-3">
-	<label for="explanation" class="form-label fw-bold">Post-Solve Explanation</label>
-	<div class="form-text text-muted small mb-1">Educational context revealed to participants immediately after they submit the correct answer.</div>
-	<textarea class="form-control" name="explanation" rows="3">{{ challenge.explanation or '' }}</textarea>
+		<div class="form-group mb-3">
+			<div class="form-check form-switch">
+				<input class="form-check-input" type="checkbox" name="randomize_options" id="randomize_options" value="true" {% if challenge.randomize_options %}checked{% endif %}>
+				<label class="form-check-label fw-bold" for="randomize_options">Randomize Option Order</label>
+			</div>
+			<div class="form-text text-muted small">Shuffles option display order for each user/team.</div>
+		</div>
+
+		<div class="form-group mb-0">
+			<label for="explanation" class="form-label fw-bold">Post-Solve Explanation</label>
+			<div class="form-text text-muted small mb-1">Educational context revealed to participants immediately after they submit the correct answer.</div>
+			<textarea class="form-control" name="explanation" rows="3">{{ challenge.explanation or '' }}</textarea>
+		</div>
+	</div>
 </div>
 {% endblock %}

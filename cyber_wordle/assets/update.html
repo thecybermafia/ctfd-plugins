@@ -7,51 +7,59 @@
 	<input type="number" class="form-control" name="value" value="{{ challenge.value }}" required>
 </div>
 
-<div class="row g-3 mb-3">
-	<div class="col-md-8">
-		<label for="target_word" class="form-label fw-bold">Secret Target Word</label>
-		<div class="form-text text-muted small mb-1">The secret word to be guessed (letters only, uppercase).</div>
-		<input type="text" class="form-control font-monospace text-uppercase" name="target_word" id="target_word" value="{{ challenge.target_word }}" required>
+<div class="card my-3 border border-success border-opacity-50 shadow-sm bg-body">
+	<div class="card-header bg-success bg-opacity-10 py-2 px-3 fw-bold text-success font-monospace d-flex justify-content-between align-items-center">
+		<span><i class="fas fa-terminal me-2"></i>CYBER WORDLE CONFIGURATION</span>
+		<span class="badge bg-success font-monospace">{{ challenge.target_word or 'CYBER' }} ({{ challenge.word_length or 5 }} Letters)</span>
 	</div>
-	<div class="col-md-4">
-		<label for="word_length" class="form-label fw-bold">Word Length</label>
-		<div class="form-text text-muted small mb-1">Length of the word in tiles.</div>
-		<input type="number" class="form-control" name="word_length" id="word_length" value="{{ challenge.word_length or 5 }}" min="3" max="16">
-	</div>
-</div>
+	<div class="card-body">
+		<div class="row g-3 mb-3">
+			<div class="col-md-8">
+				<label for="target_word" class="form-label fw-bold">Secret Target Word</label>
+				<div class="form-text text-muted small mb-1">The secret word to be guessed (letters only, uppercase).</div>
+				<input type="text" class="form-control font-monospace text-uppercase" name="target_word" id="target_word" value="{{ challenge.target_word }}" required>
+			</div>
+			<div class="col-md-4">
+				<label for="word_length" class="form-label fw-bold">Word Length</label>
+				<div class="form-text text-muted small mb-1">Length of the word in tiles.</div>
+				<input type="number" class="form-control" name="word_length" id="word_length" value="{{ challenge.word_length or 5 }}" min="3" max="16">
+			</div>
+		</div>
 
-<div class="row g-3 mb-3">
-	<div class="col-md-6">
-		<label for="max_attempts" class="form-label fw-bold">Maximum Guesses</label>
-		<div class="form-text text-muted small mb-1">Total allowed guesses before lockout.</div>
-		<input type="number" class="form-control" name="max_attempts" value="{{ challenge.max_attempts or 6 }}" min="1" max="10">
-	</div>
-	<div class="col-md-6">
-		<label for="reveal_hint_after" class="form-label fw-bold">Reveal Hint After Attempt</label>
-		<div class="form-text text-muted small mb-1">Show hint text after this number of failed attempts.</div>
-		<input type="number" class="form-control" name="reveal_hint_after" value="{{ challenge.reveal_hint_after or 4 }}" min="1" max="10">
-	</div>
-</div>
+		<div class="row g-3 mb-3">
+			<div class="col-md-6">
+				<label for="max_attempts" class="form-label fw-bold">Maximum Guesses</label>
+				<div class="form-text text-muted small mb-1">Total allowed guesses before lockout.</div>
+				<input type="number" class="form-control" name="max_attempts" value="{{ challenge.max_attempts or 6 }}" min="1" max="10">
+			</div>
+			<div class="col-md-6">
+				<label for="reveal_hint_after" class="form-label fw-bold">Reveal Hint After Attempt</label>
+				<div class="form-text text-muted small mb-1">Show hint text after this number of failed attempts.</div>
+				<input type="number" class="form-control" name="reveal_hint_after" value="{{ challenge.reveal_hint_after or 4 }}" min="1" max="10">
+			</div>
+		</div>
 
-<div class="form-group mb-3">
-	<label for="hint_text" class="form-label fw-bold">Optional Clue / Hint Text</label>
-	<div class="form-text text-muted small mb-1">Hint displayed after player exceeds the configured attempt threshold.</div>
-	<textarea class="form-control" name="hint_text" rows="2">{{ challenge.hint_text or '' }}</textarea>
-</div>
+		<div class="form-group mb-3">
+			<label for="hint_text" class="form-label fw-bold">Optional Clue / Hint Text</label>
+			<div class="form-text text-muted small mb-1">Hint displayed after player exceeds the configured attempt threshold.</div>
+			<textarea class="form-control" name="hint_text" rows="2">{{ challenge.hint_text or '' }}</textarea>
+		</div>
 
-<div class="form-group mb-3">
-	<div class="form-check form-switch mb-2">
-		<input class="form-check-input" type="checkbox" name="dynamic_scoring" id="dynamic_scoring" value="true" {% if challenge.dynamic_scoring %}checked{% endif %}>
-		<label class="form-check-label fw-bold" for="dynamic_scoring">Dynamic Bonus for Fewer Guesses</label>
-	</div>
-	<div class="form-text text-muted small">Rewards solvers with higher placement when guessed in fewer tries.</div>
-</div>
+		<div class="form-group mb-3">
+			<div class="form-check form-switch mb-2">
+				<input class="form-check-input" type="checkbox" name="dynamic_scoring" id="dynamic_scoring" value="true" {% if challenge.dynamic_scoring %}checked{% endif %}>
+				<label class="form-check-label fw-bold" for="dynamic_scoring">Dynamic Bonus for Fewer Guesses</label>
+			</div>
+			<div class="form-text text-muted small">Rewards solvers with higher placement when guessed in fewer tries.</div>
+		</div>
 
-<div class="form-group mb-3">
-	<div class="form-check form-switch mb-2">
-		<input class="form-check-input" type="checkbox" name="dictionary_enforced" id="dictionary_enforced" value="true" {% if challenge.dictionary_enforced %}checked{% endif %}>
-		<label class="form-check-label fw-bold" for="dictionary_enforced">Strict Dictionary Validation</label>
+		<div class="form-group mb-0">
+			<div class="form-check form-switch mb-2">
+				<input class="form-check-input" type="checkbox" name="dictionary_enforced" id="dictionary_enforced" value="true" {% if challenge.dictionary_enforced %}checked{% endif %}>
+				<label class="form-check-label fw-bold" for="dictionary_enforced">Strict Dictionary Validation</label>
+			</div>
+			<div class="form-text text-muted small">When disabled, players can submit any alphabetical combination of letters.</div>
+		</div>
 	</div>
-	<div class="form-text text-muted small">When disabled, players can submit any alphabetical combination of letters.</div>
 </div>
 {% endblock %}
