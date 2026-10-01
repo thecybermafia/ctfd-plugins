@@ -169,7 +169,7 @@ class QuizChallengeType(BaseChallenge):
                 val = str(data[attr]).lower() in ("true", "1", "yes", "on")
                 setattr(challenge, attr, val)
 
-        if "options_text" in data:
+        if "options_text" in data and data["options_text"].strip():
             opts = parse_options_text(data["options_text"])
             challenge.options_json = json.dumps(opts)
 

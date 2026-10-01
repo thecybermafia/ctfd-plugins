@@ -37,6 +37,18 @@ class QuizChallenge(Challenges):
         except Exception:
             return []
 
+    @property
+    def options_text(self):
+        try:
+            opts = self.options_data
+            lines = []
+            for o in opts:
+                prefix = "* " if o.get("correct") else ""
+                lines.append(f"{prefix}{o.get('text', '')}")
+            return "\n".join(lines)
+        except Exception:
+            return ""
+
     def get_sanitized_options(self):
         """Returns options list for players without the 'correct' flag."""
         opts = self.options_data

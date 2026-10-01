@@ -30,3 +30,18 @@ class PhishingInboxChallenge(Challenges):
             return json.loads(self.emails_json or "[]")
         except Exception:
             return []
+
+    @property
+    def emails_text(self):
+        try:
+            import re
+            emails = json.loads(self.emails_json or "[]")
+            lines = []
+            for e in emails:
+                body = e.get("body_html", "") or e.get("body", "")
+                clean_body = re.sub(r'<[^>]+>', ' ', body).strip()
+                clean_body = " ".join(clean_body.split())
+                lines.append(f"{e.get('sender_name', '')} | {e.get('sender_email', '') or e.get('from', '')} | {e.get('subject', '')} | {e.get('correct_action', 'report')} | {clean_body} | {e.get('explanation', '')}")
+            return "\n".join(lines)
+        except Exception:
+            return ""

@@ -35,3 +35,14 @@ class CrosswordChallenge(Challenges):
             ]
         except Exception:
             return []
+
+    @property
+    def clues_text(self):
+        try:
+            clues = json.loads(self.clues_json or "[]")
+            lines = []
+            for c in clues:
+                lines.append(f"{c.get('clue', '')} | {c.get('answer', '')}")
+            return "\n".join(lines)
+        except Exception:
+            return ""

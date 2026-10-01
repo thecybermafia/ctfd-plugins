@@ -233,7 +233,9 @@ class BranchingScenarioChallengeType(BaseChallenge):
         if "scenario_text" in data and data["scenario_text"].strip():
             parsed_nodes = parse_simple_scenario_text(data["scenario_text"])
             challenge.nodes_json = json.dumps(parsed_nodes, indent=2)
-        elif "nodes_json" in data:
+        elif "scenario_json" in data and data["scenario_json"].strip():
+            challenge.nodes_json = data["scenario_json"].strip()
+        elif "nodes_json" in data and data["nodes_json"].strip():
             challenge.nodes_json = data["nodes_json"].strip()
 
         return super().update(challenge, request)

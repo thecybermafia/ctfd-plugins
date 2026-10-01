@@ -33,3 +33,26 @@ class BranchingScenarioChallenge(Challenges):
             return json.loads(self.nodes_json or "{}")
         except Exception:
             return {}
+
+    @property
+    def scenario_json(self):
+        return self.nodes_json
+
+    @property
+    def scenario_text(self):
+        try:
+            nodes = json.loads(self.nodes_json or "{}")
+            blocks = []
+            for nid, nd in nodes.items():
+                b = [f"[{nid}] {nd.get('title', '')}"]
+                if nd.get("text"):
+                    b.append(nd.get("text", ""))
+                for opt in nd.get("options", []):
+                    line = f"> {opt.get('text', '')} -> {opt.get('next_node', '')}"
+                    if opt.get("consequence"):
+                        line += f" | {opt.get('consequence', '')}"
+                    b.append(line)
+                blocks.append("\n".join(b))
+            return "\n\n".join(blocks)
+        except Exception:
+            return ""

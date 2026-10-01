@@ -114,7 +114,7 @@ class CrosswordChallengeType(BaseChallenge):
     def update(cls, challenge, request):
         data = request.form or request.get_json() or {}
 
-        if "clues_text" in data:
+        if "clues_text" in data and data["clues_text"].strip():
             clues = parse_simple_clues(data["clues_text"])
             challenge.clues_json = json.dumps(clues)
 

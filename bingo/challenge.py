@@ -22,16 +22,26 @@ def parse_simple_lines_to_cells(text, grid_size=5):
             parts = [p.strip() for p in lines[i].split("|")]
             title = parts[0] if len(parts) > 0 else f"Square #{i+1}"
             flag = parts[1] if len(parts) > 1 else f"flag_{i+1}"
-            pts = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 10
+            pts = 10
+            desc = f"Complete '{title}' and enter the flag."
+            if len(parts) > 3:
+                pts = int(parts[2]) if parts[2].isdigit() else 10
+                desc = parts[3]
+            elif len(parts) == 3:
+                if parts[2].isdigit():
+                    pts = int(parts[2])
+                else:
+                    desc = parts[2]
         else:
             title = f"Square #{i+1}"
             flag = f"flag_{i+1}"
             pts = 10
+            desc = f"Complete '{title}' and enter the flag."
 
         cells.append({
             "index": i,
             "title": title,
-            "desc": f"Complete '{title}' and enter the flag.",
+            "desc": desc,
             "flag": flag,
             "points": pts
         })
@@ -42,7 +52,14 @@ def cells_to_simple_lines(cells_json):
         cells = json.loads(cells_json or "[]")
         lines = []
         for c in cells:
-            lines.append(f"{c.get('title', '')} | {c.get('flag', '')}")
+            title = c.get("title", "")
+            flag = c.get("flag", "")
+            desc = c.get("desc", "")
+            pts = c.get("points", 10)
+            if desc and desc != f"Complete '{title}' and enter the flag.":
+                lines.append(f"{title} | {flag} | {pts} | {desc}")
+            else:
+                lines.append(f"{title} | {flag}")
         return "\n".join(lines)
     except Exception:
         return ""
@@ -104,7 +121,7 @@ class BingoChallengeType(BaseChallenge):
                 setattr(challenge, attr, int(data[attr]))
 
         # Handle simple squares_text input from admin
-        if "squares_text" in data:
+        if "squares_text" in data and data["squares_text"].strip():
             size = int(data.get("grid_size", challenge.grid_size or 5))
             cells = parse_simple_lines_to_cells(data["squares_text"], grid_size=size)
             challenge.cells_json = json.dumps(cells)

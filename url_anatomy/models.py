@@ -29,3 +29,14 @@ class UrlAnatomyChallenge(Challenges):
             return json.loads(self.urls_json or "[]")
         except Exception:
             return []
+
+    @property
+    def urls_text(self):
+        try:
+            urls = json.loads(self.urls_json or "[]")
+            lines = []
+            for u in urls:
+                lines.append(f"{u.get('raw_url', '')} | {u.get('question', '')} | {u.get('correct_token', '')} | {u.get('explanation', '')}")
+            return "\n".join(lines)
+        except Exception:
+            return ""

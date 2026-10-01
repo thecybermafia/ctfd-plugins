@@ -36,6 +36,24 @@ class BingoChallenge(Challenges):
         except Exception:
             return []
 
+    @property
+    def squares_text(self):
+        try:
+            cells = json.loads(self.cells_json or "[]")
+            lines = []
+            for c in cells:
+                title = c.get("title", "")
+                flag = c.get("flag", "")
+                desc = c.get("desc", "")
+                pts = c.get("points", 10)
+                if desc and desc != f"Complete '{title}' and enter the flag.":
+                    lines.append(f"{title} | {flag} | {pts} | {desc}")
+                else:
+                    lines.append(f"{title} | {flag}")
+            return "\n".join(lines)
+        except Exception:
+            return ""
+
 
 class BingoCellSolve(db.Model):
     __tablename__ = "bingo_cell_solves"
