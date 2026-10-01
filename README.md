@@ -85,20 +85,23 @@ Every plugin in this suite has undergone a comprehensive defensive security audi
 
 ### Option 2: CTFd Enterprise Cloud / Hosted CTFd Installation
 
-CTFd Cloud does **not** allow uploading the whole plugins repo as one ZIP (which triggers *"Zip is missing an __init__.py file"*). CTFd Cloud requires each plugin to be uploaded **individually as its own separate ZIP file** with `__init__.py` sitting at the root of the archive.
+CTFd Cloud requires each plugin to be uploaded **individually as its own separate ZIP file**.
+The archive must contain **exactly one top-level directory** matching the plugin name (e.g. `bingo/`), and that directory must directly contain `__init__.py`:
+- Uploading the multi-plugin bundle triggers: *"Zip is missing an __init__.py file"*
+- Uploading multiple loose directories triggers: *"Zip contains multiple top-level directories"*
 
-#### Creating Plugin ZIPs
-To create a cloud-ready ZIP for any plugin, zip only the **contents** of that specific plugin folder:
+#### Packaging a Plugin ZIP
+From the repository root, package each plugin with its directory as the single top-level root:
 ```bash
 # Example: Packaging the bingo plugin
-cd bingo
-zip -r ../bingo.zip . -x "*.DS_Store*" "*__pycache__*"
+zip -r bingo.zip bingo -x "*.DS_Store*" "*__pycache__*"
 ```
 
 #### Uploading to CTFd Cloud
 1. Navigate to **Instance Management > Plugins > Upload Plugin**.
 2. Select your plugin ZIP (e.g. `bingo.zip`, `crossword.zip`, etc.).
 3. Upload each plugin you need individually.
+
 
 
 ---
