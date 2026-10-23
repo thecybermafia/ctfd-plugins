@@ -1,6 +1,6 @@
 # 🧩 CTFd Advanced Plugins Suite
 
-A production-ready collection of game-changing challenge types and operational integrations for [CTFd](https://ctfd.io/), engineered and defensively hardened by **CyberMafia**.
+A production-ready collection of game-changing challenge types and operational integrations for [CTFd](https://ctfd.io/), engineered and defensively hardened.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Security Audited](https://img.shields.io/badge/Security%20Audit-Defensively%20Hardened-brightgreen.svg)](#security-audit--defensive-hardening)
