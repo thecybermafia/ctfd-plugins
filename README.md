@@ -131,7 +131,7 @@ You are free to use, fork, and modify this software provided that:
 1. **Notice File**: You must preserve the `NOTICE` file in all redistributions and derivative works.
 2. **Prominent Credit**: When deploying this software in a public CTF competition or distributing modified versions, visible attribution must be maintained:
    ```markdown
-   Powered by CTFd Plugins Suite by CyberMafia (https://github.com/thecybermafia/ctfd-plugins)
+   Powered by CTFd Plugins Suite (https://github.com/thecybermafia/ctfd-plugins)
    ```
 3. **State Changes**: Any modified files must carry prominent notices documenting that changes were made.
 
